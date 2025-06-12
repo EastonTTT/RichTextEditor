@@ -1,4 +1,5 @@
 # RichTextEditor
+<<<<<<< HEAD
 
 This template should help get you started developing with Vue 3 in Vite.
 
@@ -37,3 +38,6 @@ npm run build
 ```sh
 npm run lint
 ```
+=======
+富文本知识库系统
+>>>>>>> c00ca5dd1fb755cf1afdefb4c36933097deb27ca
