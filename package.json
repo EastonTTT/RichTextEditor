@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "element-plus": "^2.10.1",
     "pinia": "^3.0.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
@@ -34,5 +35,17 @@
     "vite": "^6.2.4",
     "vite-plugin-vue-devtools": "^7.7.2",
     "vue-tsc": "^2.2.8"
-  }
+  },
+  "description": "src ├── App.vue ├── apis # 请求�? ├── assets # 资源�? ├── components # 公共组件�? ├── constants # 常量�? �? └── index.ts ├── pages # 业务模块�? ├── router # 路由�? ├── store # Pinia 数据�? �? ├── index.ts �? └── modules �? ├── setting.ts �? └── user.ts ├── style # 样式目录 �? ├── reset.less # 对默认样式的重置 ├── types # 类型文件目录 └── utils # 工具�? �? ├── route # 路由工具封装 �? └── request # 请求工具封装 └── main.ts # 入口逻辑文件",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EastonTTT/RichTextEditor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EastonTTT/RichTextEditor/issues"
+  },
+  "homepage": "https://github.com/EastonTTT/RichTextEditor#readme"
 }
