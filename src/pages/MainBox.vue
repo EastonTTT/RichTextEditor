@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import ListShow from './ListShow.vue';
+</script>
+
 <template>
     <div style="height: 100vh; box-shadow: var(--el-border-color-light) 0px 0px 10px">
         <el-splitter>
@@ -8,7 +12,9 @@
                             <div class="user-info">用户信息区</div>
                         </el-splitter-panel>
                         <el-splitter-panel>
-                            <div class="list-show">列表展示区</div>
+                            <div class="list-show">
+                                <ListShow />
+                            </div>
                         </el-splitter-panel>
                     </el-splitter>
                 </div>
@@ -32,4 +38,4 @@
 <style scoped>
 
 </style>
-  
+
