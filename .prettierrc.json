@@ -10,5 +10,8 @@
   "arrowParens": "always",
   "endOfLine": "lf",
   "vueIndentScriptAndStyle": true,
-  "singleAttributePerLine": true
+  "singleAttributePerLine": true,
+  "typescript": true,
+  "parser": "typescript",
+  "spaceInParens": true
 }

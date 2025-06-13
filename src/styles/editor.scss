@@ -1,0 +1,30 @@
+//编辑器样式统一定义
+.ProseMirror {
+  // outline: none !important;
+  // border: none !important;
+  // box-shadow: none !important;
+  min-height: 500px;
+}
+.editor-content{
+
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 500px;
+
+  p{
+    font-size: 16px;
+  }
+
+  /* 任务列表样式 */
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  ul[data-type="taskList"] li {
+    display: flex;
+    align-items: center;
+  }
+
+}
