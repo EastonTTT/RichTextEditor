@@ -14,6 +14,9 @@ import TaskItem from '@tiptap/extension-task-item'
 import CharacterCount from '@tiptap/extension-character-count'
 import Strike from '@tiptap/extension-strike'
 import Underline from '@tiptap/extension-underline'
+import { FontSize } from '@/utils/custom-extensions/fontSize'
+import TextStyle from '@tiptap/extension-text-style'
+//hightlight
 
 export const basicExtensions = [
   Document,
@@ -33,4 +36,6 @@ export const basicExtensions = [
   CharacterCount,
   Strike,
   Underline,
+  TextStyle,
+  FontSize,
 ]

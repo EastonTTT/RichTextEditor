@@ -1,30 +1,44 @@
-//编辑器样式统一定义
-.ProseMirror {
-  // outline: none !important;
-  // border: none !important;
-  // box-shadow: none !important;
-  min-height: 500px;
-}
-.editor-content{
-
+/* 编辑器整体容器 */
+.editor-content {
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
-  min-height: 500px;
+  background: #fff;
+  caret-color: auto;
+  min-height: 200px;
 
-  p{
-    font-size: 16px;
+  /* ProseMirror 核心内容区 */
+  .ProseMirror {
+    min-height: 500px;
+    outline: none;
+
+    p {
+
+    }
+
+    /* 任务列表样式 */
+    ul[data-type="taskList"] {
+      list-style: none;
+      padding-left: 0;
+
+      li {
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    /* 插图样式 */
+    img {
+    display: block;
+    height: auto;
+    margin: 1.5rem 0;
+    max-width: 100%;
+
+      &.ProseMirror-selectednode {
+        outline: 3px solid gray;
+      }
+    }
   }
 
-  /* 任务列表样式 */
-  ul[data-type="taskList"] {
-    list-style: none;
-    padding-left: 0;
-  }
-
-  ul[data-type="taskList"] li {
-    display: flex;
-    align-items: center;
-  }
 
 }
