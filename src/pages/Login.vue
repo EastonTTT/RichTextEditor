@@ -77,7 +77,6 @@ const handleRegister = async () => { };
 <style scoped>
 .login-register {
   width: 100%;
-  min-width: 800px;
   height: 95vh;
   display: flex;
   flex-direction: column;

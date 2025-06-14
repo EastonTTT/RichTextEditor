@@ -1,12 +1,11 @@
 <template>
   <div>
-    <p>test editor..</p>
     <rich-text-editor />
   </div>
 </template>
 
 <script lang="ts" setup>
-import RichTextEditor from '@/components/RichTextEditor.vue';
+import RichTextEditor from '@/pages/editor/RichTextEditor.vue';
 
 </script>
 

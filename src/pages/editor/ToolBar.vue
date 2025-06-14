@@ -20,7 +20,7 @@
     <button @click="addHead(2)" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">H2</button>
     <button @click="addHead(3)" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">H3</button>
     <!-- 代码块 -->
-    <button @click="toggleCode">Code</button>
+    <button @click="toggleCode" :class="{ 'is-active': editor.isActive('codeBlock') }">Code</button>
     <!-- 撤销操作 -->
     <button @click="undo" :disabled="!editor.can().undo()">undo</button>
     <!-- 重做操作 -->
@@ -76,7 +76,7 @@ const addImage = () => {
 //  任务列表
 const addTask = () => editor?.chain().focus().toggleTaskList().run()
 //  代码块
-const toggleCode = () => { }
+const toggleCode = () => editor?.chain().focus().toggleCodeBlock().run()
 //  标题
 const addHead = (level: HeadingLevel) => {
   editor.chain().focus().toggleHeading({ level: level })
@@ -97,8 +97,13 @@ onMounted(() => {
   if (!editor) return
   editor.on('selectionUpdate', () => {
     const currentFontSize = editor.getAttributes('textStyle').fontSize
-    fontSize.value = currentFontSize || '未设置'
-    console.log(fontSize.value)
+    if (sizes.includes(currentFontSize)) {
+      fontSize.value = currentFontSize
+    } else {
+      fontSize.value = '字号'
+    }
+    // fontSize.value = currentFontSize || '未设置'
+    // console.log(fontSize.value)
   })
 })
 
