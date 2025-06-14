@@ -1,13 +1,13 @@
 <template>
   <div class="toolbar">
     <!-- 加粗 -->
-    <button @click="toggleBold">Bold</button>
+    <button @click="toggleBold" :class="{ 'is-active': editor.isActive('bold') }">Bold</button>
     <!-- 斜体 -->
-    <button @click="toggleItalic">Italic</button>
+    <button @click="toggleItalic" :class="{ 'is-active': editor.isActive('italic') }">Italic</button>
     <!-- 删除线 -->
-    <button @click="toggleStrike">Strike</button>
+    <button @click="toggleStrike" :class="{ 'is-active': editor.isActive('strike') }">Strike</button>
     <!-- 下划线 -->
-    <button @click="toggleUnderline">Underline</button>
+    <button @click="toggleUnderline" :class="{ 'is-active': editor.isActive('underline') }">Underline</button>
     <!-- 链接 -->
     <button @click="setLink('www.baidu.com')">Link</button>
     <button @click="unsetLink">unsetLink</button>
@@ -25,6 +25,12 @@
     <button @click="undo" :disabled="!editor.can().undo()">undo</button>
     <!-- 重做操作 -->
     <button @click="redo" :disabled="!editor.can().redo()">redo</button>
+    <!-- 字号调整框 -->
+    <select class="font-size-select" v-model="fontSize" @change="onFontSizeChange">
+      <option disabled value="">字号</option>
+      <option v-for="size in sizes" :key="size" :value="size">{{ size }}px</option>
+    </select>
+
 
   </div>
 </template>
@@ -32,15 +38,20 @@
 <script setup lang="ts">
 import type { Editor } from "@tiptap/vue-3"
 import type { HeadingLevel } from "@/types/extensionTypes";
+import { sizes } from "@/constants/editor"
 const { editor } = defineProps<{ editor: Editor | null }>()
+import { ref, onMounted } from 'vue'
+
+const fontSize = ref('')
 
 if (!editor) { throw new Error('editor is not defined') }
 const toggleBold = () => editor?.chain().focus().toggleBold().run()
 const toggleItalic = () => editor?.chain().focus().toggleItalic().run()
 const toggleStrike = () => editor?.chain().focus().toggleStrike().run()
 const toggleUnderline = () => editor?.chain().focus().toggleUnderline().run()
-const setLink = (url: string) => {
+const setLink = () => {
   //TODO: 补充弹窗，让用户输入跳转的链接。补充url校验逻辑。
+  const url: string = prompt('请输入链接')!//后续可换成其他的获取逻辑，同Link
   if (url) {
     editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   } else {
@@ -69,7 +80,56 @@ const undo = () => editor?.chain().focus().undo().run()
 const redo = () => editor?.chain().focus().redo().run()
 
 
+const onFontSizeChange = () => {
+  const size = fontSize.value + 'px'
+  // console.log('size', size)
+  editor?.chain().focus().setFontSize(size).run()
+}
+
+onMounted(() => {
+  if (!editor) return
+  editor.on('selectionUpdate', () => {
+    const currentFontSize = editor.getAttributes('textStyle').fontSize
+    fontSize.value = currentFontSize || ''
+  })
+})
+
+
 
 </script>
 
-<style></style>
+<style lang="scss" scoped>
+button {
+  background: #f5f5f5;
+  // border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin: 5px;
+}
+
+button.is-active {
+  background-color: #409eff;
+  color: white;
+  font-weight: bold;
+}
+
+.font-size-select {
+  padding: 4px 8px;
+  border: 2px solid black;
+  background-color: #f5f5f5;
+  font-size: 14px;
+  border-radius: 4px;
+  margin-right: 6px;
+  cursor: pointer;
+  height: 32px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.font-size-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #aaa;
+}
+</style>
