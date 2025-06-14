@@ -9,7 +9,7 @@
     <!-- 下划线 -->
     <button @click="toggleUnderline" :class="{ 'is-active': editor.isActive('underline') }">Underline</button>
     <!-- 链接 -->
-    <button @click="setLink('www.baidu.com')">Link</button>
+    <button @click="setLink()">Link</button>
     <button @click="unsetLink">unsetLink</button>
     <!-- 图片 -->
     <button @click="addImage">Image</button>
@@ -28,7 +28,7 @@
     <!-- 字号调整框 -->
     <select class="font-size-select" v-model="fontSize" @change="onFontSizeChange">
       <option disabled value="">字号</option>
-      <option v-for="size in sizes" :key="size" :value="size">{{ size }}px</option>
+      <option v-for="size in sizes" :key="size" :value="size">{{ size }}</option>
     </select>
 
 
@@ -45,10 +45,16 @@ import { ref, onMounted } from 'vue'
 const fontSize = ref('')
 
 if (!editor) { throw new Error('editor is not defined') }
+//按钮逻辑函数：
+//加粗
 const toggleBold = () => editor?.chain().focus().toggleBold().run()
+//斜体
 const toggleItalic = () => editor?.chain().focus().toggleItalic().run()
+//删除线
 const toggleStrike = () => editor?.chain().focus().toggleStrike().run()
+//下划线
 const toggleUnderline = () => editor?.chain().focus().toggleUnderline().run()
+//超链接
 const setLink = () => {
   //TODO: 补充弹窗，让用户输入跳转的链接。补充url校验逻辑。
   const url: string = prompt('请输入链接')!//后续可换成其他的获取逻辑，同Link
@@ -60,28 +66,29 @@ const setLink = () => {
   }
 }
 const unsetLink = () => editor?.chain().focus().unsetLink().run()
+//  图片
 const addImage = () => {
   const url: string = prompt('请输入图片链接')!//后续可换成其他的获取逻辑，同Link
   if (url) {
     editor?.chain().focus().setImage({ src: url }).run()
   }
 }
-
+//  任务列表
 const addTask = () => editor?.chain().focus().toggleTaskList().run()
-
-
+//  代码块
 const toggleCode = () => { }
-
+//  标题
 const addHead = (level: HeadingLevel) => {
   editor.chain().focus().toggleHeading({ level: level })
 }
-
+//  撤销
 const undo = () => editor?.chain().focus().undo().run()
+//  重做
 const redo = () => editor?.chain().focus().redo().run()
 
-
+//修改字体大小
 const onFontSizeChange = () => {
-  const size = fontSize.value + 'px'
+  const size = fontSize.value
   // console.log('size', size)
   editor?.chain().focus().setFontSize(size).run()
 }
@@ -90,7 +97,8 @@ onMounted(() => {
   if (!editor) return
   editor.on('selectionUpdate', () => {
     const currentFontSize = editor.getAttributes('textStyle').fontSize
-    fontSize.value = currentFontSize || ''
+    fontSize.value = currentFontSize || '未设置'
+    console.log(fontSize.value)
   })
 })
 

@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { useEditor, EditorContent } from '@tiptap/vue-3'
-import { onMounted } from 'vue'
+// import { onMounted } from 'vue'
 import ToolBar from './ToolBar.vue'
 import { basicExtensions } from '@/utils/editorExtensions'
 import '@/styles/editor.scss'
@@ -15,9 +15,9 @@ const editor = useEditor({
   extensions: basicExtensions,
   content: '<p>this is a placeholder..</p>',
 })
-onMounted(() => {
-  window.editor = editor.value
-})
+// onMounted(() => {
+//   window.editor = editor.value
+// })
 
 
 </script>
