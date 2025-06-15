@@ -67,7 +67,7 @@ export default {
   
   // 登录
   const handleLogin = async () => {
-    router.push('/mainbox');
+    router.push('/home');
   };
   // 注册
   const handleRegister = async() => {};
@@ -76,14 +76,15 @@ export default {
   
   <style scoped>
 
-.login-register{
-  width: 100%;
-  min-width: 800px;
-  height: 95vh;
-   display: flex;
+.login-register {
+    width: 100%;
+    min-width: 800px;
+    height: 95vh;
+    display: flex;
     flex-direction: column;
-     justify-content: center; 
+    justify-content: center; 
     align-items: center; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 h1 {
