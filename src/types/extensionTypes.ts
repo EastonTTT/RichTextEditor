@@ -5,4 +5,5 @@ export type HeadingItem = {
   text: string
   id: string
   pos: number
+  children?: HeadingItem[]
 }

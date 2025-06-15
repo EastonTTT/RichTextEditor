@@ -1,10 +1,11 @@
 <template>
   <div class="toc">
-    <p>placeholder...</p>
-    <div v-for="heading in headings" :key="heading.id" @click="scrollToHeading(heading.pos)" class="toc-item">
+    <p>placeholder</p>
+    <div v-for="heading in headings" :key="heading.id" @click="scrollToHeading(heading.pos)"
+      :class="[`toc-item`, `level-${heading.level}`]">
       {{ heading.text }}
     </div>
-
+    <!-- <TocItem v-for="item in headings" :key="item.id" :item="item" :editor="editor" /> -->
   </div>
 </template>
 <script lang="ts" setup>
@@ -30,15 +31,36 @@ watchEffect(() => {
   })
 
   headings.value = result
+  // headings.value = buildTOCTree(result)
 })
 
 const scrollToHeading = (pos: number) => {
-  const dom = editor?.view.domAtPos(pos).node as HTMLElement
+  const dom = editor?.view.nodeDOM(pos) as HTMLElement
   if (dom) {
     dom.scrollIntoView({ behavior: 'smooth' })
   }
 }
 
+// function buildTOCTree(flat: HeadingItem[]) {
+//   const tree: HeadingItem[] = []
+//   let lastH1: HeadingItem | null = null
+//   let lastH2: HeadingItem | null = null
+
+//   for (const item of flat) {
+//     if (item.level === 1) {
+//       tree.push({ ...item, children: [] })
+//       lastH1 = tree[tree.length - 1]
+//       lastH2 = null
+//     } else if (item.level === 2 && lastH1) {
+//       lastH1.children!.push({ ...item, children: [] })
+//       lastH2 = lastH1.children![lastH1.children!.length - 1]
+//     } else if (item.level === 3 && lastH2) {
+//       lastH2.children!.push(item)
+//     }
+//   }
+
+//   return tree
+// }
 
 
 </script>
