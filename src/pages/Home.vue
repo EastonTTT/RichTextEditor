@@ -39,12 +39,8 @@
           </template>
           <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
         </el-sub-menu>
-        <!-- 新建知识库按钮 -->
-        <el-menu-item index="3">
-          <span>新建知识库</span>
-        </el-menu-item>
         <!-- 新建文档按钮 -->
-        <el-menu-item index="4">
+        <el-menu-item index="3">
           <span>新建文档</span>
         </el-menu-item>
       </el-menu>
@@ -104,8 +100,6 @@ function handleMenuSelect(index: string) {
     const idx = Number(index.split('-')[1])
     ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
   } else if (index === '3') {
-    ElNotification.primary('跳转到新建知识库界面（待实现）')
-  } else if (index === '4') {
     ElNotification.primary('跳转到新建文档界面（待实现）')
   }
 }
