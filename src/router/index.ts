@@ -12,7 +12,17 @@ const router = createRouter({
       path: '/mainbox',
       name: 'mainbox',
       component: () => import('@/pages/MainBox.vue'),
-    }
+    },
+    {
+      path: '/test',
+      name: 'test',
+      component: () => import('@/pages/TestPage.vue'),
+    },
+    {
+      path: '/Home',
+      name: 'Home',
+      component: () => import('@/pages/Home.vue'),
+    },
   ],
 })
 

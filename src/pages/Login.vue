@@ -45,15 +45,15 @@ export default {
           <p>{{ isLogin ? '输入您的个人信息，与我们一起开始旅程' : '使用本项目，需要进行登录' }}</p>
           <button class="ghost" @click="toggleForm">{{ isLogin ? '注册' : '登录' }}</button>
         </div>
-       </div>
+      </div>
     </div>
-    </div>
-  </template>
-  
-  <script setup lang="ts">
-  import { ref } from 'vue';
-  import { useRouter } from 'vue-router';
-  import { ElMessage } from 'element-plus';
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 
   const isLogin = ref(true);
   const phone = ref('');
@@ -88,135 +88,145 @@ export default {
 }
 
 h1 {
-    font-weight: bold;
-    margin: 0;
+  font-weight: bold;
+  margin: 0;
 }
+
 p {
-    font-size: 14px;
-    font-weight: 100;
-    line-height: 20px;
-    letter-spacing: 0.5px;
-    margin: 20px 0 30px;
+  font-size: 14px;
+  font-weight: 100;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  margin: 20px 0 30px;
 }
+
 a {
-    color: #333;
-    font-size: 14px;
-    text-decoration: none;
-    margin: 15px 0;
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  margin: 15px 0;
 }
+
 /* 按钮样式 */
 button {
-    border-radius: 20px;
-    border: 1px solid #3498db;
-    background-color: #3498db;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 12px 45px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: transform 80ms ease-in;
+  border-radius: 20px;
+  border: 1px solid #3498db;
+  background-color: #3498db;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 12px 45px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: transform 80ms ease-in;
 }
+
 button:active {
-    transform: scale(0.95);
+  transform: scale(0.95);
 }
 
 button:focus {
-    outline: none;
+  outline: none;
 }
 
 button.ghost {
-    background-color: transparent;
-    border-color: #ffffff;
+  background-color: transparent;
+  border-color: #ffffff;
 }
 
 /* 表单样式 */
 form {
-    background-color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 0 50px;
-    height: 100%;
-    text-align: center;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 50px;
+  height: 100%;
+  text-align: center;
 }
+
 /* 输入框样式 */
 input {
-    background-color: #eee;
-    border: none;
-    padding: 12px 15px;
-    margin: 8px 0;
-    width: 100%;
+  background-color: #eee;
+  border: none;
+  padding: 12px 15px;
+  margin: 8px 0;
+  width: 100%;
 }
+
 /* 复选框样式 */
-.remember{
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    align-self: baseline;
+.remember {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  align-self: baseline;
 }
 
-.remember input{
-    background-color: #eee;
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: auto;
-    margin-right: 8px;
+.remember input {
+  background-color: #eee;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  margin-right: 8px;
 }
- .container {
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-    position: relative;
-    overflow: hidden;
-    width: 768px;
-    max-width: 100%;
-    min-height: 480px;
-  }
 
-  
-  .form-container {
-    display: flex;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    height: 100%;
-  }
-  
-  .form {
-    width: 50%;
-    padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    background: white;
-  }
-  
-  .info {
-    background: linear-gradient(to right, #3498db, #3449db);
-    color: #ffffff;
-    position: relative;
-    left: -50%;
-    height: 100%;
-    width: 50%;
-    padding: 20px;
-    text-align: center;
-    display: flex; /* 启用Flexbox */
-    flex-direction: column; /* 子元素垂直排列 */
-    justify-content: center; /* 垂直居中 */
-    align-items: center; /* 水平居中 */
-  }
-  
-  /* 动画 */
-  .slide-left {
-    transition: transform 0.6s ease-in-out;
-    transform: translateX(0%);
-  }
-  
-  .slide-right {
-    transition: transform 0.6s ease-in-out;
-    transform: translateX(100%);
-  }
-  </style>
-  
+.container {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+  width: 768px;
+  max-width: 100%;
+  min-height: 480px;
+}
+
+
+.form-container {
+  display: flex;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.form {
+  width: 50%;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.info {
+  background: linear-gradient(to right, #3498db, #3449db);
+  color: #ffffff;
+  position: relative;
+  left: -50%;
+  height: 100%;
+  width: 50%;
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  /* 启用Flexbox */
+  flex-direction: column;
+  /* 子元素垂直排列 */
+  justify-content: center;
+  /* 垂直居中 */
+  align-items: center;
+  /* 水平居中 */
+}
+
+/* 动画 */
+.slide-left {
+  transition: transform 0.6s ease-in-out;
+  transform: translateX(0%);
+}
+
+.slide-right {
+  transition: transform 0.6s ease-in-out;
+  transform: translateX(100%);
+}
+</style>
