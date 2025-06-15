@@ -9,7 +9,7 @@ export const sizes: string[] = [
   '30px',
   '36px',
   '48px',
-  '字号',
+  // '字号',
 ]
 
 export const codeLanguages = [
