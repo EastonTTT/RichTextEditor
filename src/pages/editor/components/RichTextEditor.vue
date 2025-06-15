@@ -5,7 +5,7 @@
       <editor-content :editor="editor!" class="editor-content" />
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
-      <bubble-bar :editor="editor!" />
+      <bubble-bar :editor="editor!" class="bubble-bar" />
     </div>
   </div>
 

@@ -5,7 +5,7 @@
   min-height: 100vh;
   width: 100%;
   display: flex;
-  border: 1px solid black;
+  // border: 1px solid black;
   // padding: 12px;
 
   /* 目录树样式设置 */
@@ -57,15 +57,19 @@
 
   .editor-container{
     width: 80%;
-      /* toolbar */
+    /* 顶层工具栏 */
     .tool-bar{
-      border: 1px solid #eaeaea;
+      // border: 1px solid #eaeaea;
+      display: flex;
+      gap: 5px;
     }
+
+    /* 浮动工具栏 */
 
 
     /* 编辑器整体容器 */
     .editor-content {
-      border: 2px solid skyblue;
+      // border: 2px solid skyblue;
       padding: 16px;
       background: #fff;
       caret-color: auto;

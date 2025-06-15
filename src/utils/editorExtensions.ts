@@ -29,6 +29,13 @@ import cpp from 'highlight.js/lib/languages/cpp'
 import bash from 'highlight.js/lib/languages/bash'
 import markdown from 'highlight.js/lib/languages/markdown'
 import yaml from 'highlight.js/lib/languages/yaml'
+import HorizontalRule from '@tiptap/extension-horizontal-rule'
+import OrderedList from '@tiptap/extension-ordered-list'
+import BulletList from '@tiptap/extension-bullet-list'
+import ListItem from '@tiptap/extension-list-item'
+import Highlight from '@tiptap/extension-highlight'
+import TextAlign from '@tiptap/extension-text-align'
+import { Color } from '@tiptap/extension-color'
 
 lowlight.registerLanguage('javascript', javascript)
 lowlight.registerLanguage('typescript', typescript)
@@ -65,4 +72,13 @@ export const basicExtensions = [
   Underline,
   TextStyle,
   FontSize,
+  HorizontalRule,
+  OrderedList,
+  BulletList,
+  ListItem,
+  Highlight,
+  TextAlign.configure({
+    types: ['heading', 'paragraph'],
+  }),
+  Color,
 ]
