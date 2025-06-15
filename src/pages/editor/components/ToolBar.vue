@@ -79,7 +79,8 @@ const addTask = () => editor?.chain().focus().toggleTaskList().run()
 const toggleCode = () => editor?.chain().focus().toggleCodeBlock().run()
 //  标题
 const addHead = (level: HeadingLevel) => {
-  editor.chain().focus().toggleHeading({ level: level })
+  console.log(level)
+  editor?.chain().focus().toggleHeading({ level: level }).run()
 }
 //  撤销
 const undo = () => editor?.chain().focus().undo().run()

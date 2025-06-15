@@ -6,7 +6,5 @@
 
 <script lang="ts" setup>
 import RichTextEditor from '@/pages/editor/components/RichTextEditor.vue';
-
 </script>
-
-<style></style>
+<style lang="scss" scoped></style>

@@ -1,11 +1,17 @@
 <template>
-  <div class="editor-container">
-    <tool-bar v-if="editor" :editor="editor!" />
-    <editor-content :editor="editor" class="editor-content" />
-    <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
-      v-if="showCodeSelector" />
-
+  <div class="wrapper">
+    <div class="toc-container">
+      <table-of-contents :editor="editor!" class="toc" />
+    </div>
+    <div>
+      <tool-bar v-if="editor" :editor="editor!" />
+      <editor-content :editor="editor" class="editor-content" />
+      <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
+        v-if="showCodeSelector" />
+      <bubble-bar :editor="editor!" />
+    </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -13,7 +19,10 @@ import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { ref, watchEffect, nextTick } from 'vue'
 import ToolBar from './ToolBar.vue'
 import { basicExtensions } from '@/utils/editorExtensions'
-import CodeSelector from '@/pages/editor/CodeSelector.vue'
+import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
+import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
+import TableOfContents from '@/pages/editor/components/TableOfContents.vue';
+
 import '@/styles/editor.scss'
 const editor = useEditor({
   extensions: basicExtensions,

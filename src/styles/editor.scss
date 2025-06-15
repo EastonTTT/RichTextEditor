@@ -1,67 +1,121 @@
-/* 编辑器整体容器 */
 @import 'highlight.js/styles/atom-one-dark.css';
 
-.editor-content {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fff;
-  caret-color: auto;
-  min-height: 200px;
-  position: relative;
-  max-width: 100%;
 
-  /* ProseMirror 核心内容区 */
-  .ProseMirror {
-    min-height: 500px;
-    outline: none;
+.wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
 
-    p {
+  /* 目录树样式设置 */
+  .toc-container {
+      min-width: 180px;
+      max-width: 240px;
+      border: 1px solid #ddd;
+      // background-color: #f9f9f9;
+      box-shadow: 2px 0 4px rgba(0, 0, 0, 0.03);
+      overflow-y: auto;
 
-    }
+      .toc {
+        padding: 12px 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+        border: 1px solid #ddd;
 
-    /* 任务列表样式 */
-    ul[data-type="taskList"] {
-      list-style: none;
-      padding-left: 0;
+      }
+      .toc-item {
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        margin: 2px 0;
+        transition: background-color 0.2s ease;
 
-      li {
-        display: flex;
-        align-items: center;
+        // 根据 heading level 动态缩进（你组件中用了 marginLeft 实现，这里只做默认 fallback）
+        &.level-1 {
+          font-weight: bold;
+        }
+
+        &.level-2 {
+          margin-left: 16px;
+        }
+
+        &.level-3 {
+          margin-left: 32px;
+        }
+
+        &:hover {
+          background-color: #eaeaea;
+        }
+
+        &.active {
+          background-color: #d0ebff;
+          font-weight: bold;
+        }
       }
     }
 
-    /* 插图样式 */
-    img {
-    display: block;
-    height: auto;
-    margin: 1.5rem 0;
+
+
+  /* 编辑器整体容器 */
+  .editor-content {
+    border-radius: 8px;
+    padding: 16px;
+    background: #fff;
+    caret-color: auto;
+    min-height: 200px;
+    position: relative;
     max-width: 100%;
+    flex: 1;
 
-      &.ProseMirror-selectednode {
-        outline: 3px solid gray;
+    /* ProseMirror 核心内容区 */
+    .ProseMirror {
+      min-height: 500px;
+      outline: none;
+
+      p {
+        margin: 0;
       }
-    }
 
-    /* 代码块样式 */
-    pre {
-      background: #1e1e1e;
-      color: #ffffff;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 16px;
-      margin: 1em 0;
-      position: relative;
-      overflow-x: auto;
-      font-size: 14px;
-      line-height: 1.5;
-      max-width: 95%;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-      // margin: 1em auto;
+      /* 任务列表样式 */
+      ul[data-type="taskList"] {
+        list-style: none;
+        padding-left: 0;
+
+        li {
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      /* 插图样式 */
+      img {
       display: block;
+      height: auto;
+      margin: 1.5rem 0;
+      max-width: 100%;
+
+        &.ProseMirror-selectednode {
+          outline: 3px solid gray;
+        }
+      }
+
+      /* 代码块样式 */
+      pre {
+        background: #1e1e1e;
+        color: #ffffff;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 1em 0;
+        position: relative;
+        overflow-x: auto;
+        font-size: 14px;
+        line-height: 1.5;
+        max-width: 95%;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        // margin: 1em auto;
+        display: block;
+      }
     }
   }
-
-
 }
+
