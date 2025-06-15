@@ -76,7 +76,7 @@ export const basicExtensions = [
   OrderedList,
   BulletList,
   ListItem,
-  Highlight,
+  Highlight.configure({ multicolor: true }),
   TextAlign.configure({
     types: ['heading', 'paragraph'],
   }),

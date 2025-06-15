@@ -1,6 +1,6 @@
 <template>
   <div class="toc">
-    <p>placeholder</p>
+    <p style="text-align: center;">TOC placeholder</p>
     <div v-for="heading in headings" :key="heading.id" @click="scrollToHeading(heading.pos)"
       :class="[`toc-item`, `level-${heading.level}`]">
       {{ heading.text }}

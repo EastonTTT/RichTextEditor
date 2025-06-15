@@ -79,13 +79,49 @@
         min-height: 500px;
         outline: none;
 
-        /* 任务列表样式 */
-        ul[data-type="taskList"] {
+        /* 文本高亮样式 */
+        mark {
+          background-color: #FAF594;
+          border-radius: 0.4rem;
+          box-decoration-break: clone;
+          padding: 0.1rem 0.3rem;
+        }
+        ul, ol {
+          padding-left: 1.5em;
+          margin: 1em 0;
+        }
+
+        ul {
+          list-style: disc;
+        }
+
+        ol {
+          list-style: decimal;
+        }
+
+        li {
+          line-height: 1.5;
+        }
+
+        // 🔵 任务列表样式（如果你使用了 taskList 插件）
+        ul[data-type='taskList'] {
           list-style: none;
+          padding-left: 1.5em;
 
           li {
             display: flex;
             align-items: center;
+
+            > label {
+              display: flex;
+              align-items: center;
+              gap: 0.5em;
+              user-select: none;
+
+              input[type='checkbox'] {
+                margin-right: 0.5em;
+              }
+            }
           }
         }
 

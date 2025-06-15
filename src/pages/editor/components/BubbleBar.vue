@@ -98,6 +98,9 @@ const onFontSizeChange = () => {
   editor?.chain().focus().setFontSize(size).run()
 }
 
+//文本高亮
+const toggleHighlight = () => editor?.chain().focus().toggleHighlight().run()
+
 onMounted(() => {
   if (!editor) return
   editor.on('selectionUpdate', () => {
@@ -174,16 +177,17 @@ button {
   border-radius: 6px;
   padding: 1px 5px;
 
+  &:hover {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+  }
+
   label {
     display: flex;
     align-items: center;
     gap: 6px;
     cursor: pointer;
 
-    &:hover {
-      background-color: #f5f5f5;
-      border-radius: 4px;
-    }
 
     input[type='color'] {
       width: 28px;
