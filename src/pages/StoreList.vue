@@ -16,6 +16,7 @@
       <!-- 导航菜单 -->
       <el-menu
         :default-active="activeMenu"
+        :default-openeds="['1']"
         class="el-menu-vertical-demo"
         background-color="#132b3e"
         text-color="#fff"
@@ -230,8 +231,8 @@
  * @component
  */
 import logo from '@/assets/logo.png'
-import { ElNotification } from 'element-plus'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
+import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -317,11 +318,10 @@ const tableData = [
  * @output 弹窗或跳转（此处为弹窗演示）
  */
 function handleMenuSelect(index: string) {
+  activeMenu.value = index; // 更新当前激活菜单项
   if (index === '1-1') {
-    // ElNotification.primary('跳转到知识库列表界面（待实现）')
     router.push('/storelist');
   } else if (index === '1-2') {
-    // ElNotification.primary('跳转到文档列表界面（待实现）')
     router.push('/doclist');
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])

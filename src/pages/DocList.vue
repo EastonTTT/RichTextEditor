@@ -16,6 +16,7 @@
       <!-- 导航菜单 -->
       <el-menu
         :default-active="activeMenu"
+        :default-openeds="['1']"
         class="el-menu-vertical-demo"
         background-color="#132b3e"
         text-color="#fff"
@@ -205,8 +206,8 @@
  * @component
  */
 import logo from '@/assets/logo.png'
-import { ElNotification } from 'element-plus'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
+import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -217,7 +218,7 @@ const router = useRouter()
 const logoUrl = logo
 
 // 当前激活菜单项
-const activeMenu = ref('1-1')
+const activeMenu = ref('1-2')
 // 最近文档列表
 const recentDocs = ref([
   '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
@@ -295,12 +296,11 @@ const tableData = [
  * @output 弹窗或跳转（此处为弹窗演示）
  */
 function handleMenuSelect(index: string) {
+  activeMenu.value = index
   if (index === '1-1') {
-    // ElNotification.primary('跳转到知识库列表界面（待实现）')
-    router.push('/storelist');
+    router.push('/storelist')
   } else if (index === '1-2') {
-    // ElNotification.primary('跳转到文档列表界面（待实现）')
-    router.push('/doclist');
+    router.push('/doclist')
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
     ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')

@@ -97,10 +97,8 @@ const recentDocs = ref([
  */
 function handleMenuSelect(index: string) {
   if (index === '1-1') {
-    // ElNotification.primary('跳转到知识库列表界面（待实现）')
     router.push('/storelist');
   } else if (index === '1-2') {
-    // ElNotification.primary('跳转到文档列表界面（待实现）')
     router.push('/doclist');
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
