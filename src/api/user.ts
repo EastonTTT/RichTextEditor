@@ -5,7 +5,7 @@ export function login(data: { phone: string; password: string }) {
     return request({
         url: '/api/auth/login',
         method: 'post',
-        data
+        data  
     });
 }
 
