@@ -40,7 +40,7 @@
           <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
         </el-sub-menu>
         <!-- 新建文档按钮 -->
-        <el-menu-item index="3">
+        <el-menu-item index="3" @click="openCreateDocument">
           <span>新建文档</span>
         </el-menu-item>
       </el-menu>
@@ -73,7 +73,7 @@
             value-format="YYYY-MM-DD"
           />
           <el-button type="info" round>查询</el-button>
-          <el-button type="info" round>新建文档</el-button>
+          <el-button type="info" round @click="openCreateDocument">新建文档</el-button>
         </div>
       </div>
       <el-main class="main-content">
@@ -85,7 +85,7 @@
             <el-table-column prop="date" label="最近查看" />
             <el-table-column prop="action" label="操作" width="80">
               <template #default>
-                <el-icon class="action-icon">
+                <el-icon class="action-icon" @click="openDocOperationDialog">
                   <MoreFilled />
                 </el-icon>
               </template>
@@ -96,6 +96,104 @@
       <el-footer class="main-footer">Element Plus ©2024 Created by 代码全都队</el-footer>
     </el-container>
   </el-container>
+
+  <!-- 新建文档对话框 -->
+  <el-dialog
+    v-model="createDialogVisible"
+    title="新建文档"
+    width="500px"
+    :close-on-click-modal="false"
+  >
+    <el-form :model="createForm" label-width="100px">
+      <el-form-item label="文档名称" required>
+        <el-input
+          v-model="createForm.name"
+          placeholder="请输入文档名称"
+          maxlength="50"
+          show-word-limit
+        />
+      </el-form-item>
+      <el-form-item label="所属知识库" required>
+        <el-select v-model="createForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
+          <el-option
+            v-for="item in knowledgeBaseOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="closeCreateDialog">取消</el-button>
+        <el-button type="primary" @click="createDocument">创建</el-button>
+      </span>
+    </template>
+  </el-dialog>
+
+  <!-- 文档操作对话框 -->
+  <el-dialog
+    v-model="docOperationDialogVisible"
+    title="文档操作"
+    width="500px"
+    :close-on-click-modal="false"
+  >
+    <el-tabs v-model="activeTab" type="card">
+      <!-- 重命名标签页 -->
+      <el-tab-pane label="重命名" name="rename">
+        <el-form :model="renameForm" label-width="100px" style="margin-top: 20px;">
+          <el-form-item label="新名称" required>
+            <el-input
+              v-model="renameForm.newName"
+              placeholder="请输入新的文档名称"
+              maxlength="50"
+              show-word-limit
+            />
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <!-- 删除标签页 -->
+      <el-tab-pane label="删除" name="delete">
+        <div style="margin-top: 20px; text-align: center;">
+          <el-icon style="font-size: 48px; color: #f56c6c; margin-bottom: 16px;">
+            <Warning />
+          </el-icon>
+          <h3 style="color: #f56c6c; margin-bottom: 16px;">确认删除</h3>
+          <p style="color: #666; margin-bottom: 20px;">
+            您确定要删除这个文档吗？此操作不可恢复。
+          </p>
+          <el-input
+            v-model="deleteForm.confirmText"
+            placeholder="请输入 'DELETE' 确认删除"
+            style="width: 300px;"
+          />
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="closeDocOperationDialog">取消</el-button>
+        <el-button
+          v-if="activeTab === 'delete'"
+          type="danger"
+          @click="handleDocOperation"
+          :disabled="deleteForm.confirmText !== 'DELETE'"
+        >
+          删除
+        </el-button>
+        <el-button
+          v-else
+          type="primary"
+          @click="handleDocOperation"
+        >
+          确定
+        </el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -108,7 +206,7 @@
  */
 import logo from '@/assets/logo.png'
 import { ElNotification } from 'element-plus'
-import { MoreFilled } from '@element-plus/icons-vue'
+import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -134,6 +232,39 @@ const startDate = ref('')
 
 // 结束日期
 const endDate = ref('')
+
+// 对话框相关
+const createDialogVisible = ref(false)
+const createForm = ref({
+  name: '',
+  knowledgeBase: '',
+})
+
+// 知识库选项
+const knowledgeBaseOptions = ref([
+  {
+    value: 'knowledgeBase1',
+    label: '知识库A',
+  },
+  {
+    value: 'knowledgeBase2',
+    label: '知识库B',
+  },
+  {
+    value: 'knowledgeBase3',
+    label: '知识库C',
+  },
+])
+
+// 文档操作对话框相关
+const docOperationDialogVisible = ref(false)
+const activeTab = ref('rename')
+const renameForm = ref({
+  newName: ''
+})
+const deleteForm = ref({
+  confirmText: ''
+})
 
 //文档列表
 const tableData = [
@@ -173,9 +304,73 @@ function handleMenuSelect(index: string) {
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
     ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
-  } else if (index === '3') {
-    ElNotification.primary('跳转到新建文档界面（待实现）')
   }
+}
+
+/**
+ * 打开新建文档对话框
+ */
+function openCreateDocument() {
+  createDialogVisible.value = true
+  // 重置表单
+  createForm.value = {
+    name: '',
+    knowledgeBase: '',
+  }
+}
+
+/**
+ * 关闭新建文档对话框
+ */
+function closeCreateDialog() {
+  createDialogVisible.value = false
+}
+
+/**
+ * 创建文档
+ */
+function createDocument() {
+  if (!createForm.value.name.trim()) {
+    ElNotification.warning('请输入文档名称')
+    return
+  }
+
+  if (!createForm.value.knowledgeBase) {
+    ElNotification.warning('请选择所属知识库')
+    return
+  }
+
+  // 这里可以添加创建文档的逻辑
+  ElNotification.success('文档创建成功！')
+  closeCreateDialog()
+}
+
+/**
+ * 打开文档操作对话框
+ */
+function openDocOperationDialog() {
+  docOperationDialogVisible.value = true
+}
+
+/**
+ * 关闭文档操作对话框
+ */
+function closeDocOperationDialog() {
+  docOperationDialogVisible.value = false
+}
+
+/**
+ * 处理文档操作
+ */
+function handleDocOperation() {
+  if (activeTab.value === 'rename') {
+    // 处理重命名逻辑
+    ElNotification.success('文档重命名成功！')
+  } else if (activeTab.value === 'delete') {
+    // 处理删除逻辑
+    ElNotification.success('文档删除成功！')
+  }
+  closeDocOperationDialog()
 }
 </script>
 
@@ -332,5 +527,24 @@ function handleMenuSelect(index: string) {
 :deep(.el-sub-menu__title) {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 操作对话框样式 */
+:deep(.el-tabs__header) {
+  margin-bottom: 0;
+}
+
+:deep(.el-tabs__content) {
+  padding: 20px 0;
+}
+
+:deep(.el-tab-pane) {
+  min-height: 150px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

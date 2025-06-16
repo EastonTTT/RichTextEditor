@@ -67,7 +67,7 @@ const toggleForm = () => {
 
 // 登录
 const handleLogin = async () => {
-  router.push('/mainbox');
+  router.push('/storelist');
 };
 // 注册
 const handleRegister = async () => { };
