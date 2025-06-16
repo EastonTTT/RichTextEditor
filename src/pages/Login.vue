@@ -81,7 +81,7 @@ const handleLogin = async () => {
 
     if (response.data.success) {
       ElMessage.success('登录成功');
-      router.push('/Home');
+      router.push('/storelist');
     } else {
       ElMessage.error(response.data.message || '登录失败');
     }
@@ -89,6 +89,7 @@ const handleLogin = async () => {
     ElMessage.error('登录失败，请稍后重试');
     console.error('登录错误:', error);
   }
+
 };
 // 注册
 const handleRegister = async () => {

@@ -74,6 +74,10 @@
 import logo from '@/assets/logo.png'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+// 创建router实例
+const router = useRouter()
 
 // 头像图片地址
 const logoUrl = logo
@@ -93,9 +97,11 @@ const recentDocs = ref([
  */
 function handleMenuSelect(index: string) {
   if (index === '1-1') {
-    ElNotification.primary('跳转到知识库列表界面（待实现）')
+    // ElNotification.primary('跳转到知识库列表界面（待实现）')
+    router.push('/storelist');
   } else if (index === '1-2') {
-    ElNotification.primary('跳转到文档列表界面（待实现）')
+    // ElNotification.primary('跳转到文档列表界面（待实现）')
+    router.push('/doclist');
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
     ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
