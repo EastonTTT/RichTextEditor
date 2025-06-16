@@ -54,6 +54,7 @@ export default {
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { login, register } from '../api/user';
 
 const isLogin = ref(true);
 const phone = ref('');
@@ -67,10 +68,57 @@ const toggleForm = () => {
 
 // 登录
 const handleLogin = async () => {
-  router.push('/mainbox');
+  try {
+    if (!phone.value || !password.value) {
+      ElMessage.error('请填写完整信息');
+      return;
+    }
+
+    const response = await login({
+      phone: phone.value,
+      password: password.value
+    });
+
+    if (response.data.success) {
+      ElMessage.success('登录成功');
+      router.push('/Home');
+    } else {
+      ElMessage.error(response.data.message || '登录失败');
+    }
+  } catch (error) {
+    ElMessage.error('登录失败，请稍后重试');
+    console.error('登录错误:', error);
+  }
 };
 // 注册
-const handleRegister = async () => { };
+const handleRegister = async () => {
+  try {
+    if (!phone.value || !password.value || !password2.value) {
+      ElMessage.error('请填写完整信息');
+      return;
+    }
+
+    if (password.value !== password2.value) {
+      ElMessage.error('两次输入的密码不一致');
+      return;
+    }
+
+    const response = await register({
+      phone: phone.value,
+      password: password.value
+    });
+
+    if (response.data.success) {
+      ElMessage.success('注册成功');
+      isLogin.value = true; // 注册成功后切换到登录界面
+    } else {
+      ElMessage.error(response.data.message || '注册失败');
+    }
+  } catch (error) {
+    ElMessage.error('注册失败，请稍后重试');
+    console.error('注册错误:', error);
+  }
+};
 
 </script>
 

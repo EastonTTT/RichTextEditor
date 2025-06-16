@@ -1,13 +1,13 @@
 import '@/styles/index.less'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-<<<<<<< HEAD
+
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-=======
+
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
->>>>>>> editor/dev
+
 import App from './App.vue'
 import router from './router'
 
