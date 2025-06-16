@@ -48,14 +48,49 @@
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
+      <!-- 面包屑导航 -->
+      <div class="breadcrumb-container">
+        <div class="breadcrumb-wrapper">
+          <el-breadcrumb separator="/" class="breadcrumb" style="margin-right: 60px;">
+            <el-breadcrumb-item>我的文档</el-breadcrumb-item>
+          </el-breadcrumb>
+          <el-input v-model="nameInput" style="width: 240px" placeholder="输入名称" />
+          <el-input v-model="owerInput" style="width: 240px" placeholder="输入所有者" />
+          <el-date-picker
+            v-model="startDate"
+            type="date"
+            placeholder="起始日期"
+            style="width: 180px"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+          />
+          <el-date-picker
+            v-model="endDate"
+            type="date"
+            placeholder="结束日期"
+            style="width: 180px"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+          />
+          <el-button type="info" round>查询</el-button>
+          <el-button type="info" round>新建文档</el-button>
+        </div>
+      </div>
       <el-main class="main-content">
-        <!-- 面包屑导航 -->
-        <el-breadcrumb separator="/" class="breadcrumb">
-          <el-breadcrumb-item>文档XXXXX</el-breadcrumb-item>
-        </el-breadcrumb>
         <!-- 内容展示区 -->
         <div class="content-box">
-          测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字
+          <el-table :data="tableData" style="width: 100%">
+            <el-table-column prop="name" label="名称" width="300" />
+            <el-table-column prop="owner" label="所有者" width="300" />
+            <el-table-column prop="date" label="最近查看" />
+            <el-table-column prop="action" label="操作" width="80">
+              <template #default>
+                <el-icon class="action-icon">
+                  <MoreFilled />
+                </el-icon>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
       </el-main>
       <el-footer class="main-footer">Element Plus ©2024 Created by 代码全都队</el-footer>
@@ -73,6 +108,7 @@
  */
 import logo from '@/assets/logo.png'
 import { ElNotification } from 'element-plus'
+import { MoreFilled } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -88,6 +124,38 @@ const activeMenu = ref('1-1')
 const recentDocs = ref([
   '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
 ])
+
+// 输入名称
+const nameInput = ref('')
+// 输入所有者
+const owerInput = ref('')
+// 起始日期
+const startDate = ref('')
+
+// 结束日期
+const endDate = ref('')
+
+//文档列表
+const tableData = [
+  {
+    name: '文档A',
+    owner: '张三',
+    date: '2025-06-15',
+    action: '操作',
+  },
+  {
+    name: '文档B',
+    owner: '李四',
+    date: '2025-06-15',
+    action: '操作',
+  },
+  {
+    name: '文档C',
+    owner: '王五',
+    date: '2025-06-15',
+    action: '操作',
+  }
+]
 
 /**
  * 菜单选择事件
@@ -163,17 +231,59 @@ function handleMenuSelect(index: string) {
 /* 主内容区样式 */
 .main-content {
   flex: 1;
-  padding: 0 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 /* 面包屑样式 */
+.breadcrumb-container {
+  margin: 0;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.breadcrumb-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .breadcrumb {
-  margin: 16px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
+  font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #495057;
+}
+
+/* 面包屑项样式 */
+:deep(.el-breadcrumb__item) {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+:deep(.el-breadcrumb__inner) {
+  color: #495057;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+:deep(.el-breadcrumb__inner:hover) {
+  color: #007bff;
+}
+
+:deep(.el-breadcrumb__separator) {
+  color: #6c757d;
+  font-weight: 400;
+  margin: 0 8px;
 }
 
 /* 内容盒子样式 */
@@ -191,6 +301,30 @@ function handleMenuSelect(index: string) {
   padding: 20px 0;
   text-align: center;
   background: #f5f5f5;
+}
+
+/* 图标样式 */
+.folder-icon {
+  color: #ffa500;
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.document-icon {
+  color: #1890ff;
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.action-icon {
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.action-icon:hover {
+  color: #1890ff;
 }
 
 /* 菜单项样式 */
