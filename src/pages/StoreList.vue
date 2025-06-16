@@ -54,8 +54,8 @@
           <el-breadcrumb separator="/" class="breadcrumb" style="margin-right: 60px;">
             <el-breadcrumb-item>我的知识库</el-breadcrumb-item>
           </el-breadcrumb>
-          <el-input v-model="nameInput" style="width: 240px" placeholder="名称" />
-          <el-input v-model="nameInput" style="width: 240px" placeholder="所有者"/>
+          <el-input v-model="nameInput" style="width: 240px" placeholder="输入名称" />
+          <el-input v-model="onwerInput" style="width: 240px" placeholder="输入所有者"/>
           <el-date-picker
             v-model="startDate"
             type="date"
@@ -72,7 +72,7 @@
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
-          <el-button type="info" round>查询</el-button>
+          <el-button type="info" round @click="searchStore">查询</el-button>
           <el-button type="info" round @click="openCreateDialog">新建知识库</el-button>
         </div>
       </div>
@@ -84,8 +84,8 @@
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
             <el-table-column prop="action" label="操作" width="80">
-              <template #default>
-                <el-icon class="action-icon" @click="openStoreOperationDialog">
+              <template #default="scope">
+                <el-icon class="action-icon" @click="openStoreOperationDialog(scope.$index)">
                   <MoreFilled />
                 </el-icon>
               </template>
@@ -250,6 +250,8 @@ const recentDocs = ref([
 
 // 输入名称
 const nameInput = ref('')
+// 输入所有者
+const onwerInput = ref('')
 
 // 起始日期
 const startDate = ref('')
@@ -261,7 +263,6 @@ const endDate = ref('')
 const createDialogVisible = ref(false)
 const createForm = ref({
   name: '',
-  description: ''
 })
 
 // 新建文档对话框相关
@@ -269,7 +270,6 @@ const createDocumentDialogVisible = ref(false)
 const createDocumentForm = ref({
   name: '',
   knowledgeBase: '',
-  description: ''
 })
 
 // 知识库选项
@@ -289,7 +289,7 @@ const knowledgeBaseOptions = ref([
 ])
 
 //文档列表
-const tableData = [
+const tableData = ref([
   {
     name: '知识库A',
     owner: '张三',
@@ -308,7 +308,7 @@ const tableData = [
     date: '2025-06-15',
     action: '操作',
   }
-]
+])
 
 /**
  * 菜单选择事件
@@ -340,7 +340,6 @@ function openCreateDocument() {
   createDocumentForm.value = {
     name: '',
     knowledgeBase: '',
-    description: ''
   }
 }
 
@@ -378,7 +377,6 @@ function openCreateDialog() {
   // 重置表单
   createForm.value = {
     name: '',
-    description: ''
   }
 }
 
@@ -398,24 +396,41 @@ function createKnowledgeBase() {
     return
   }
 
-  // 这里可以添加创建知识库的逻辑
-  ElNotification.success('知识库创建成功！')
-  closeCreateKnowledgeBaseDialog()
-}
+  // 创建新知识库对象
+  const newKnowledgeBase = {
+    name: createForm.value.name,
+    owner: '默认',
+    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
+    action: '操作'
+  }
 
-function openStoreOperationDialog() {
-  storeOperationDialogVisible.value = true
+  // 将新知识库添加到列表开头
+  tableData.value.unshift(newKnowledgeBase)
+
+  // 显示成功提示
+  ElNotification.success('知识库创建成功！')
+
+  // 关闭对话框
+  closeCreateKnowledgeBaseDialog()
 }
 
 // 知识库操作对话框相关
 const storeOperationDialogVisible = ref(false)
 const activeTab = ref('rename')
+const currentRowIndex = ref(-1) // 当前选中的行索引
 const renameForm = ref({
   newName: ''
 })
 const deleteForm = ref({
   confirmText: ''
 })
+
+function openStoreOperationDialog(rowIndex: number) {
+  storeOperationDialogVisible.value = true
+  currentRowIndex.value = rowIndex
+  renameForm.value.newName = ''
+  deleteForm.value.confirmText = ''
+}
 
 /**
  * 关闭知识库操作对话框
@@ -430,12 +445,41 @@ function closeStoreOperationDialog() {
 function handleStoreOperation() {
   if (activeTab.value === 'rename') {
     // 处理重命名逻辑
+    if (!renameForm.value.newName.trim()) {
+      ElNotification.warning('请输入新的知识库名称')
+      return
+    }
+
+    // 重命名指定行的知识库
+    if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
+      tableData.value[currentRowIndex.value].name = renameForm.value.newName
+    }
+
     ElNotification.success('知识库重命名成功！')
   } else if (activeTab.value === 'delete') {
     // 处理删除逻辑
+    if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
+      tableData.value.splice(currentRowIndex.value, 1) // 删除指定行的知识库
+    }
     ElNotification.success('知识库删除成功！')
   }
   closeStoreOperationDialog()
+}
+
+// 查询知识库
+function searchStore() {
+  // 检验时间是否前后矛盾
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value)
+    const end = new Date(endDate.value)
+    
+    if (start > end) {
+      ElNotification.error('起始日期不能晚于结束日期')
+      return
+    }
+  }
+  
+  // 这里可以添加其他查询逻辑
 }
 </script>
 

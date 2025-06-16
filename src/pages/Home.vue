@@ -1,10 +1,4 @@
 <template>
-  <!--
-    Home1页面（Element Plus 版）
-    用Element Plus组件实现侧边栏、用户信息、菜单、内容区、面包屑和页脚。
-    结构与Home.vue一致，风格统一，便于维护。
-  -->
-  <el-container class="home-container">
     <!-- 侧边栏 -->
     <el-aside width="220px" class="sidebar">
       <!-- 用户信息区 -->
@@ -40,30 +34,48 @@
           <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
         </el-sub-menu>
         <!-- 新建文档按钮 -->
-        <el-menu-item index="3">
+        <el-menu-item index="3" @click="openCreateDocument">
           <span>新建文档</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
-    <!-- 主内容区 -->
-    <el-container class="main-container">
-      <el-header class="main-header" />
-      <el-main class="main-content">
-        <!-- 面包屑导航 -->
-        <el-breadcrumb separator="/" class="breadcrumb">
-          <el-breadcrumb-item>文档XXXXX</el-breadcrumb-item>
-        </el-breadcrumb>
-        <!-- 内容展示区 -->
-        <div class="content-box">
-          测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字 测试文字
-        </div>
-      </el-main>
-      <el-footer class="main-footer">Element Plus ©2024 Created by 代码全都队</el-footer>
-    </el-container>
-  </el-container>
+    <!-- 新建文档对话框 -->
+  <el-dialog
+    v-model="createDialogVisible"
+    title="新建文档"
+    width="500px"
+    :close-on-click-modal="false"
+  >
+    <el-form :model="createForm" label-width="100px">
+      <el-form-item label="文档名称" required>
+        <el-input
+          v-model="createForm.name"
+          placeholder="请输入文档名称"
+          maxlength="50"
+          show-word-limit
+        />
+      </el-form-item>
+      <el-form-item label="所属知识库" required>
+        <el-select v-model="createForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
+          <el-option
+            v-for="item in knowledgeBaseOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="closeCreateDialog">取消</el-button>
+        <el-button type="primary" @click="createDocument">创建</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 /**
  * Home页面（Element Plus 版）
  *
@@ -71,7 +83,7 @@
  *
  * @component
  */
-import logo from '@/assets/logo.png'
+ import logo from '@/assets/logo.png'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -89,6 +101,29 @@ const recentDocs = ref([
   '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
 ])
 
+// 知识库选项
+const knowledgeBaseOptions = ref([
+  {
+    value: 'knowledgeBase1',
+    label: '知识库A',
+  },
+  {
+    value: 'knowledgeBase2',
+    label: '知识库B',
+  },
+  {
+    value: 'knowledgeBase3',
+    label: '知识库C',
+  },
+])
+
+// 对话框相关
+const createDialogVisible = ref(false)
+const createForm = ref({
+  name: '',
+  knowledgeBase: '',
+})
+
 /**
  * 菜单选择事件
  * @input 菜单项index
@@ -105,10 +140,61 @@ function handleMenuSelect(index: string) {
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
     ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
-  } else if (index === '3') {
-    ElNotification.primary('跳转到新建文档界面（待实现）')
   }
 }
+
+/**
+ * 打开新建文档对话框
+ */
+function openCreateDocument() {
+  createDialogVisible.value = true
+  // 重置表单
+  createForm.value = {
+    name: '',
+    knowledgeBase: '',
+  }
+}
+
+/**
+ * 关闭新建文档对话框
+ */
+function closeCreateDialog() {
+  createDialogVisible.value = false
+}
+
+/**
+ * 创建文档
+ */
+function createDocument() {
+  if (!createForm.value.name.trim()) {
+    ElNotification.warning('请输入文档名称')
+    return
+  }
+
+  if (!createForm.value.knowledgeBase) {
+    ElNotification.warning('请选择所属知识库')
+    return
+  }
+
+  // // 创建新文档对象
+  // const newDocument = {
+  //   name: createForm.value.name,
+  //   owner: '默认',
+  //   date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
+  //   action: '操作'
+  // }
+
+  // 将新文档添加到列表开头
+  // tableData.value.unshift(newDocument)
+
+  // 显示成功提示
+  ElNotification.success('文档创建成功！')
+
+  // 关闭对话框
+  closeCreateDialog()
+}
+
+
 </script>
 
 <style scoped>
@@ -163,17 +249,59 @@ function handleMenuSelect(index: string) {
 /* 主内容区样式 */
 .main-content {
   flex: 1;
-  padding: 0 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 /* 面包屑样式 */
+.breadcrumb-container {
+  margin: 0;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.breadcrumb-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .breadcrumb {
-  margin: 16px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
+  font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #495057;
+}
+
+/* 面包屑项样式 */
+:deep(.el-breadcrumb__item) {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+:deep(.el-breadcrumb__inner) {
+  color: #495057;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+:deep(.el-breadcrumb__inner:hover) {
+  color: #007bff;
+}
+
+:deep(.el-breadcrumb__separator) {
+  color: #6c757d;
+  font-weight: 400;
+  margin: 0 8px;
 }
 
 /* 内容盒子样式 */
@@ -193,10 +321,53 @@ function handleMenuSelect(index: string) {
   background: #f5f5f5;
 }
 
+/* 图标样式 */
+.folder-icon {
+  color: #ffa500;
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.document-icon {
+  color: #1890ff;
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.action-icon {
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.action-icon:hover {
+  color: #1890ff;
+}
+
 /* 菜单项样式 */
 :deep(.el-menu-item),
 :deep(.el-sub-menu__title) {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 操作对话框样式 */
+:deep(.el-tabs__header) {
+  margin-bottom: 0;
+}
+
+:deep(.el-tabs__content) {
+  padding: 20px 0;
+}
+
+:deep(.el-tab-pane) {
+  min-height: 150px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

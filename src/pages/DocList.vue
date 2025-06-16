@@ -72,7 +72,7 @@
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
-          <el-button type="info" round>查询</el-button>
+          <el-button type="info" round @click="searchDoc">查询</el-button>
           <el-button type="info" round @click="openCreateDocument">新建文档</el-button>
         </div>
       </div>
@@ -267,7 +267,7 @@ const deleteForm = ref({
 })
 
 //文档列表
-const tableData = [
+const tableData = ref([
   {
     name: '文档A',
     owner: '张三',
@@ -286,7 +286,7 @@ const tableData = [
     date: '2025-06-15',
     action: '操作',
   }
-]
+])
 
 /**
  * 菜单选择事件
@@ -340,8 +340,21 @@ function createDocument() {
     return
   }
 
-  // 这里可以添加创建文档的逻辑
+  // 创建新文档对象
+  const newDocument = {
+    name: createForm.value.name,
+    owner: '默认',
+    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
+    action: '操作'
+  }
+
+  // 将新文档添加到列表开头
+  tableData.value.unshift(newDocument)
+
+  // 显示成功提示
   ElNotification.success('文档创建成功！')
+
+  // 关闭对话框
   closeCreateDialog()
 }
 
@@ -350,6 +363,8 @@ function createDocument() {
  */
 function openDocOperationDialog() {
   docOperationDialogVisible.value = true
+  renameForm.value.newName = ''
+  deleteForm.value.confirmText = ''
 }
 
 /**
@@ -371,6 +386,22 @@ function handleDocOperation() {
     ElNotification.success('文档删除成功！')
   }
   closeDocOperationDialog()
+}
+
+// 查询文档
+function searchDoc() {
+  // 检验时间是否前后矛盾
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value)
+    const end = new Date(endDate.value)
+    
+    if (start > end) {
+      ElNotification.error('起始日期不能晚于结束日期')
+      return
+    }
+  }
+  
+  // 这里可以添加其他查询逻辑
 }
 </script>
 
