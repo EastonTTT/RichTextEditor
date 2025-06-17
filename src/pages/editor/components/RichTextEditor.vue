@@ -2,6 +2,7 @@
   <div>
     <div>
       <tool-bar v-if="editor" :editor="editor!" class="tool-bar" />
+      <ai-summary :editor="editor!" class="ai-summary" />
       <editor-content :editor="editor!" class="editor-content" />
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
@@ -18,6 +19,7 @@ import ToolBar from './ToolBar.vue'
 import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
 import { Editor } from '@tiptap/vue-3';
+import AiSummary from './AiSummary.vue'
 const { editor } = defineProps<{ editor: Editor | null }>()
 
 const showCodeSelector = ref(false)
