@@ -5,47 +5,17 @@
     结构与Home.vue一致，风格统一，便于维护。
   -->
   <el-container class="home-container">
-    <!-- 侧边栏 -->
-    <el-aside width="220px" class="sidebar">
-      <!-- 用户信息区 -->
-      <div class="user-info-box">
-        <!-- 使用本地logo.png作为头像 -->
-        <el-avatar :src="logoUrl" size="large" style="background: #fff; color: #222129;" />
-        <span class="user-name">代码全都队</span>
-      </div>
-      <!-- 导航菜单 -->
-      <el-menu
-        :default-active="activeMenu"
-        :default-openeds="['1']"
-        class="el-menu-vertical-demo"
-        background-color="#132b3e"
-        text-color="#fff"
-        active-text-color="#ffd04b"
-        @select="handleMenuSelect"
-        :unique-opened="true"
-        style="border-right: none;"
-      >
-        <!-- 目录树分组 -->
-        <el-sub-menu index="1">
-          <template #title>
-            <span>目录树</span>
-          </template>
-          <el-menu-item index="1-1">知识库列表</el-menu-item>
-          <el-menu-item index="1-2">文档列表</el-menu-item>
-        </el-sub-menu>
-        <!-- 最近文档分组 -->
-        <el-sub-menu index="2">
-          <template #title>
-            <span>最近文档</span>
-          </template>
-          <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
-        </el-sub-menu>
-        <!-- 新建文档按钮 -->
-        <el-menu-item index="3" @click="openCreateDocument">
-          <span>新建文档</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
+    <!-- 使用可复用的侧边栏组件 -->
+    <Sidebar
+      :user-name="userName"
+      :active-menu="activeMenu"
+      :recent-docs="recentDocs"
+      :knowledge-base-options="knowledgeBaseOptions"
+      @menu-select="handleMenuSelect"
+      @create-document="handleCreateDocument"
+
+    />
+
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
@@ -73,7 +43,7 @@
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
-          <el-button type="info" round>查询</el-button>
+          <el-button type="info" round @click="searchDoc">查询</el-button>
           <el-button type="info" round @click="openCreateDocument">新建文档</el-button>
         </div>
       </div>
@@ -97,41 +67,6 @@
       <el-footer class="main-footer">Element Plus ©2024 Created by 代码全都队</el-footer>
     </el-container>
   </el-container>
-
-  <!-- 新建文档对话框 -->
-  <el-dialog
-    v-model="createDialogVisible"
-    title="新建文档"
-    width="500px"
-    :close-on-click-modal="false"
-  >
-    <el-form :model="createForm" label-width="100px">
-      <el-form-item label="文档名称" required>
-        <el-input
-          v-model="createForm.name"
-          placeholder="请输入文档名称"
-          maxlength="50"
-          show-word-limit
-        />
-      </el-form-item>
-      <el-form-item label="所属知识库" required>
-        <el-select v-model="createForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-          <el-option
-            v-for="item in knowledgeBaseOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="closeCreateDialog">取消</el-button>
-        <el-button type="primary" @click="createDocument">创建</el-button>
-      </span>
-    </template>
-  </el-dialog>
 
   <!-- 文档操作对话框 -->
   <el-dialog
@@ -195,6 +130,41 @@
       </span>
     </template>
   </el-dialog>
+
+  <!-- 新建文档对话框 -->
+  <el-dialog
+      v-model="createDocDialogVisible"
+      title="新建文档"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="createDocForm" label-width="100px">
+        <el-form-item label="文档名称" required>
+          <el-input
+            v-model="createDocForm.name"
+            placeholder="请输入文档名称"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="所属知识库" required>
+          <el-select v-model="createDocForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
+            <el-option
+              v-for="item in knowledgeBaseOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeCreateDocDialog">取消</el-button>
+          <el-button type="primary" @click="createDoc">创建</el-button>
+        </span>
+      </template>
+    </el-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -205,7 +175,7 @@
  *
  * @component
  */
-import logo from '@/assets/logo.png'
+import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
@@ -214,32 +184,13 @@ import { useRouter } from 'vue-router'
 // 创建router实例
 const router = useRouter()
 
-// 头像图片地址
-const logoUrl = logo
-
+const userName = ref('代码全都队')
 // 当前激活菜单项
 const activeMenu = ref('1-2')
 // 最近文档列表
 const recentDocs = ref([
   '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
 ])
-
-// 输入名称
-const nameInput = ref('')
-// 输入所有者
-const owerInput = ref('')
-// 起始日期
-const startDate = ref('')
-
-// 结束日期
-const endDate = ref('')
-
-// 对话框相关
-const createDialogVisible = ref(false)
-const createForm = ref({
-  name: '',
-  knowledgeBase: '',
-})
 
 // 知识库选项
 const knowledgeBaseOptions = ref([
@@ -257,6 +208,22 @@ const knowledgeBaseOptions = ref([
   },
 ])
 
+// 输入名称
+const nameInput = ref('')
+// 输入所有者
+const owerInput = ref('')
+// 起始日期
+const startDate = ref('')
+// 结束日期
+const endDate = ref('')
+
+// 新建文档对话框相关
+const createDocDialogVisible = ref(false)
+const createDocForm = ref({
+  name: '',
+  knowledgeBase: '',
+})
+
 // 文档操作对话框相关
 const docOperationDialogVisible = ref(false)
 const activeTab = ref('rename')
@@ -268,7 +235,7 @@ const deleteForm = ref({
 })
 
 //文档列表
-const tableData = [
+const tableData = ref([
   {
     name: '文档A',
     owner: '张三',
@@ -287,13 +254,11 @@ const tableData = [
     date: '2025-06-15',
     action: '操作',
   }
-]
+])
 
 /**
  * 菜单选择事件
- * @input 菜单项index
- * @process 根据index判断点击了哪个菜单，执行对应操作
- * @output 弹窗或跳转（此处为弹窗演示）
+ * @param index 菜单项index
  */
 function handleMenuSelect(index: string) {
   activeMenu.value = index
@@ -308,12 +273,29 @@ function handleMenuSelect(index: string) {
 }
 
 /**
- * 打开新建文档对话框
+ * 处理创建文档事件(侧边栏的文档操作按钮触发)
+ * @param documentData 文档数据
+ */
+function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
+  // 创建新文档对象
+  const newDocument = {
+    name: documentData.name,
+    owner: '默认',
+    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
+    action: '操作'
+  }
+
+  // 将新文档添加到列表开头
+  tableData.value.unshift(newDocument)
+}
+
+/**
+ * 打开新建文档对话框（从面包屑按钮触发）
  */
 function openCreateDocument() {
-  createDialogVisible.value = true
+  createDocDialogVisible.value = true
   // 重置表单
-  createForm.value = {
+  createDocForm.value = {
     name: '',
     knowledgeBase: '',
   }
@@ -322,27 +304,40 @@ function openCreateDocument() {
 /**
  * 关闭新建文档对话框
  */
-function closeCreateDialog() {
-  createDialogVisible.value = false
+function closeCreateDocDialog() {
+  createDocDialogVisible.value = false
 }
 
 /**
- * 创建文档
+ * 创建文档（面包屑按钮触发的对话框）
  */
-function createDocument() {
-  if (!createForm.value.name.trim()) {
+function createDoc() {
+  if (!createDocForm.value.name.trim()) {
     ElNotification.warning('请输入文档名称')
     return
   }
 
-  if (!createForm.value.knowledgeBase) {
+  if (!createDocForm.value.knowledgeBase) {
     ElNotification.warning('请选择所属知识库')
     return
   }
 
-  // 这里可以添加创建文档的逻辑
+  // 创建新文档对象
+  const newDocument = {
+    name: createDocForm.value.name,
+    owner: '默认',
+    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
+    action: '操作'
+  }
+
+  // 将新文档添加到列表开头
+  tableData.value.unshift(newDocument)
+
+  // 显示成功提示
   ElNotification.success('文档创建成功！')
-  closeCreateDialog()
+
+  // 关闭对话框
+  closeCreateDocDialog()
 }
 
 /**
@@ -350,6 +345,8 @@ function createDocument() {
  */
 function openDocOperationDialog() {
   docOperationDialogVisible.value = true
+  renameForm.value.newName = ''
+  deleteForm.value.confirmText = ''
 }
 
 /**
@@ -372,6 +369,22 @@ function handleDocOperation() {
   }
   closeDocOperationDialog()
 }
+
+// 查询文档
+function searchDoc() {
+  // 检验时间是否前后矛盾
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value)
+    const end = new Date(endDate.value)
+
+    if (start > end) {
+      ElNotification.error('起始日期不能晚于结束日期')
+      return
+    }
+  }
+
+  // 这里可以添加其他查询逻辑
+}
 </script>
 
 <style scoped>
@@ -381,32 +394,6 @@ function handleDocOperation() {
   inset: 0;
   display: flex;
   overflow: hidden;
-}
-
-/* 侧边栏样式 */
-.sidebar {
-  width: 220px;
-  background: #334b5e;
-  color: #fff;
-  overflow-y: auto;
-}
-
-/* 用户信息盒子样式 */
-.user-info-box {
-  height: 80px;
-  margin: 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-}
-.user-name {
-  font-size: 18px;
-  color: #222129;
-  font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 主容器样式 */
@@ -520,13 +507,6 @@ function handleDocOperation() {
 
 .action-icon:hover {
   color: #1890ff;
-}
-
-/* 菜单项样式 */
-:deep(.el-menu-item),
-:deep(.el-sub-menu__title) {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 操作对话框样式 */
