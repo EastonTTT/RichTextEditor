@@ -280,7 +280,17 @@ const tableData = ref([
  * 菜单选择事件
  * @param index 菜单项index
  */
-
+function handleMenuSelect(index: string) {
+  activeMenu.value = index
+  if (index === '1-1') {
+    router.push('/storelist')
+  } else if (index === '1-2') {
+    router.push('/doclist')
+  } else if (index.startsWith('2-')) {
+    const idx = Number(index.split('-')[1])
+    ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
+  }
+}
 
 /**
  * 处理创建文档事件（来自侧边栏组件）
