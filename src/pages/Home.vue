@@ -1,6 +1,4 @@
 <template>
-    <!-- 侧边栏 -->
-    <el-aside width="220px" class="sidebar">
       <!-- 用户信息区 -->
       <div class="user-info-box">
         <!-- 使用本地logo.png作为头像 -->
@@ -38,7 +36,6 @@
           <span>新建文档</span>
         </el-menu-item>
       </el-menu>
-    </el-aside>
     <!-- 新建文档对话框 -->
   <el-dialog
     v-model="createDialogVisible"

@@ -5,46 +5,15 @@
     结构与Home.vue一致，风格统一，便于维护。
   -->
   <el-container class="home-container">
-    <!-- 侧边栏 -->
-    <el-aside width="220px" class="sidebar">
-      <!-- 用户信息区 -->
-      <div class="user-info-box">
-        <!-- 使用本地logo.png作为头像 -->
-        <el-avatar :src="logoUrl" size="large" style="background: #fff; color: #222129;" />
-        <span class="user-name">代码全都队</span>
-      </div>
-      <!-- 导航菜单 -->
-      <el-menu
-        :default-active="activeMenu"
-        class="el-menu-vertical-demo"
-        background-color="#132b3e"
-        text-color="#fff"
-        active-text-color="#ffd04b"
-        @select="handleMenuSelect"
-        :unique-opened="true"
-        style="border-right: none;"
-      >
-        <!-- 目录树分组 -->
-        <el-sub-menu index="1">
-          <template #title>
-            <span>目录树</span>
-          </template>
-          <el-menu-item index="1-1">知识库列表</el-menu-item>
-          <el-menu-item index="1-2">文档列表</el-menu-item>
-        </el-sub-menu>
-        <!-- 最近文档分组 -->
-        <el-sub-menu index="2">
-          <template #title>
-            <span>最近文档</span>
-          </template>
-          <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
-        </el-sub-menu>
-        <!-- 新建文档按钮 -->
-        <el-menu-item index="3" @click="openCreateDocument">
-          <span>新建文档</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
+    <!-- 使用可复用的侧边栏组件 -->
+    <Sidebar
+      :user-name="userName"
+      :active-menu="activeMenu"
+      :recent-docs="recentDocs"
+      :knowledge-base-options="knowledgeBaseOptions"
+      @menu-select="handleMenuSelect"
+      @create-document="handleCreateDocument"
+    />
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
@@ -122,7 +91,7 @@
     </template>
   </el-dialog>
 
-  <!-- 新建文档对话框 -->
+  <!-- 新建文档对话框
   <el-dialog
     v-model="createDocumentDialogVisible"
     title="新建文档"
@@ -155,7 +124,7 @@
         <el-button type="primary" @click="createDocument">创建</el-button>
       </span>
     </template>
-  </el-dialog>
+  </el-dialog> -->
 
   <!-- 知识库操作对话框 -->
   <el-dialog
@@ -229,21 +198,18 @@
  *
  * @component
  */
-import logo from '@/assets/logo.png'
 import { ElNotification } from 'element-plus'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 
 // 创建router实例
 const router = useRouter()
 
-// 头像图片地址
-const logoUrl = logo
-
-// 当前激活菜单项
+// 侧边栏相关数据
+const userName = ref('代码全都队')
 const activeMenu = ref('1-1')
-// 最近文档列表
 const recentDocs = ref([
   '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
 ])
@@ -265,12 +231,12 @@ const createForm = ref({
   name: '',
 })
 
-// 新建文档对话框相关
-const createDocumentDialogVisible = ref(false)
-const createDocumentForm = ref({
-  name: '',
-  knowledgeBase: '',
-})
+// // 新建文档对话框相关
+// const createDocumentDialogVisible = ref(false)
+// const createDocumentForm = ref({
+//   name: '',
+//   knowledgeBase: '',
+// })
 
 // 知识库选项
 const knowledgeBaseOptions = ref([
@@ -312,62 +278,67 @@ const tableData = ref([
 
 /**
  * 菜单选择事件
- * @input 菜单项index
- * @process 根据index判断点击了哪个菜单，执行对应操作
- * @output 弹窗或跳转（此处为弹窗演示）
+ * @param index 菜单项index
  */
 function handleMenuSelect(index: string) {
-  if (index === '1-1') {
-    // ElNotification.primary('跳转到知识库列表界面（待实现）')
-    router.push('/storelist');
-  } else if (index === '1-2') {
-    // ElNotification.primary('跳转到文档列表界面（待实现）')
-    router.push('/doclist');
-  } else if (index.startsWith('2-')) {
-    const idx = Number(index.split('-')[1])
-    ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
-  } else if (index === '3') {
-    openCreateDocument()
-  }
+  // if (index === '1-1') {
+  //   router.push('/storelist');
+  // } else if (index === '1-2') {
+  //   router.push('/doclist');
+  // } else if (index.startsWith('2-')) {
+  //   const idx = Number(index.split('-')[1])
+  //   ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
+  // } else if (index === '3') {
+  //   // openCreateDocument()
+  // }
+}
+
+/**
+ * 处理创建文档事件（来自侧边栏组件）
+ * @param documentData 文档数据
+ */
+function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
+  // // 这里可以添加从侧边栏创建文档的逻辑
+  // ElNotification.success(`从侧边栏创建文档: ${documentData.name}，所属知识库: ${documentData.knowledgeBase}`)
 }
 
 /**
  * 打开新建文档对话框
  */
-function openCreateDocument() {
-  createDocumentDialogVisible.value = true
-  // 重置表单
-  createDocumentForm.value = {
-    name: '',
-    knowledgeBase: '',
-  }
-}
+// function openCreateDocument() {
+//   createDocumentDialogVisible.value = true
+//   // 重置表单
+//   createDocumentForm.value = {
+//     name: '',
+//     knowledgeBase: '',
+//   }
+// }
 
 /**
  * 关闭新建文档对话框
  */
-function closeCreateDocumentDialog() {
-  createDocumentDialogVisible.value = false
-}
+// function closeCreateDocumentDialog() {
+//   createDocumentDialogVisible.value = false
+// }
 
 /**
  * 创建文档
  */
-function createDocument() {
-  if (!createDocumentForm.value.name.trim()) {
-    ElNotification.warning('请输入文档名称')
-    return
-  }
+// function createDocument() {
+//   if (!createDocumentForm.value.name.trim()) {
+//     ElNotification.warning('请输入文档名称')
+//     return
+//   }
 
-  if (!createDocumentForm.value.knowledgeBase) {
-    ElNotification.warning('请选择所属知识库')
-    return
-  }
+//   if (!createDocumentForm.value.knowledgeBase) {
+//     ElNotification.warning('请选择所属知识库')
+//     return
+//   }
 
-  // 这里可以添加创建文档的逻辑
-  ElNotification.success('文档创建成功！')
-  closeCreateDocumentDialog()
-}
+//   // 这里可以添加创建文档的逻辑
+//   ElNotification.success('文档创建成功！')
+//   closeCreateDocumentDialog()
+// }
 
 /**
  * 打开新建知识库对话框
@@ -472,13 +443,13 @@ function searchStore() {
   if (startDate.value && endDate.value) {
     const start = new Date(startDate.value)
     const end = new Date(endDate.value)
-    
+
     if (start > end) {
       ElNotification.error('起始日期不能晚于结束日期')
       return
     }
   }
-  
+
   // 这里可以添加其他查询逻辑
 }
 </script>
@@ -490,32 +461,6 @@ function searchStore() {
   inset: 0;
   display: flex;
   overflow: hidden;
-}
-
-/* 侧边栏样式 */
-.sidebar {
-  width: 220px;
-  background: #334b5e;
-  color: #fff;
-  overflow-y: auto;
-}
-
-/* 用户信息盒子样式 */
-.user-info-box {
-  height: 80px;
-  margin: 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-}
-.user-name {
-  font-size: 18px;
-  color: #222129;
-  font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 主容器样式 */
@@ -629,13 +574,6 @@ function searchStore() {
 
 .action-icon:hover {
   color: #1890ff;
-}
-
-/* 菜单项样式 */
-:deep(.el-menu-item),
-:deep(.el-sub-menu__title) {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 操作对话框样式 */
