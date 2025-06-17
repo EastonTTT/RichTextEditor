@@ -20,27 +20,37 @@
       <!-- 面包屑导航 -->
       <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
-          <el-breadcrumb separator="/" class="breadcrumb" style="margin-right: 60px;">
-            <el-breadcrumb-item>我的知识库</el-breadcrumb-item>
-          </el-breadcrumb>
-          <el-input v-model="nameInput" style="width: 240px" placeholder="输入名称" />
-          <el-input v-model="onwerInput" style="width: 240px" placeholder="输入所有者"/>
-          <el-date-picker
-            v-model="startDate"
-            type="date"
-            placeholder="起始日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-          <el-date-picker
-            v-model="endDate"
-            type="date"
-            placeholder="结束日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
+          <el-text class="mx-1" size="large">我的知识库</el-text>
+          <div class="search-item">
+            <el-text size="large">名称</el-text>
+            <el-input v-model="nameInput" style="width: 100px" placeholder="输入名称" />
+          </div>
+          <div class="search-item">
+            <el-text size="large">所有者</el-text>
+            <el-input v-model="onwerInput" style="width: 100px" placeholder="输入所有者"/>
+          </div>
+          <div class="search-item">
+            <el-text size="large">起始日期</el-text>
+            <el-date-picker
+              v-model="startDate"
+              type="date"
+              placeholder="起始日期"
+              style="width: 120px"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+            />
+          </div>
+          <div class="search-item">
+            <el-text size="large">结束日期</el-text>
+            <el-date-picker
+              v-model="endDate"
+              type="date"
+              placeholder="结束日期"
+              style="width: 120px"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+            />
+          </div>
           <el-button type="info" round @click="searchStore">查询</el-button>
           <el-button type="info" round @click="openCreateDialog">新建知识库</el-button>
         </div>
@@ -90,41 +100,6 @@
       </span>
     </template>
   </el-dialog>
-
-  <!-- 新建文档对话框
-  <el-dialog
-    v-model="createDocumentDialogVisible"
-    title="新建文档"
-    width="500px"
-    :close-on-click-modal="false"
-  >
-    <el-form :model="createDocumentForm" label-width="100px">
-      <el-form-item label="文档名称" required>
-        <el-input
-          v-model="createDocumentForm.name"
-          placeholder="请输入文档名称"
-          maxlength="50"
-          show-word-limit
-        />
-      </el-form-item>
-      <el-form-item label="所属知识库" required>
-        <el-select v-model="createDocumentForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-          <el-option
-            v-for="item in knowledgeBaseOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="closeCreateDocumentDialog">取消</el-button>
-        <el-button type="primary" @click="createDocument">创建</el-button>
-      </span>
-    </template>
-  </el-dialog> -->
 
   <!-- 知识库操作对话框 -->
   <el-dialog
@@ -231,13 +206,6 @@ const createForm = ref({
   name: '',
 })
 
-// // 新建文档对话框相关
-// const createDocumentDialogVisible = ref(false)
-// const createDocumentForm = ref({
-//   name: '',
-//   knowledgeBase: '',
-// })
-
 // 知识库选项
 const knowledgeBaseOptions = ref([
   {
@@ -281,15 +249,7 @@ const tableData = ref([
  * @param index 菜单项index
  */
 function handleMenuSelect(index: string) {
-  activeMenu.value = index
-  if (index === '1-1') {
-    router.push('/storelist')
-  } else if (index === '1-2') {
-    router.push('/doclist')
-  } else if (index.startsWith('2-')) {
-    const idx = Number(index.split('-')[1])
-    ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
-  }
+
 }
 
 /**
@@ -297,8 +257,7 @@ function handleMenuSelect(index: string) {
  * @param documentData 文档数据
  */
 function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
-  // // 这里可以添加从侧边栏创建文档的逻辑
-  // ElNotification.success(`从侧边栏创建文档: ${documentData.name}，所属知识库: ${documentData.knowledgeBase}`)
+
 }
 
 /**
@@ -464,6 +423,7 @@ function searchStore() {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 8px;
 }
 
 .breadcrumb {
@@ -496,6 +456,28 @@ function searchStore() {
   margin: 0 8px;
 }
 
+/* 搜索项样式 - 让文字和组件紧凑挨着 */
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-item .el-text {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.search-item .el-input,
+.search-item .el-date-picker {
+  margin: 0;
+}
+
+/* 按钮间距调整 */
+.breadcrumb-wrapper .el-button {
+  margin-left: 8px;
+}
+
 /* 内容盒子样式 */
 .content-box {
   flex: 1;
@@ -513,19 +495,7 @@ function searchStore() {
   background: #f5f5f5;
 }
 
-/* 图标样式 */
-.folder-icon {
-  color: #ffa500;
-  margin-right: 8px;
-  font-size: 18px;
-}
-
-.document-icon {
-  color: #1890ff;
-  margin-right: 8px;
-  font-size: 18px;
-}
-
+/* 操作图标样式 */
 .action-icon {
   color: #666;
   font-size: 16px;
@@ -537,7 +507,7 @@ function searchStore() {
   color: #1890ff;
 }
 
-/* 操作对话框样式 */
+/* 对话框样式 */
 :deep(.el-tabs__header) {
   margin-bottom: 0;
 }

@@ -1,11 +1,14 @@
 <template>
   <!--
-    Home1页面（Element Plus 版）
-    用Element Plus组件实现侧边栏、用户信息、菜单、内容区、面包屑和页脚。
-    结构与Home.vue一致，风格统一，便于维护。
+    文档列表页面（DocList.vue）
+    功能：展示用户的所有文档，支持搜索、筛选、新建、重命名、删除等操作
+    包含：侧边栏导航、面包屑搜索、文档表格、操作对话框
   -->
   <el-container class="home-container">
-    <!-- 使用可复用的侧边栏组件 -->
+    <!--
+      侧边栏组件 - 功能：用户信息展示、菜单导航、最近文档、快速创建文档
+      包含：用户头像和名称、知识库和文档菜单、最近访问文档列表、新建文档按钮
+    -->
     <Sidebar
       :user-name="userName"
       :active-menu="activeMenu"
@@ -13,42 +16,59 @@
       :knowledge-base-options="knowledgeBaseOptions"
       @menu-select="handleMenuSelect"
       @create-document="handleCreateDocument"
-
     />
 
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
-      <!-- 面包屑导航 -->
+
+      <!--
+        面包屑导航和搜索区域 - 功能：页面导航、文档搜索筛选、快速新建
+        包含：面包屑导航、名称搜索、所有者搜索、日期范围筛选、查询按钮、新建文档按钮
+      -->
       <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
-          <el-breadcrumb separator="/" class="breadcrumb" style="margin-right: 60px;">
-            <el-breadcrumb-item>我的文档</el-breadcrumb-item>
-          </el-breadcrumb>
-          <el-input v-model="nameInput" style="width: 240px" placeholder="输入名称" />
-          <el-input v-model="owerInput" style="width: 240px" placeholder="输入所有者" />
-          <el-date-picker
-            v-model="startDate"
-            type="date"
-            placeholder="起始日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-          <el-date-picker
-            v-model="endDate"
-            type="date"
-            placeholder="结束日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
+          <el-text class="mx-1" size="large">我的文档</el-text>
+          <div class="search-item">
+            <el-text size="large">名称</el-text>
+            <el-input v-model="nameInput" size= "" style="width: 100px" placeholder="输入名称" />
+          </div>
+          <div class="search-item">
+            <el-text size="large">所有者</el-text>
+            <el-input v-model="owerInput" style="width: 100px" placeholder="输入所有者" />
+          </div>
+          <div class="search-item">
+            <el-text size="large">起始日期</el-text>
+            <el-date-picker
+              v-model="startDate"
+              type="date"
+              placeholder="起始日期"
+              style="width: 120px"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+            />
+          </div>
+          <div class="search-item">
+            <el-text size="large">结束日期</el-text>
+            <el-date-picker
+              v-model="endDate"
+              type="date"
+              placeholder="结束日期"
+              style="width: 120px"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+            />
+          </div>
           <el-button type="info" round @click="searchDoc">查询</el-button>
           <el-button type="info" round @click="openCreateDocument">新建文档</el-button>
         </div>
       </div>
+
       <el-main class="main-content">
-        <!-- 内容展示区 -->
+        <!--
+          文档列表展示区 - 功能：以表格形式展示所有文档信息
+          包含：文档名称、所有者、最近查看时间、操作按钮（重命名/删除）
+        -->
         <div class="content-box">
           <el-table :data="tableData" style="width: 100%">
             <el-table-column prop="name" label="名称" width="300" />
@@ -68,7 +88,10 @@
     </el-container>
   </el-container>
 
-  <!-- 文档操作对话框 -->
+  <!--
+    文档操作对话框 - 功能：对选中文档进行重命名或删除操作
+    包含：重命名标签页（输入新名称）、删除标签页（确认删除操作）
+  -->
   <el-dialog
     v-model="docOperationDialogVisible"
     title="文档操作"
@@ -131,7 +154,10 @@
     </template>
   </el-dialog>
 
-  <!-- 新建文档对话框 -->
+  <!--
+    新建文档对话框 - 功能：创建新的文档
+    包含：文档名称输入、所属知识库选择
+  -->
   <el-dialog
       v-model="createDocDialogVisible"
       title="新建文档"
@@ -179,10 +205,6 @@ import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-// 创建router实例
-const router = useRouter()
 
 const userName = ref('代码全都队')
 // 当前激活菜单项
@@ -258,18 +280,9 @@ const tableData = ref([
 
 /**
  * 菜单选择事件
- * @param index 菜单项index
  */
-function handleMenuSelect(index: string) {
-  activeMenu.value = index
-  if (index === '1-1') {
-    router.push('/storelist')
-  } else if (index === '1-2') {
-    router.push('/doclist')
-  } else if (index.startsWith('2-')) {
-    const idx = Number(index.split('-')[1])
-    ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
-  }
+function handleMenuSelect() {
+
 }
 
 /**
@@ -436,6 +449,7 @@ function searchDoc() {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 8px;
 }
 
 .breadcrumb {
@@ -468,6 +482,28 @@ function searchDoc() {
   margin: 0 8px;
 }
 
+/* 搜索项样式 - 让文字和组件紧凑挨着 */
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-item .el-text {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.search-item .el-input,
+.search-item .el-date-picker {
+  margin: 0;
+}
+
+/* 按钮间距调整 */
+.breadcrumb-wrapper .el-button {
+  margin-left: 8px;
+}
+
 /* 内容盒子样式 */
 .content-box {
   flex: 1;
@@ -485,19 +521,7 @@ function searchDoc() {
   background: #f5f5f5;
 }
 
-/* 图标样式 */
-.folder-icon {
-  color: #ffa500;
-  margin-right: 8px;
-  font-size: 18px;
-}
-
-.document-icon {
-  color: #1890ff;
-  margin-right: 8px;
-  font-size: 18px;
-}
-
+/* 操作图标样式 */
 .action-icon {
   color: #666;
   font-size: 16px;
@@ -509,7 +533,7 @@ function searchDoc() {
   color: #1890ff;
 }
 
-/* 操作对话框样式 */
+/* 对话框样式 */
 :deep(.el-tabs__header) {
   margin-bottom: 0;
 }
