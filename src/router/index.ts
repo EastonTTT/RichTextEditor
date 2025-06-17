@@ -18,6 +18,21 @@ const router = createRouter({
       name: 'test',
       component: () => import('@/pages/editor/EditorIndex.vue'),
     },
+    {
+      path: '/Home',
+      name: 'Home',
+      component: () => import('@/pages/Home.vue'),
+    },
+    {
+      path: '/storelist',
+      name: 'storelist',
+      component: () => import('@/pages/StoreList.vue'),
+    },
+    {
+      path: '/doclist',
+      name: 'doclist',
+      component: () => import('@/pages/DocList.vue'),
+    },
   ],
 })
 
