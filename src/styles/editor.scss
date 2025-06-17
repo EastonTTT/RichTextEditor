@@ -1,67 +1,163 @@
-/* 编辑器整体容器 */
 @import 'highlight.js/styles/atom-one-dark.css';
 
-.editor-content {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
+
+.wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  // border: 1px solid black;
+  // padding: 12px;
+
+  /* 目录树样式设置 */
+.toc-container {
+  width: 240px;
   background: #fff;
-  caret-color: auto;
-  min-height: 200px;
-  position: relative;
-  max-width: 100%;
+  border-right: 1px solid #eee;
+  padding: 16px;
+  font-family: 'Segoe UI', Roboto, sans-serif;
 
-  /* ProseMirror 核心内容区 */
-  .ProseMirror {
-    min-height: 500px;
-    outline: none;
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    line-height: 25px;
+    font-size: 18px;
+    font-weight:bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s ease;
 
-    p {
-
+    &::before {
+      content: '•';
+      font-size: 20px;
+      color: black;
     }
 
-    /* 任务列表样式 */
-    ul[data-type="taskList"] {
-      list-style: none;
-      padding-left: 0;
-
-      li {
-        display: flex;
-        align-items: center;
-      }
+    &.level-2 {
+      padding-left: 24px;
     }
 
-    /* 插图样式 */
-    img {
-    display: block;
-    height: auto;
-    margin: 1.5rem 0;
-    max-width: 100%;
-
-      &.ProseMirror-selectednode {
-        outline: 3px solid gray;
-      }
+    &.level-3 {
+      padding-left: 36px;
     }
 
-    /* 代码块样式 */
-    pre {
-      background: #1e1e1e;
-      color: #ffffff;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 16px;
-      margin: 1em 0;
-      position: relative;
-      overflow-x: auto;
-      font-size: 14px;
-      line-height: 1.5;
-      max-width: 95%;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-      // margin: 1em auto;
-      display: block;
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    &.active {
+      background-color: #e6f4ff;
+      color: #1677ff;
+      font-weight: 600;
+      border-left: 3px solid #1677ff;
     }
   }
-
-
 }
+
+  .editor-container{
+    width: 80%;
+    /* 顶层工具栏 */
+    .tool-bar{
+      // border: 1px solid #eaeaea;
+      display: flex;
+      gap: 5px;
+    }
+
+    /* 浮动工具栏 */
+
+
+    /* 编辑器整体容器 */
+    .editor-content {
+      // border: 2px solid skyblue;
+      padding: 16px;
+      background: #fff;
+      caret-color: auto;
+
+      /* ProseMirror 核心内容区 */
+      .ProseMirror {
+        min-height: 500px;
+        outline: none;
+
+        /* 文本高亮样式 */
+        mark {
+          background-color: #FAF594;
+          border-radius: 0.4rem;
+          box-decoration-break: clone;
+          padding: 0.1rem 0.3rem;
+        }
+        ul, ol {
+          padding-left: 1.5em;
+          margin: 1em 0;
+        }
+
+        ul {
+          list-style: disc;
+        }
+
+        ol {
+          list-style: decimal;
+        }
+
+        li {
+          line-height: 1.5;
+        }
+
+        // 🔵 任务列表样式（如果你使用了 taskList 插件）
+        ul[data-type='taskList'] {
+          list-style: none;
+          padding-left: 1.5em;
+
+          li {
+            display: flex;
+            align-items: center;
+
+            > label {
+              display: flex;
+              align-items: center;
+              gap: 0.5em;
+              user-select: none;
+
+              input[type='checkbox'] {
+                margin-right: 0.5em;
+              }
+            }
+          }
+        }
+
+        /* 插图样式 */
+        img {
+        display: block;
+        height: auto;
+        margin: 1.5rem 0;
+        max-width: 100%;
+
+          &.ProseMirror-selectednode {
+            outline: 3px solid gray;
+          }
+        }
+
+        /* 代码块样式 */
+        pre {
+          background: #1e1e1e;
+          color: #ffffff;
+          border: 1px solid #333;
+          border-radius: 8px;
+          padding: 16px;
+          margin: 1em 0;
+          position: relative;
+          overflow-x: auto;
+          font-size: 14px;
+          line-height: 1.5;
+          max-width: 95%;
+          word-wrap: break-word;
+          white-space: pre-wrap;
+          // margin: 1em auto;
+          display: block;
+          position: relative;
+        }
+      }
+    }
+  }
+}
+

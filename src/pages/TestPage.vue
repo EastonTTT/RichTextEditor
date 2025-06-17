@@ -1,12 +1,9 @@
 <template>
-  <div>
-    <rich-text-editor />
-  </div>
+  <editor-index />
 </template>
 
 <script lang="ts" setup>
-import RichTextEditor from '@/pages/editor/RichTextEditor.vue';
-
+import EditorIndex from './editor/EditorIndex.vue';
 </script>
 
 <style></style>
