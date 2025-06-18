@@ -1,61 +1,75 @@
 <template>
-  <div class="ai-overview-container" v-show="visible">
-    <div class="ai-overview-header">
-      <h3 class="ai-title">AI速览</h3>
-      <div class="ai-actions">
-        <button @click="refreshSummary" class="action-btn" :class="{ 'loading-btn': loading }">
-          <el-icon v-if="!loading" class="action-icon"><Refresh /></el-icon>
-          <el-icon v-else class="action-icon spin-icon"><Loading /></el-icon>
-          <span>{{ loading ? '生成中...' : '总结' }}</span>
-        </button>
-        <button @click="toggleShowMore" class="action-btn">
-          <el-icon class="action-icon" :class="{ 'rotate-icon': showMore }">
-            <!-- 根据状态显示不同图标 -->
-            <template v-if="showMore">
-              <CaretTop />
-            </template>
-            <template v-else>
-              <CaretRight />
-            </template>
-          </el-icon>
-          <span>{{ showMore ? '收起' : '展开' }}</span>
-        </button>
-         <button @click="copySummary" class="action-btn" :class="{ 'copied': copySuccess }">
-           <el-icon v-if="!copySuccess" class="action-icon"><DocumentCopy /></el-icon>
-          <el-icon v-else class="action-icon copied-icon"><Check /></el-icon>
-          <span>{{ copySuccess ? '已复制' : '复制' }}</span>
-        </button>
-        <button @click="toggleVisibility" class="action-btn">
-           <el-icon class="action-icon"><Close /></el-icon>
-          <span>关闭</span>
-        </button>
-      </div>
-    </div>
-    
-    <div v-if="loading" class="ai-overview-loading">
-      <div class="spinner"></div>
-      <p class="loading-text">正在生成摘要...</p>
-    </div>
-    
-    <div v-else-if="error" class="ai-overview-error">
-      <el-icon class="error-icon"><CircleClose /></el-icon>
-      <p class="error-text">{{ error }}</p>
-    </div>
-    
-    <div v-else class="ai-overview-content">
-      <div 
-        class="summary-content"
-        :class="{ 'expanded': showMore ,'collapsed-text': !showMore }"
-      >
-        <!-- 增加内容为空时的默认提示 -->
-        <div v-if="!summary && !truncatedSummary" class="default-tip">
-          <p>暂无摘要内容，点击"总结"按钮生成摘要</p>
+  <!-- 按钮过渡组 -->
+  <transition-group name="btn-fade" tag="div" class="toggle-btn-container">
+    <button 
+      v-if="!visible" 
+      @click="showComponent" 
+      class="ai-toggle-btn"
+      key="btn"
+    >
+      <el-icon class="toggle-icon"><Lightning /></el-icon>
+      <span>AI速览</span>
+    </button>
+  </transition-group>
+   <transition name="component-fade" mode="out-in">
+    <div class="ai-overview-container" v-show="visible">
+      <div class="ai-overview-header">
+        <h3 class="ai-title">AI速览</h3>
+        <div class="ai-actions">
+          <button @click="refreshSummary" class="action-btn" :class="{ 'loading-btn': loading }">
+            <el-icon v-if="!loading" class="action-icon"><Refresh /></el-icon>
+            <el-icon v-else class="action-icon spin-icon"><Loading /></el-icon>
+            <span>{{ loading ? '生成中...' : '总结' }}</span>
+          </button>
+          <button @click="toggleShowMore" class="action-btn">
+            <el-icon class="action-icon" :class="{ 'rotate-icon': showMore }">
+              <!-- 根据状态显示不同图标 -->
+              <template v-if="showMore">
+                <CaretTop />
+              </template>
+              <template v-else>
+                <CaretRight />
+              </template>
+            </el-icon>
+            <span>{{ showMore ? '收起' : '展开' }}</span>
+          </button>
+          <button @click="copySummary" class="action-btn" :class="{ 'copied': copySuccess }">
+            <el-icon v-if="!copySuccess" class="action-icon"><DocumentCopy /></el-icon>
+            <el-icon v-else class="action-icon copied-icon"><Check /></el-icon>
+            <span>{{ copySuccess ? '已复制' : '复制' }}</span>
+          </button>
+          <button @click="toggleVisibility" class="action-btn">
+            <el-icon class="action-icon"><Close /></el-icon>
+            <span>关闭</span>
+          </button>
         </div>
-        
-        <div v-else v-html="showMore ? summary : truncatedSummary"></div>
+      </div>
+      
+      <div v-if="loading" class="ai-overview-loading">
+        <div class="spinner"></div>
+        <p class="loading-text">正在生成摘要...</p>
+      </div>
+      
+      <div v-else-if="error" class="ai-overview-error">
+        <el-icon class="error-icon"><CircleClose /></el-icon>
+        <p class="error-text">{{ error }}</p>
+      </div>
+      
+      <div v-else class="ai-overview-content">
+        <div 
+          class="summary-content"
+          :class="{ 'expanded': showMore ,'collapsed-text': !showMore }"
+        >
+          <!-- 增加内容为空时的默认提示 -->
+          <div v-if="!summary && !truncatedSummary" class="default-tip">
+            <p>暂无摘要内容，点击"总结"按钮生成摘要</p>
+          </div>
+          
+          <div v-else v-html="showMore ? summary : truncatedSummary"></div>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -65,9 +79,10 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { 
   Refresh, Loading, CaretRight, CaretTop,
-  DocumentCopy, Check, Close, CircleClose 
+  DocumentCopy, Check, Close, CircleClose ,Lightning 
 } from '@element-plus/icons-vue';
 import '@/styles/summary.scss'; // 引入样式文件
+import { getAiSummary } from '@/api/editor';
 
 // 只接收editor作为参数
 const { editor } = defineProps<{
@@ -89,6 +104,11 @@ const summary = ref(''); // 完整摘要
 const truncatedSummary = ref(''); // 截断后的摘要
 const copySuccess = ref(false); // 复制成功状态
 
+// 显示组件的方法
+const showComponent = () => {
+  visible.value = true;
+};
+
 // 生成摘要
 const generateSummary = async () => {
   if (!editor) {
@@ -104,9 +124,14 @@ const generateSummary = async () => {
     const documentContent = editor.getHTML();
     
     // 调用后端API生成摘要 (模拟API调用)
-    const summaryMarkdown = await generateAISummary(documentContent);
+    // const summaryMarkdown = await generateAISummary(documentContent);
     // const summaryMarkdown = documentContent;
     
+    const description = "请简要为下面这篇文档内容做个总结,总结可以掺杂一些emoji(控制在300字左右):\n"
+
+    const tmp = await getAiSummary(description+documentContent);
+    const summaryMarkdown = tmp.data;
+
     // 使用marked将Markdown转换为HTML
     const rawHtml = marked.parse(summaryMarkdown);
     

@@ -302,3 +302,53 @@
 .expanded {
   color: #303133; // Element Plus的默认文字颜色
 }
+
+/* 按钮过渡动画 */
+.btn-fade-enter-from,
+.btn-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.btn-fade-enter-active,
+.btn-fade-leave-active {
+  transition: all 0.3s ease-in-out;
+}
+
+/* 组件过渡动画 */
+.component-fade-enter-from,
+.component-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+  transform-origin: center bottom;
+}
+
+.component-fade-enter-active,
+.component-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 按钮基础样式（优化后） */
+.ai-toggle-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #409EFF, #66b1ff);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.3);
+  z-index: 1000;
+  
+  .toggle-icon {
+    margin-right: 8px;
+    font-size: 20px;
+  }
+}
