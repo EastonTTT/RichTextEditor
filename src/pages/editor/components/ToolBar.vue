@@ -52,6 +52,8 @@
     <button @click="redo" :disabled="!editor.can().redo()">redo
       <ForwardIcon class="icon" />
     </button>
+    <!-- 开启协作 -->
+    <button @click="toggleCollaboration">collab</button>
 
 
 
@@ -63,7 +65,8 @@ import type { Editor } from "@tiptap/vue-3"
 import type { HeadingLevel } from "@/types/extensionTypes";
 const { editor } = defineProps<{ editor: Editor | null }>()
 import { Link1Icon, LinkUnlinkIcon, ImageAddIcon, ComponentDividerVerticalIcon, BackwardIcon, ForwardIcon, TaskChecked1Icon, ListIcon, OrderDescendingIcon, CodeIcon } from "tdesign-icons-vue-next";
-
+import {defineEmits} from "vue"
+const emit = defineEmits()
 
 if (!editor) { throw new Error('editor is not defined') }
 //按钮逻辑函数：
@@ -117,6 +120,11 @@ const addHead = (level: HeadingLevel) => {
 const undo = () => editor?.chain().focus().undo().run()
 //  重做
 const redo = () => editor?.chain().focus().redo().run()
+
+//  协作
+const toggleCollaboration = () => {
+  emit("toggleCollaboration")
+}
 
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div>
-      <tool-bar v-if="editor" :editor="editor!" class="tool-bar" />
+      <tool-bar v-if="editor" :editor="editor!" class="tool-bar" @toggle-collaboration="toggleCollaboration" />
       <editor-content :editor="editor!" class="editor-content" />
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
@@ -13,13 +13,14 @@
 
 <script setup lang="ts">
 import { EditorContent } from '@tiptap/vue-3'
-import { ref, watchEffect, nextTick } from 'vue'
+import { ref, watchEffect, nextTick, defineEmits } from 'vue'
 import ToolBar from './ToolBar.vue'
 import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
 import { Editor } from '@tiptap/vue-3';
 const { editor } = defineProps<{ editor: Editor | null }>()
 
+const emit = defineEmits()
 const showCodeSelector = ref(false)
 const currentLanguage = ref('')
 const codeSelectorStyle = ref({
@@ -56,6 +57,10 @@ watchEffect(async () => {
 
   }
 })
+
+const toggleCollaboration = () => {
+  emit('toggleCollaboration')
+}
 
 </script>
 

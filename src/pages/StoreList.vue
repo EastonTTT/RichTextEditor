@@ -14,16 +14,8 @@
         <span class="user-name">代码全都队</span>
       </div>
       <!-- 导航菜单 -->
-      <el-menu
-        :default-active="activeMenu"
-        class="el-menu-vertical-demo"
-        background-color="#132b3e"
-        text-color="#fff"
-        active-text-color="#ffd04b"
-        @select="handleMenuSelect"
-        :unique-opened="true"
-        style="border-right: none;"
-      >
+      <el-menu :default-active="activeMenu" class="el-menu-vertical-demo" background-color="#132b3e" text-color="#fff"
+        active-text-color="#ffd04b" @select="handleMenuSelect" :unique-opened="true" style="border-right: none;">
         <!-- 目录树分组 -->
         <el-sub-menu index="1">
           <template #title>
@@ -55,23 +47,11 @@
             <el-breadcrumb-item>我的知识库</el-breadcrumb-item>
           </el-breadcrumb>
           <el-input v-model="nameInput" style="width: 240px" placeholder="名称" />
-          <el-input v-model="nameInput" style="width: 240px" placeholder="所有者"/>
-          <el-date-picker
-            v-model="startDate"
-            type="date"
-            placeholder="起始日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-          <el-date-picker
-            v-model="endDate"
-            type="date"
-            placeholder="结束日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
+          <el-input v-model="nameInput" style="width: 240px" placeholder="所有者" />
+          <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 180px" format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD" />
+          <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 180px" format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD" />
           <el-button type="info" round>查询</el-button>
           <el-button type="info" round @click="openCreateDialog">新建知识库</el-button>
         </div>
@@ -98,20 +78,10 @@
   </el-container>
 
   <!-- 新建知识库对话框 -->
-  <el-dialog
-    v-model="createDialogVisible"
-    title="新建知识库"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="createDialogVisible" title="新建知识库" width="500px" :close-on-click-modal="false">
     <el-form :model="createForm" label-width="100px">
       <el-form-item label="知识库名称" required>
-        <el-input
-          v-model="createForm.name"
-          placeholder="请输入知识库名称"
-          maxlength="50"
-          show-word-limit
-        />
+        <el-input v-model="createForm.name" placeholder="请输入知识库名称" maxlength="50" show-word-limit />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -123,29 +93,14 @@
   </el-dialog>
 
   <!-- 新建文档对话框 -->
-  <el-dialog
-    v-model="createDocumentDialogVisible"
-    title="新建文档"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="createDocumentDialogVisible" title="新建文档" width="500px" :close-on-click-modal="false">
     <el-form :model="createDocumentForm" label-width="100px">
       <el-form-item label="文档名称" required>
-        <el-input
-          v-model="createDocumentForm.name"
-          placeholder="请输入文档名称"
-          maxlength="50"
-          show-word-limit
-        />
+        <el-input v-model="createDocumentForm.name" placeholder="请输入文档名称" maxlength="50" show-word-limit />
       </el-form-item>
       <el-form-item label="所属知识库" required>
         <el-select v-model="createDocumentForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-          <el-option
-            v-for="item in knowledgeBaseOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
+          <el-option v-for="item in knowledgeBaseOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
     </el-form>
@@ -158,23 +113,13 @@
   </el-dialog>
 
   <!-- 知识库操作对话框 -->
-  <el-dialog
-    v-model="storeOperationDialogVisible"
-    title="知识库操作"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="storeOperationDialogVisible" title="知识库操作" width="500px" :close-on-click-modal="false">
     <el-tabs v-model="activeTab" type="card">
       <!-- 重命名标签页 -->
       <el-tab-pane label="重命名" name="rename">
         <el-form :model="renameForm" label-width="100px" style="margin-top: 20px;">
           <el-form-item label="新名称" required>
-            <el-input
-              v-model="renameForm.newName"
-              placeholder="请输入新的知识库名称"
-              maxlength="50"
-              show-word-limit
-            />
+            <el-input v-model="renameForm.newName" placeholder="请输入新的知识库名称" maxlength="50" show-word-limit />
           </el-form-item>
         </el-form>
       </el-tab-pane>
@@ -189,11 +134,7 @@
           <p style="color: #666; margin-bottom: 20px;">
             您确定要删除这个知识库吗？此操作不可恢复。
           </p>
-          <el-input
-            v-model="deleteForm.confirmText"
-            placeholder="请输入 'DELETE' 确认删除"
-            style="width: 300px;"
-          />
+          <el-input v-model="deleteForm.confirmText" placeholder="请输入 'DELETE' 确认删除" style="width: 300px;" />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -201,19 +142,11 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="closeStoreOperationDialog">取消</el-button>
-        <el-button
-          v-if="activeTab === 'delete'"
-          type="danger"
-          @click="handleStoreOperation"
-          :disabled="deleteForm.confirmText !== 'DELETE'"
-        >
+        <el-button v-if="activeTab === 'delete'" type="danger" @click="handleStoreOperation"
+          :disabled="deleteForm.confirmText !== 'DELETE'">
           删除
         </el-button>
-        <el-button
-          v-else
-          type="primary"
-          @click="handleStoreOperation"
-        >
+        <el-button v-else type="primary" @click="handleStoreOperation">
           确定
         </el-button>
       </span>
@@ -466,6 +399,7 @@ function handleStoreOperation() {
   align-items: center;
   justify-content: space-evenly;
 }
+
 .user-name {
   font-size: 18px;
   color: #222129;
