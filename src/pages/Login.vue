@@ -24,7 +24,7 @@ export default {
         <div class="form" :class="{ 'slide-right': !isLogin, 'slide-left': isLogin }">
           <form v-if="isLogin" @submit.prevent="handleLogin">
             <h1>登 录</h1>
-            <input v-model="phone" type="text" placeholder="手机号" />
+            <input v-model="username" type="text" placeholder="用户名" />
             <input v-model="password" type="password" placeholder="密码" />
             <div class="remember">
               <input type="checkbox" id="remember" v-model="rememberMe" />记住密码
@@ -34,7 +34,7 @@ export default {
           </form>
           <form v-else @submit.prevent="handleRegister">
             <h1>注册</h1>
-            <input v-model="phone" type="text" placeholder="手机号" />
+            <input v-model="username" type="text" placeholder="用户名" />
             <input v-model="password" type="password" placeholder="密码" />
             <input v-model="password2" type="password" placeholder="确认密码" />
             <button type="submit">注册</button>
@@ -57,7 +57,7 @@ import { ElMessage } from 'element-plus';
 import { login, register } from '../api/user';
 
 const isLogin = ref(true);
-const phone = ref('');
+const username = ref('');
 const password = ref('');
 const password2 = ref('');
 const rememberMe = ref(false);
@@ -69,13 +69,13 @@ const toggleForm = () => {
 // 登录
 const handleLogin = async () => {
   try {
-    if (!phone.value || !password.value) {
+    if (!username.value || !password.value) {
       ElMessage.error('请填写完整信息');
       return;
     }
 
     const response = await login({
-      phone: phone.value,
+      username: username.value,
       password: password.value
     });
 
@@ -89,12 +89,11 @@ const handleLogin = async () => {
     ElMessage.error('登录失败，请稍后重试');
     console.error('登录错误:', error);
   }
-
 };
 // 注册
 const handleRegister = async () => {
   try {
-    if (!phone.value || !password.value || !password2.value) {
+    if (!username.value || !password.value || !password2.value) {
       ElMessage.error('请填写完整信息');
       return;
     }
@@ -105,7 +104,7 @@ const handleRegister = async () => {
     }
 
     const response = await register({
-      phone: phone.value,
+      username: username.value,
       password: password.value
     });
 
