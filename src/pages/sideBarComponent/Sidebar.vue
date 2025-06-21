@@ -1,9 +1,9 @@
 <template>
   <el-aside width="220px" class="sidebar">
     <!-- 用户信息区 -->
-    <div class="user-info-box">
+    <div class="user-info-box" @click="userInfoDialogVisible = true" style="cursor: pointer;">
       <!-- 使用本地logo.png作为头像 -->
-      <el-avatar :src="logoUrl" size="large" style="background: #fff; color: #222129;" />
+      <el-avatar :src="userAvatar" size="large" style="background: #fff; color: #222129;" />
       <span class="user-name">{{ userName }}</span>
     </div>
 
@@ -76,6 +76,15 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 设置用户信息对话框（抽离为组件） -->
+    <UserInfoDialog
+      :visible="userInfoDialogVisible"
+      :userName="userName"
+      :userAvatar="userAvatar"
+      @update:visible="userInfoDialogVisible = $event"
+      @save="onUserInfoSave"
+    />
   </el-aside>
 </template>
 
@@ -84,6 +93,7 @@ import logo from '@/assets/logo.png'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import UserInfoDialog from './UserInfoDialog.vue'
 
 // 定义组件名称
 defineOptions({
@@ -128,6 +138,13 @@ const createForm = ref({
   name: '',
   knowledgeBase: '',
 })
+
+// 用户信息对话框相关
+const userInfoDialogVisible = ref(false)
+
+// 用户名和头像响应式变量（用于展示）
+const userName = ref(props.userName)
+const userAvatar = ref(logoUrl)
 
 /**
  * 菜单选择事件
@@ -191,6 +208,14 @@ function createDocument() {
   // 关闭对话框
   closeCreateDialog()
 }
+
+/**
+ * 用户信息保存回调
+ */
+function onUserInfoSave(data: { name: string; avatar: string }) {
+  userName.value = data.name
+  userAvatar.value = data.avatar
+}
 </script>
 
 <style scoped>
@@ -211,6 +236,12 @@ function createDocument() {
   display: flex;
   align-items: center;
   justify-content: space-evenly;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.user-info-box:hover {
+  background: rgba(255,255,255,0.25);
 }
 
 .user-name {
@@ -233,5 +264,10 @@ function createDocument() {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.avatar-uploader .el-upload {
+  border: none;
+  background: none;
 }
 </style>
