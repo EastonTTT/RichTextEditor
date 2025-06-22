@@ -51,10 +51,11 @@ export default {
 </template>
 
 <script setup lang="ts">
+import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
 import { login, register } from '../api/user';
+import { useUserStore } from '../stores/user';
 
 const isLogin = ref(true);
 const username = ref('');
@@ -62,11 +63,22 @@ const password = ref('');
 const password2 = ref('');
 const rememberMe = ref(false);
 const router = useRouter();
+const userStore = useUserStore();
+
 const toggleForm = () => {
   isLogin.value = !isLogin.value;
 };
 
-// 登录
+/**
+ * 登录处理函数
+ *
+ * @input 用户名和密码
+ * @process 1. 验证输入完整性
+ *          2. 调用登录API
+ *          3. 保存用户状态到store
+ *          4. 跳转到文档列表页面
+ * @output 登录成功或失败的消息提示
+ */
 const handleLogin = async () => {
   try {
     if (!username.value || !password.value) {
@@ -80,8 +92,15 @@ const handleLogin = async () => {
     });
 
     if (response.data.success) {
+      const userData = response.data.user || {};
+      // 保存用户登录状态
+      userStore.setUserLogin({
+        username: username.value,
+        nickname: userData.nickname,
+        avatar: userData.avatar
+      });
       ElMessage.success('登录成功');
-      router.push('/storelist');
+      await router.push('/storelist');
     } else {
       ElMessage.error(response.data.message || '登录失败');
     }
@@ -90,7 +109,17 @@ const handleLogin = async () => {
     console.error('登录错误:', error);
   }
 };
-// 注册
+
+/**
+ * 注册处理函数
+ *
+ * @input 用户名、密码和确认密码
+ * @process 1. 验证输入完整性
+ *          2. 验证密码一致性
+ *          3. 调用注册API
+ *          4. 注册成功后切换到登录界面
+ * @output 注册成功或失败的消息提示
+ */
 const handleRegister = async () => {
   try {
     if (!username.value || !password.value || !password2.value) {

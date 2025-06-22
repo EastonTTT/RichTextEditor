@@ -16,4 +16,16 @@ export function register(data: { username: string; password: string }) {
         method: 'post',
         data
     });
-} 
+}
+
+/**
+ * 更新用户个人资料（昵称和头像）
+ * @param data 包含要更新的用户名、昵称和头像
+ */
+export const updateUserProfile = (data: { username: string; nickname: string; avatar: string }) => {
+    return request({
+        url: '/api/auth/user/profile',
+        method: 'put',
+        data
+    });
+};
