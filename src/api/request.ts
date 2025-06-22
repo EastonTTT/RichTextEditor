@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus';
 
 // 创建axios实例
 const request = axios.create({
-    baseURL: 'http://172.30.211.5:8080', // 设置基础URL
+    baseURL: 'http://192.168.33.1:8080',
     timeout: 5000 // 请求超时时间
 });
 
@@ -29,4 +29,4 @@ request.interceptors.response.use(
     }
 );
 
-export default request; 
+export default request;

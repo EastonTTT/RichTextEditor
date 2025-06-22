@@ -1,10 +1,17 @@
 <template>
   <el-aside width="220px" class="sidebar">
     <!-- 用户信息区 -->
-    <div class="user-info-box" @click="userInfoDialogVisible = true" style="cursor: pointer;">
+    <div
+      class="user-info-box"
+      :class="{ 'guest-mode': isGuest }"
+      @click="handleUserInfoClick"
+      style="cursor: pointer;"
+    >
       <!-- 使用本地logo.png作为头像 -->
       <el-avatar :src="userAvatar" size="large" style="background: #fff; color: #222129;" />
-      <span class="user-name">{{ userName }}</span>
+      <span class="user-name">{{ displayUserName }}</span>
+      <!-- 游客标识 -->
+      <el-tag v-if="isGuest" size="small" type="warning" class="guest-tag">游客</el-tag>
     </div>
 
     <!-- 导航菜单 -->
@@ -82,6 +89,7 @@
       :visible="userInfoDialogVisible"
       :userName="userName"
       :userAvatar="userAvatar"
+      :loading="isSavingUserInfo"
       @update:visible="userInfoDialogVisible = $event"
       @save="onUserInfoSave"
     />
@@ -89,9 +97,11 @@
 </template>
 
 <script lang="ts" setup>
+import { updateUserProfile } from '@/api/user'
 import logo from '@/assets/logo.png'
-import { ElNotification } from 'element-plus'
-import { ref } from 'vue'
+import { useUserStore } from '@/stores/user'
+import { ElMessageBox, ElNotification } from 'element-plus'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserInfoDialog from './UserInfoDialog.vue'
 
@@ -128,6 +138,7 @@ const emit = defineEmits<{
 
 // 创建router实例
 const router = useRouter()
+const userStore = useUserStore()
 
 // 头像图片地址
 const logoUrl = logo
@@ -141,10 +152,64 @@ const createForm = ref({
 
 // 用户信息对话框相关
 const userInfoDialogVisible = ref(false)
+const isSavingUserInfo = ref(false)
 
-// 用户名和头像响应式变量（用于展示）
-const userName = ref(props.userName)
-const userAvatar = ref(logoUrl)
+// 用户名和头像改为从store获取的计算属性
+const userName = computed(() => userStore.userInfo.nickname || userStore.userInfo.username)
+const userAvatar = computed(() => userStore.userInfo.avatar || logoUrl)
+
+/**
+ * 计算属性：是否为游客模式
+ */
+const isGuest = computed(() => userStore.isGuest)
+
+/**
+ * 计算属性：显示的用户名
+ */
+const displayUserName = computed(() => {
+  const name = isGuest.value ? '游客用户' : userName.value;
+  return name.length > 7 ? name.substring(0, 7) + '...' : name;
+})
+
+/**
+ * 初始化用户状态
+ */
+onMounted(() => {
+  userStore.initUserState()
+})
+
+/**
+ * 处理用户信息区域点击
+ *
+ * @input 无
+ * @process 1. 检查是否为游客模式
+ *          2. 游客模式弹出确认框提示登录
+ *          3. 已登录用户打开设置对话框
+ * @output 提示信息或打开对话框
+ */
+async function handleUserInfoClick() {
+  if (isGuest.value) {
+    try {
+      await ElMessageBox.confirm(
+        '您当前为游客模式，请登录后使用完整功能。',
+        '需要登录',
+        {
+          confirmButtonText: '前往登录',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+      // 用户点击"前往登录"后，跳转到登录页
+      router.push('/')
+    } catch {
+      // 用户点击了"取消"或关闭了弹窗
+      ElNotification.info('操作已取消')
+    }
+    return
+  }
+  // 如果是已登录用户，则正常打开信息设置对话框
+  userInfoDialogVisible.value = true
+}
 
 /**
  * 菜单选择事件
@@ -212,9 +277,40 @@ function createDocument() {
 /**
  * 用户信息保存回调
  */
-function onUserInfoSave(data: { name: string; avatar: string }) {
-  userName.value = data.name
-  userAvatar.value = data.avatar
+async function onUserInfoSave(data: { name: string; avatar: string }) {
+  if (isGuest.value) {
+    ElNotification.error('游客无法保存信息')
+    return
+  }
+  isSavingUserInfo.value = true
+  try {
+    const response = await updateUserProfile({
+      username: userStore.userInfo.username, // 使用username进行用户识别
+      nickname: data.name,
+      avatar: data.avatar
+    })
+
+    if (response.data.success) {
+      // 修正：根据后端的返回，从 response.data.user 中获取更新后的用户数据
+      const updatedUserData = response.data.user || {};
+
+      // 使用从后端返回的最新数据更新store
+      userStore.updateUserInfo({
+        nickname: updatedUserData.nickname || data.name,
+        avatar: updatedUserData.avatar || data.avatar
+      });
+
+      ElNotification.success('用户信息更新成功！');
+      userInfoDialogVisible.value = false // 成功后关闭对话框
+    } else {
+      ElNotification.error(response.data.message || '更新失败')
+    }
+  } catch (error) {
+    // Axios拦截器会自动处理网络错误等提示，这里只在控制台打印详细错误
+    console.error('Update user info error:', error)
+  } finally {
+    isSavingUserInfo.value = false // 无论成功或失败，都结束加载状态
+  }
 }
 </script>
 
@@ -238,10 +334,21 @@ function onUserInfoSave(data: { name: string; avatar: string }) {
   justify-content: space-evenly;
   cursor: pointer;
   transition: background 0.2s;
+  position: relative;
 }
 
 .user-info-box:hover {
   background: rgba(255,255,255,0.25);
+}
+
+/* 游客模式样式 */
+.user-info-box.guest-mode {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.user-info-box.guest-mode:hover {
+  background: rgba(255, 193, 7, 0.3);
 }
 
 .user-name {
@@ -250,6 +357,14 @@ function onUserInfoSave(data: { name: string; avatar: string }) {
   font-weight: bold;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 游客标签样式 */
+.guest-tag {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 10px;
 }
 
 /* 菜单项样式 */
