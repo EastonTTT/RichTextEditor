@@ -24,45 +24,67 @@ import Collaboration from '@tiptap/extension-collaboration'
 import { TiptapCollabProvider } from '@hocuspocus/provider'
 import { reactive, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import { Editor } from '@tiptap/vue-3';
+import { WebsocketProvider } from 'y-websocket'
 
+
+// let provider: TiptapCollabProvider | null = null
+// let editor = ref<Editor | {}>({})
+//是否开启协作
 const isCollaborative = ref(true)
+//记录在线人数
 const onlineUsers = ref(0)
 //共享文档实例
 const doc = new Y.Doc()
+//创建协作服务
+const provider = new WebsocketProvider('ws://119.29.83.248:8888/mydocument', 'mydocument', doc)
+
+//文档名称
 const documentName = 'demo'
-let provider: TiptapCollabProvider | null = null
-// let editor = ref<Editor | {}>({})
 const editor = useEditor({
   extensions: [
     ...basicExtensions,
-    ...(isCollaborative.value ? [Collaboration.configure({
+    Collaboration.configure({
       document: doc,
-    })] : []),
+    }),
   ],
   content: '<p>start collaborating!</p>',
 })
 
-const toggleCollaboration = () => {
-  isCollaborative.value = !isCollaborative.value
-  console.log('协作状态变更:', isCollaborative.value)
-}
+//切换协作模式
+// const toggleCollaboration = () => {
+//   isCollaborative.value = !isCollaborative.value
+//   console.log('协作状态变更:', isCollaborative.value)
+// }
 
-watchEffect(() => {
-  if (isCollaborative.value && !provider) {
-    provider = new TiptapCollabProvider({
-      name: documentName,
-      baseUrl: 'http://localhost:8888/mydocument',
-      token: 'notoken',
-      document: doc,
-    })
-    console.log('创建协作服务:', provider)
-    // initEditor()
-  } else if (!isCollaborative.value && provider) {
-    provider.destroy()
-    provider = null
-    console.log('销毁协作服务:', provider)
-    // initEditor()
-  }
+// watchEffect(() => {
+//   if (isCollaborative.value && !provider) {
+//     provider = new TiptapCollabProvider({
+//       name: documentName,
+//       baseUrl: 'http://localhost:8888/mydocument',
+//       token: 'notoken',
+//       document: doc,
+//     })
+//     console.log('创建协作服务:', provider)
+//     // initEditor()
+//   } else if (!isCollaborative.value && provider) {
+//     provider.destroy()
+//     provider = null
+//     console.log('销毁协作服务:', provider)
+//     // initEditor()
+//   }
+// })
+
+//调试
+provider.on('sync', ({ document }) => {
+  console.log('🟢 Provider同步完成，连接成功')
+})
+provider.on('connect', () => console.log('✅ 连接建立'))
+provider.on('disconnect', () => console.log('❌ 连接断开'))
+doc.on('update', update => {
+  console.log('✍️ Yjs 文档发生变更:', update)
+})
+provider.on('error', (err) => {
+  console.error('❗ Provider 错误:', err)
 })
 
 
@@ -76,7 +98,6 @@ onBeforeUnmount(() => {
   if (provider) {
     provider.destroy()
   }
-  editor!.destroy()  // 清理编辑器实例
 })
 
 
