@@ -2,7 +2,7 @@
   <!-- 按钮过渡组 -->
   <transition-group name="btn-fade" tag="div" class="toggle-btn-container">
     <button 
-      v-if="!visible" 
+      v-if="!visible&&mode=='read'" 
       @click="showComponent" 
       class="ai-toggle-btn"
       key="btn"
@@ -12,7 +12,7 @@
     </button>
   </transition-group>
    <transition name="component-fade" mode="out-in">
-    <div class="ai-overview-container" v-show="visible">
+    <div class="ai-overview-container" v-show="visible&&mode=='read'">
       <div class="ai-overview-header">
         <h3 class="ai-title">AI速览</h3>
         <div class="ai-actions">
@@ -85,8 +85,9 @@ import '@/styles/summary.scss'; // 引入样式文件
 import { getAiSummary } from '@/api/editor';
 
 // 只接收editor作为参数
-const { editor } = defineProps<{
+const { editor, mode } = defineProps<{
   editor: Editor | null;
+  mode: String;
 }>();
 
 // 配置marked选项
@@ -122,10 +123,6 @@ const generateSummary = async () => {
   try {
      // 使用 getHTML() 方法获取带格式的内容
     const documentContent = editor.getHTML();
-    
-    // 调用后端API生成摘要 (模拟API调用)
-    // const summaryMarkdown = await generateAISummary(documentContent);
-    // const summaryMarkdown = documentContent;
     
     const description = "请简要为下面这篇文档内容做个总结,总结可以掺杂一些emoji(控制在300字左右):\n"
 
@@ -243,66 +240,6 @@ const toggleVisibility = () => {
 // 切换显示更多/更少
 const toggleShowMore = () => {
   showMore.value = !showMore.value;
-};
-
-// 模拟后端API调用
-const generateAISummary = (content: string): Promise<string> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟从HTML内容生成Markdown摘要
-      resolve(`这些是前端开发的基础语言：
-
----
-
-- **UI 库**  
-  - Ant Design（React）  
-  - Element Plus（Vue）  
-  - Bootstrap（基于原生 CSS 和 JavaScript 的 UI 框架）
-
----
-### 3. **状态管理**
-
-### 4. **构建工具**
-为了优化和打包前端代码，通常需要使用构建工具：
-- **模块打包器**  
-  - Webpack：最常用的模块打包工具。
-  - Vite：新一代快速开发工具，适合现代 JavaScript 项目。
-- **任务运行器**  
-  - Grunt
-- **代码检查工具**  
-
-### 5. **版本控制系统**
-用于协作开发和代码管理：
----
-### 6. **前端路由**
-单页应用（SPA）需要前端路由来管理页面跳转：
-- React Router（React 生态）
-
----
-
-### 7. **HTTP 请求与 API 调用**
-前端需要与后端进行数据交互：
-- Axios：一个基于 Promise 的 HTTP 客户端。
-- Fetch API：现代浏览器内置的 API。
-- Less
-
----
-### 9. **测试工具**
-确保代码质量和稳定性：
-- Cypress：端到端测试工具。
-
-### 10. **性能优化工具**
-- Webpack Bundle Analyzer：分析打包文件大小。
-  - Flutter Web（虽然不是传统前端技术，但支持 Web 开发）
-- **桌面应用开发**  
-  - Electron（结合 Node.js 和 Chromium）
----
-### 12. **其他相关技术**
-- **TypeScript**：JavaScript 的超集，提供静态类型检查。
-- **GraphQL**：替代 REST 的查询语言。
-前端技术栈是一个不断发展的领域，开发者需要根据项目需求和技术趋势选择合适的工具和技术。对于初学者来说，可以从 HTML、CSS 和 JavaScript 入手，逐步学习框架、构建工具和其他高级技术。`);
-    }, 800);
-  });
 };
 
 </script>

@@ -1,8 +1,10 @@
 <template>
   <div>
     <div>
+        <!-- 引入模式切换组件 -->
+      <ModeSwitch v-model="currentMode" @change="handleModeChange"/> 
       <tool-bar v-if="editor" :editor="editor!" class="tool-bar" />
-      <ai-summary :editor="editor!" class="ai-summary" />
+      <ai-summary :editor="editor!" :mode="currentMode" class="ai-summary" />
       <editor-content :editor="editor!" class="editor-content" />
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
@@ -18,8 +20,9 @@ import { ref, watchEffect, nextTick } from 'vue'
 import ToolBar from './ToolBar.vue'
 import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
-import { Editor } from '@tiptap/vue-3';
+import { Editor } from '@tiptap/vue-3'
 import AiSummary from './AiSummary.vue'
+import ModeSwitch from './ModeSwitch.vue'
 const { editor } = defineProps<{ editor: Editor | null }>()
 
 const showCodeSelector = ref(false)
@@ -58,6 +61,13 @@ watchEffect(async () => {
 
   }
 })
+
+const currentMode = ref('edit'); // 初始模式为阅读
+
+const handleModeChange = (mode: string) => {
+  currentMode.value = mode;
+  console.log(`模式已切换为: ${mode}`);
+};
 
 </script>
 
