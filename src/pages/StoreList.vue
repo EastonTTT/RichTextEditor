@@ -83,14 +83,21 @@
     width="500px"
     :close-on-click-modal="false"
   >
-    <el-form :model="createForm" label-width="100px">
-      <el-form-item label="知识库名称" required>
+    <el-form :model="createForm" :rules="createFormRules" ref="createFormRef" label-width="100px">
+      <el-form-item label="知识库名称" prop="name" required>
         <el-input
           v-model="createForm.name"
           placeholder="请输入知识库名称"
           maxlength="50"
           show-word-limit
         />
+      </el-form-item>
+      <el-form-item label="编辑者" prop="editors">
+        <el-select v-model="createForm.editors" multiple placeholder="请选择编辑者">
+          <el-option label="123" value="123" />
+          <el-option label="李四" value="李四" />
+          <el-option label="王五" value="王五" />
+        </el-select>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -176,11 +183,13 @@
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+// import { useRouter } from 'vue-router'
+import { getKnowledgeBaseList, addKnowledgeBase } from '@/api/knowledgeBase'
+import { useUserStore } from '@/stores/user'
 
-// 创建router实例
-const router = useRouter()
+// 获取用户store
+const userStore = useUserStore()
 
 // 侧边栏相关数据
 const userName = ref('代码全都队')
@@ -204,7 +213,15 @@ const endDate = ref('')
 const createDialogVisible = ref(false)
 const createForm = ref({
   name: '',
+  editors: [] as string[], // 支持多选
 })
+
+// 新建知识库表单校验规则
+const createFormRules = {
+  name: [
+    { required: true, message: '请输入知识库名称', trigger: 'blur' }
+  ]
+}
 
 // 知识库选项
 const knowledgeBaseOptions = ref([
@@ -222,43 +239,47 @@ const knowledgeBaseOptions = ref([
   },
 ])
 
-//文档列表
-const tableData = ref([
-  {
-    name: '知识库A',
-    owner: '张三',
-    date: '2025-06-15',
-    action: '操作',
-  },
-  {
-    name: '知识库B',
-    owner: '李四',
-    date: '2025-06-15',
-    action: '操作',
-  },
-  {
-    name: '知识库C',
-    owner: '王五',
-    date: '2025-06-15',
-    action: '操作',
+// 定义知识库项类型
+interface KnowledgeBaseItem {
+  name: string
+  owner: string
+  date: string
+  action: string
+}
+
+//知识库列表
+const tableData = ref<KnowledgeBaseItem[]>([])
+
+// 侧边栏显示用户名逻辑，与Sidebar一致
+const displayUserName = computed(() => {
+  const name = userStore.isGuest ? '游客用户' : (userStore.userInfo.nickname || userStore.userInfo.username)
+  return name.length > 7 ? name.substring(0, 7) + '...' : name
+})
+
+onMounted(async () => {
+  try {
+    const res = await getKnowledgeBaseList(userStore.userInfo.username)
+    tableData.value = res.data.data.map((item: { kbName: string; userName: string; accessTime: string }) => ({
+      name: item.kbName,         // 映射为前端需要的字段
+      owner: item.userName,
+      date: item.accessTime,
+      action: '操作',
+      // 其他字段按需添加r
+    }))
+  } catch {
+    ElNotification.error('知识库数据加载失败')
   }
-])
+})
 
 /**
  * 菜单选择事件
- * @param index 菜单项index
  */
-function handleMenuSelect(index: string) {
-
-}
+function handleMenuSelect() {}
 
 /**
  * 处理创建文档事件（来自侧边栏组件）
- * @param documentData 文档数据
  */
-function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
-
-}
+function handleCreateDocument() {}
 
 /**
  * 打开新建知识库对话框
@@ -268,7 +289,10 @@ function openCreateDialog() {
   // 重置表单
   createForm.value = {
     name: '',
+    editors: [],
   }
+  // 重置校验
+  if (createFormRef.value) createFormRef.value.clearValidate()
 }
 
 /**
@@ -282,27 +306,39 @@ function closeCreateKnowledgeBaseDialog() {
  * 创建知识库
  */
 function createKnowledgeBase() {
-  if (!createForm.value.name.trim()) {
-    ElNotification.warning('请输入知识库名称')
-    return
-  }
-
-  // 创建新知识库对象
-  const newKnowledgeBase = {
-    name: createForm.value.name,
-    owner: '默认',
-    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
-    action: '操作'
-  }
-
-  // 将新知识库添加到列表开头
-  tableData.value.unshift(newKnowledgeBase)
-
-  // 显示成功提示
-  ElNotification.success('知识库创建成功！')
-
-  // 关闭对话框
-  closeCreateKnowledgeBaseDialog()
+  // 表单校验
+  createFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid) {
+      ElNotification.warning('请完善表单信息')
+      return
+    }
+    // 组装新知识库数据
+    const now = new Date()
+    const dateStr = now.toISOString().split('T')[0]
+    const newKnowledgeBase = {
+      name: createForm.value.name,
+      owner: displayUserName.value,
+      date: dateStr,
+      action: '操作',
+      editors: createForm.value.editors.join(', '), // 仅做展示
+    }
+    // 添加到表格
+    tableData.value.unshift(newKnowledgeBase)
+    // 发起请求，传递新建知识库信息给后端
+    try {
+      await addKnowledgeBase({
+        name: createForm.value.name,
+        owner: displayUserName.value,
+        date: dateStr,
+        editors: createForm.value.editors
+      })
+      ElNotification.success('知识库创建成功！')
+    } catch {
+      ElNotification.error('知识库创建失败')
+    }
+    // 关闭对话框
+    closeCreateKnowledgeBaseDialog()
+  })
 }
 
 // 知识库操作对话框相关
@@ -372,6 +408,9 @@ function searchStore() {
 
   // 这里可以添加其他查询逻辑
 }
+
+// 新建知识库表单ref
+const createFormRef = ref()
 </script>
 
 <style scoped>
