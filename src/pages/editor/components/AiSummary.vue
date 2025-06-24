@@ -96,7 +96,7 @@ marked.setOptions({
 });
 
 // 组件状态
-const visible = ref(true);
+const visible = ref(false);
 const showMore = ref(false);
 const loading = ref(false);
 const error = ref('');
