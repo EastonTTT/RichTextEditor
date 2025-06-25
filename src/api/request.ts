@@ -3,15 +3,9 @@ import { ElMessage } from 'element-plus'
 
 // 创建axios实例
 const request = axios.create({
-<<<<<<< HEAD
-  baseURL: 'http://172.30.211.5:8080', // 设置基础URL
-  timeout: 500, // 请求超时时间
+  baseURL: 'http://172.30.211.60:8080',
+  timeout: 5000, // 请求超时时间
 })
-=======
-    baseURL: 'http://192.168.33.1:8080',
-    timeout: 5000 // 请求超时时间
-});
->>>>>>> 11908b31ca7dfdb1e84a0c573cf89069bda66439
 
 // 请求拦截器
 request.interceptors.request.use(
@@ -35,8 +29,4 @@ request.interceptors.response.use(
   }
 )
 
-<<<<<<< HEAD
 export default request
-=======
-export default request;
->>>>>>> 11908b31ca7dfdb1e84a0c573cf89069bda66439

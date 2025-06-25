@@ -5,68 +5,16 @@
     结构与Home.vue一致，风格统一，便于维护。
   -->
   <el-container class="home-container">
-<<<<<<< HEAD
-    <!-- 侧边栏 -->
-    <el-aside width="220px" class="sidebar">
-      <!-- 用户信息区 -->
-      <div class="user-info-box">
-        <!-- 使用本地logo.png作为头像 -->
-        <el-avatar :src="logoUrl" size="large" style="background: #fff; color: #222129;" />
-        <span class="user-name">代码全都队</span>
-      </div>
-      <!-- 导航菜单 -->
-      <el-menu :default-active="activeMenu" class="el-menu-vertical-demo" background-color="#132b3e" text-color="#fff"
-        active-text-color="#ffd04b" @select="handleMenuSelect" :unique-opened="true" style="border-right: none;">
-        <!-- 目录树分组 -->
-        <el-sub-menu index="1">
-          <template #title>
-            <span>目录树</span>
-          </template>
-          <el-menu-item index="1-1">知识库列表</el-menu-item>
-          <el-menu-item index="1-2">文档列表</el-menu-item>
-        </el-sub-menu>
-        <!-- 最近文档分组 -->
-        <el-sub-menu index="2">
-          <template #title>
-            <span>最近文档</span>
-          </template>
-          <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
-        </el-sub-menu>
-        <!-- 新建文档按钮 -->
-        <el-menu-item index="3" @click="openCreateDocument">
-          <span>新建文档</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
-=======
     <!-- 使用可复用的侧边栏组件 -->
-    <Sidebar
-      :user-name="userName"
-      :active-menu="activeMenu"
-      :recent-docs="recentDocs"
-      :knowledge-base-options="knowledgeBaseOptions"
-      @menu-select="handleMenuSelect"
-      @create-document="handleCreateDocument"
-    />
->>>>>>> 11908b31ca7dfdb1e84a0c573cf89069bda66439
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs"
+      :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
+      @create-document="handleCreateDocument" />
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
       <!-- 面包屑导航 -->
       <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
-<<<<<<< HEAD
-          <el-breadcrumb separator="/" class="breadcrumb" style="margin-right: 60px;">
-            <el-breadcrumb-item>我的知识库</el-breadcrumb-item>
-          </el-breadcrumb>
-          <el-input v-model="nameInput" style="width: 240px" placeholder="名称" />
-          <el-input v-model="nameInput" style="width: 240px" placeholder="所有者" />
-          <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 180px" format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD" />
-          <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 180px" format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD" />
-          <el-button type="info" round>查询</el-button>
-=======
           <el-text class="mx-1" size="large">我的知识库</el-text>
           <div class="search-item">
             <el-text size="large">名称</el-text>
@@ -74,32 +22,19 @@
           </div>
           <div class="search-item">
             <el-text size="large">所有者</el-text>
-            <el-input v-model="onwerInput" style="width: 100px" placeholder="输入所有者"/>
+            <el-input v-model="onwerInput" style="width: 100px" placeholder="输入所有者" />
           </div>
           <div class="search-item">
             <el-text size="large">起始日期</el-text>
-            <el-date-picker
-              v-model="startDate"
-              type="date"
-              placeholder="起始日期"
-              style="width: 120px"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
           </div>
           <div class="search-item">
             <el-text size="large">结束日期</el-text>
-            <el-date-picker
-              v-model="endDate"
-              type="date"
-              placeholder="结束日期"
-              style="width: 120px"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
           </div>
           <el-button type="info" round @click="searchStore">查询</el-button>
->>>>>>> 11908b31ca7dfdb1e84a0c573cf89069bda66439
           <el-button type="info" round @click="openCreateDialog">新建知识库</el-button>
         </div>
       </div>
@@ -139,29 +74,6 @@
     </template>
   </el-dialog>
 
-<<<<<<< HEAD
-  <!-- 新建文档对话框 -->
-  <el-dialog v-model="createDocumentDialogVisible" title="新建文档" width="500px" :close-on-click-modal="false">
-    <el-form :model="createDocumentForm" label-width="100px">
-      <el-form-item label="文档名称" required>
-        <el-input v-model="createDocumentForm.name" placeholder="请输入文档名称" maxlength="50" show-word-limit />
-      </el-form-item>
-      <el-form-item label="所属知识库" required>
-        <el-select v-model="createDocumentForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-          <el-option v-for="item in knowledgeBaseOptions" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="closeCreateDocumentDialog">取消</el-button>
-        <el-button type="primary" @click="createDocument">创建</el-button>
-      </span>
-    </template>
-  </el-dialog>
-
-=======
->>>>>>> 11908b31ca7dfdb1e84a0c573cf89069bda66439
   <!-- 知识库操作对话框 -->
   <el-dialog v-model="storeOperationDialogVisible" title="知识库操作" width="500px" :close-on-click-modal="false">
     <el-tabs v-model="activeTab" type="card">
@@ -422,36 +334,6 @@ function searchStore() {
   overflow: hidden;
 }
 
-<<<<<<< HEAD
-/* 侧边栏样式 */
-.sidebar {
-  width: 220px;
-  background: #334b5e;
-  color: #fff;
-  overflow-y: auto;
-}
-
-/* 用户信息盒子样式 */
-.user-info-box {
-  height: 80px;
-  margin: 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-}
-
-.user-name {
-  font-size: 18px;
-  color: #222129;
-  font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-=======
->>>>>>> 11908b31ca7dfdb1e84a0c573cf89069bda66439
 /* 主容器样式 */
 .main-container {
   flex: 1;
