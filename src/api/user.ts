@@ -17,3 +17,11 @@ export function register(data: { phone: string; password: string }) {
         data
     });
 } 
+
+//获取当前用户信息
+export const getMyInfo = () => {
+  return request({
+    url: '/api/auth/info',
+    method: 'get'
+  })
+}

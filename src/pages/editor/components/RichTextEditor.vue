@@ -9,6 +9,10 @@
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
       <bubble-bar :editor="editor!" class="bubble-bar" />
+      <!-- 评论区组件 -->
+      <div class="comment-section">
+        <text-comment />
+      </div>
     </div>
   </div>
 
@@ -23,6 +27,7 @@ import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
 import { Editor } from '@tiptap/vue-3'
 import AiSummary from './AiSummary.vue'
 import ModeSwitch from './ModeSwitch.vue'
+import TextComment from './TextComment.vue'
 const { editor } = defineProps<{ editor: Editor | null }>()
 
 const showCodeSelector = ref(false)
@@ -66,4 +71,8 @@ const currentMode = ref('edit'); // 初始模式为阅读
 
 </script>
 
-<style></style>
+<style>
+.comment-section {
+  padding-top: 3rem;
+}
+</style>
