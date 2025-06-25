@@ -2,7 +2,7 @@
   <div>
     <div>
         <!-- 引入模式切换组件 -->
-      <ModeSwitch v-model="currentMode" @change="handleModeChange"/> 
+      <ModeSwitch v-model="currentMode"/> 
       <tool-bar v-if="editor" :editor="editor!" class="tool-bar" />
       <ai-summary :editor="editor!" :mode="currentMode" class="ai-summary" />
       <editor-content :editor="editor!" class="editor-content" />
@@ -63,11 +63,6 @@ watchEffect(async () => {
 })
 
 const currentMode = ref('edit'); // 初始模式为阅读
-
-const handleModeChange = (mode: string) => {
-  currentMode.value = mode;
-  console.log(`模式已切换为: ${mode}`);
-};
 
 </script>
 
