@@ -18,7 +18,7 @@ import ToolBar from './ToolBar.vue'
 import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
 import { Editor } from '@tiptap/vue-3';
-const { editor } = defineProps<{ editor: Editor | null }>()
+const { editor, } = defineProps<{ editor: Editor | null }>()
 
 const emit = defineEmits()
 const showCodeSelector = ref(false)

@@ -21,15 +21,15 @@
       <ImageAddIcon class="icon" />
     </button>
     <!-- 任务列表 -->
-    <button @click="addTask">TaskList
+    <button @click="addTask" :class="{ 'is-active': editor.isActive('taskList') }">TaskList
       <TaskChecked1Icon class="icon" />
     </button>
     <!-- 有序列表 -->
-    <button @click="addOrderedList">OrderedList
+    <button @click="addOrderedList" :class="{ 'is-active': editor.isActive('orderedList') }">OrderedList
       <OrderDescendingIcon class="icon" />
     </button>
     <!-- 无序列表 -->
-    <button @click="addBulletList">UnorderedList
+    <button @click="addBulletList" :class="{ 'is-active': editor.isActive('bulletList') }">UnorderedList
       <ListIcon class="icon" />
     </button>
     <!-- 分割线 -->
@@ -53,22 +53,23 @@
       <ForwardIcon class="icon" />
     </button>
     <!-- 开启协作 -->
-    <button @click="toggleCollaboration">collab</button>
-
-
-
+    <button @click="toggleCollaboration" :class="{ 'is-active': isCollaborative }"
+      v-if="userRole === 'owner'">collab</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Editor } from "@tiptap/vue-3"
 import type { HeadingLevel } from "@/types/extensionTypes";
-const { editor } = defineProps<{ editor: Editor | null }>()
 import { Link1Icon, LinkUnlinkIcon, ImageAddIcon, ComponentDividerVerticalIcon, BackwardIcon, ForwardIcon, TaskChecked1Icon, ListIcon, OrderDescendingIcon, CodeIcon } from "tdesign-icons-vue-next";
-import {defineEmits} from "vue"
+import { defineEmits, inject } from "vue"
+import type { Role } from "@/types/editorTypes";
 const emit = defineEmits()
+const { editor, } = defineProps<{ editor: Editor | null }>()
 
 if (!editor) { throw new Error('editor is not defined') }
+const userRole = inject<Role>('role')
+const isCollaborative = inject<boolean>('isCollaborative')
 //按钮逻辑函数：
 
 //以下已被移动到 Bubble Menu
@@ -137,6 +138,9 @@ button {
   border-radius: 5px;
   transition: all 0.2s ease;
   margin: 5px;
+  white-space: nowrap;
+
+
 }
 
 button.is-active {
