@@ -1,6 +1,6 @@
 <template>
   <div>
-    <editor-header />
+    <editor-header :editor="editor!" />
   </div>
   <div class="wrapper">
     <div class="toc-container">

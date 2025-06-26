@@ -48,6 +48,8 @@
     "axios": "^1.10.0",
     "element-plus": "^2.10.1",
     "highlight.js": "^11.11.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "lowlight": "^2.9.0",
     "pinia": "^3.0.1",
     "tdesign-icons-vue-next": "^0.3.6",
