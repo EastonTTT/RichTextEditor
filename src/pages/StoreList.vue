@@ -5,75 +5,36 @@
     结构与Home.vue一致，风格统一，便于维护。
   -->
   <el-container class="home-container">
-    <!-- 侧边栏 -->
-    <el-aside width="220px" class="sidebar">
-      <!-- 用户信息区 -->
-      <div class="user-info-box">
-        <!-- 使用本地logo.png作为头像 -->
-        <el-avatar :src="logoUrl" size="large" style="background: #fff; color: #222129;" />
-        <span class="user-name">代码全都队</span>
-      </div>
-      <!-- 导航菜单 -->
-      <el-menu
-        :default-active="activeMenu"
-        :default-openeds="['1']"
-        class="el-menu-vertical-demo"
-        background-color="#132b3e"
-        text-color="#fff"
-        active-text-color="#ffd04b"
-        @select="handleMenuSelect"
-        :unique-opened="true"
-        style="border-right: none;"
-      >
-        <!-- 目录树分组 -->
-        <el-sub-menu index="1">
-          <template #title>
-            <span>目录树</span>
-          </template>
-          <el-menu-item index="1-1">知识库列表</el-menu-item>
-          <el-menu-item index="1-2">文档列表</el-menu-item>
-        </el-sub-menu>
-        <!-- 最近文档分组 -->
-        <el-sub-menu index="2">
-          <template #title>
-            <span>最近文档</span>
-          </template>
-          <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
-        </el-sub-menu>
-        <!-- 新建文档按钮 -->
-        <el-menu-item index="3" @click="openCreateDocument">
-          <span>新建文档</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
+    <!-- 使用可复用的侧边栏组件 -->
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs"
+      :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
+      @create-document="handleCreateDocument" />
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
       <!-- 面包屑导航 -->
       <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
-          <el-breadcrumb separator="/" class="breadcrumb" style="margin-right: 60px;">
-            <el-breadcrumb-item>我的知识库</el-breadcrumb-item>
-          </el-breadcrumb>
-          <el-input v-model="nameInput" style="width: 240px" placeholder="名称" />
-          <el-input v-model="nameInput" style="width: 240px" placeholder="所有者"/>
-          <el-date-picker
-            v-model="startDate"
-            type="date"
-            placeholder="起始日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-          <el-date-picker
-            v-model="endDate"
-            type="date"
-            placeholder="结束日期"
-            style="width: 180px"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-          />
-          <el-button type="info" round>查询</el-button>
+          <el-text class="mx-1" size="large">我的知识库</el-text>
+          <div class="search-item">
+            <el-text size="large">名称</el-text>
+            <el-input v-model="nameInput" style="width: 100px" placeholder="输入名称" />
+          </div>
+          <div class="search-item">
+            <el-text size="large">所有者</el-text>
+            <el-input v-model="onwerInput" style="width: 100px" placeholder="输入所有者" />
+          </div>
+          <div class="search-item">
+            <el-text size="large">起始日期</el-text>
+            <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
+          </div>
+          <div class="search-item">
+            <el-text size="large">结束日期</el-text>
+            <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
+          </div>
+          <el-button type="info" round @click="searchStore">查询</el-button>
           <el-button type="info" round @click="openCreateDialog">新建知识库</el-button>
         </div>
       </div>
@@ -85,8 +46,8 @@
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
             <el-table-column prop="action" label="操作" width="80">
-              <template #default>
-                <el-icon class="action-icon" @click="openStoreOperationDialog">
+              <template #default="scope">
+                <el-icon class="action-icon" @click="openStoreOperationDialog(scope.$index)">
                   <MoreFilled />
                 </el-icon>
               </template>
@@ -99,20 +60,10 @@
   </el-container>
 
   <!-- 新建知识库对话框 -->
-  <el-dialog
-    v-model="createDialogVisible"
-    title="新建知识库"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="createDialogVisible" title="新建知识库" width="500px" :close-on-click-modal="false">
     <el-form :model="createForm" label-width="100px">
       <el-form-item label="知识库名称" required>
-        <el-input
-          v-model="createForm.name"
-          placeholder="请输入知识库名称"
-          maxlength="50"
-          show-word-limit
-        />
+        <el-input v-model="createForm.name" placeholder="请输入知识库名称" maxlength="50" show-word-limit />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -123,59 +74,14 @@
     </template>
   </el-dialog>
 
-  <!-- 新建文档对话框 -->
-  <el-dialog
-    v-model="createDocumentDialogVisible"
-    title="新建文档"
-    width="500px"
-    :close-on-click-modal="false"
-  >
-    <el-form :model="createDocumentForm" label-width="100px">
-      <el-form-item label="文档名称" required>
-        <el-input
-          v-model="createDocumentForm.name"
-          placeholder="请输入文档名称"
-          maxlength="50"
-          show-word-limit
-        />
-      </el-form-item>
-      <el-form-item label="所属知识库" required>
-        <el-select v-model="createDocumentForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-          <el-option
-            v-for="item in knowledgeBaseOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="closeCreateDocumentDialog">取消</el-button>
-        <el-button type="primary" @click="createDocument">创建</el-button>
-      </span>
-    </template>
-  </el-dialog>
-
   <!-- 知识库操作对话框 -->
-  <el-dialog
-    v-model="storeOperationDialogVisible"
-    title="知识库操作"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="storeOperationDialogVisible" title="知识库操作" width="500px" :close-on-click-modal="false">
     <el-tabs v-model="activeTab" type="card">
       <!-- 重命名标签页 -->
       <el-tab-pane label="重命名" name="rename">
         <el-form :model="renameForm" label-width="100px" style="margin-top: 20px;">
           <el-form-item label="新名称" required>
-            <el-input
-              v-model="renameForm.newName"
-              placeholder="请输入新的知识库名称"
-              maxlength="50"
-              show-word-limit
-            />
+            <el-input v-model="renameForm.newName" placeholder="请输入新的知识库名称" maxlength="50" show-word-limit />
           </el-form-item>
         </el-form>
       </el-tab-pane>
@@ -190,11 +96,7 @@
           <p style="color: #666; margin-bottom: 20px;">
             您确定要删除这个知识库吗？此操作不可恢复。
           </p>
-          <el-input
-            v-model="deleteForm.confirmText"
-            placeholder="请输入 'DELETE' 确认删除"
-            style="width: 300px;"
-          />
+          <el-input v-model="deleteForm.confirmText" placeholder="请输入 'DELETE' 确认删除" style="width: 300px;" />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -202,19 +104,11 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="closeStoreOperationDialog">取消</el-button>
-        <el-button
-          v-if="activeTab === 'delete'"
-          type="danger"
-          @click="handleStoreOperation"
-          :disabled="deleteForm.confirmText !== 'DELETE'"
-        >
+        <el-button v-if="activeTab === 'delete'" type="danger" @click="handleStoreOperation"
+          :disabled="deleteForm.confirmText !== 'DELETE'">
           删除
         </el-button>
-        <el-button
-          v-else
-          type="primary"
-          @click="handleStoreOperation"
-        >
+        <el-button v-else type="primary" @click="handleStoreOperation">
           确定
         </el-button>
       </span>
@@ -230,7 +124,7 @@
  *
  * @component
  */
-import logo from '@/assets/logo.png'
+import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
@@ -239,18 +133,17 @@ import { useRouter } from 'vue-router'
 // 创建router实例
 const router = useRouter()
 
-// 头像图片地址
-const logoUrl = logo
-
-// 当前激活菜单项
+// 侧边栏相关数据
+const userName = ref('代码全都队')
 const activeMenu = ref('1-1')
-// 最近文档列表
 const recentDocs = ref([
   '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
 ])
 
 // 输入名称
 const nameInput = ref('')
+// 输入所有者
+const onwerInput = ref('')
 
 // 起始日期
 const startDate = ref('')
@@ -262,15 +155,6 @@ const endDate = ref('')
 const createDialogVisible = ref(false)
 const createForm = ref({
   name: '',
-  description: ''
-})
-
-// 新建文档对话框相关
-const createDocumentDialogVisible = ref(false)
-const createDocumentForm = ref({
-  name: '',
-  knowledgeBase: '',
-  description: ''
 })
 
 // 知识库选项
@@ -290,7 +174,7 @@ const knowledgeBaseOptions = ref([
 ])
 
 //文档列表
-const tableData = [
+const tableData = ref([
   {
     name: '知识库A',
     owner: '张三',
@@ -309,65 +193,22 @@ const tableData = [
     date: '2025-06-15',
     action: '操作',
   }
-]
+])
 
 /**
  * 菜单选择事件
- * @input 菜单项index
- * @process 根据index判断点击了哪个菜单，执行对应操作
- * @output 弹窗或跳转（此处为弹窗演示）
+ * @param index 菜单项index
  */
 function handleMenuSelect(index: string) {
-  activeMenu.value = index; // 更新当前激活菜单项
-  if (index === '1-1') {
-    router.push('/storelist');
-  } else if (index === '1-2') {
-    router.push('/doclist');
-  } else if (index.startsWith('2-')) {
-    const idx = Number(index.split('-')[1])
-    ElNotification.primary('跳转到' + recentDocs.value[idx] + '界面（待实现）')
-  } else if (index === '3') {
-    openCreateDocument()
-  }
+
 }
 
 /**
- * 打开新建文档对话框
+ * 处理创建文档事件（来自侧边栏组件）
+ * @param documentData 文档数据
  */
-function openCreateDocument() {
-  createDocumentDialogVisible.value = true
-  // 重置表单
-  createDocumentForm.value = {
-    name: '',
-    knowledgeBase: '',
-    description: ''
-  }
-}
+function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
 
-/**
- * 关闭新建文档对话框
- */
-function closeCreateDocumentDialog() {
-  createDocumentDialogVisible.value = false
-}
-
-/**
- * 创建文档
- */
-function createDocument() {
-  if (!createDocumentForm.value.name.trim()) {
-    ElNotification.warning('请输入文档名称')
-    return
-  }
-
-  if (!createDocumentForm.value.knowledgeBase) {
-    ElNotification.warning('请选择所属知识库')
-    return
-  }
-
-  // 这里可以添加创建文档的逻辑
-  ElNotification.success('文档创建成功！')
-  closeCreateDocumentDialog()
 }
 
 /**
@@ -378,7 +219,6 @@ function openCreateDialog() {
   // 重置表单
   createForm.value = {
     name: '',
-    description: ''
   }
 }
 
@@ -398,24 +238,41 @@ function createKnowledgeBase() {
     return
   }
 
-  // 这里可以添加创建知识库的逻辑
-  ElNotification.success('知识库创建成功！')
-  closeCreateKnowledgeBaseDialog()
-}
+  // 创建新知识库对象
+  const newKnowledgeBase = {
+    name: createForm.value.name,
+    owner: '默认',
+    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
+    action: '操作'
+  }
 
-function openStoreOperationDialog() {
-  storeOperationDialogVisible.value = true
+  // 将新知识库添加到列表开头
+  tableData.value.unshift(newKnowledgeBase)
+
+  // 显示成功提示
+  ElNotification.success('知识库创建成功！')
+
+  // 关闭对话框
+  closeCreateKnowledgeBaseDialog()
 }
 
 // 知识库操作对话框相关
 const storeOperationDialogVisible = ref(false)
 const activeTab = ref('rename')
+const currentRowIndex = ref(-1) // 当前选中的行索引
 const renameForm = ref({
   newName: ''
 })
 const deleteForm = ref({
   confirmText: ''
 })
+
+function openStoreOperationDialog(rowIndex: number) {
+  storeOperationDialogVisible.value = true
+  currentRowIndex.value = rowIndex
+  renameForm.value.newName = ''
+  deleteForm.value.confirmText = ''
+}
 
 /**
  * 关闭知识库操作对话框
@@ -430,12 +287,41 @@ function closeStoreOperationDialog() {
 function handleStoreOperation() {
   if (activeTab.value === 'rename') {
     // 处理重命名逻辑
+    if (!renameForm.value.newName.trim()) {
+      ElNotification.warning('请输入新的知识库名称')
+      return
+    }
+
+    // 重命名指定行的知识库
+    if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
+      tableData.value[currentRowIndex.value].name = renameForm.value.newName
+    }
+
     ElNotification.success('知识库重命名成功！')
   } else if (activeTab.value === 'delete') {
     // 处理删除逻辑
+    if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
+      tableData.value.splice(currentRowIndex.value, 1) // 删除指定行的知识库
+    }
     ElNotification.success('知识库删除成功！')
   }
   closeStoreOperationDialog()
+}
+
+// 查询知识库
+function searchStore() {
+  // 检验时间是否前后矛盾
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value)
+    const end = new Date(endDate.value)
+
+    if (start > end) {
+      ElNotification.error('起始日期不能晚于结束日期')
+      return
+    }
+  }
+
+  // 这里可以添加其他查询逻辑
 }
 </script>
 
@@ -446,32 +332,6 @@ function handleStoreOperation() {
   inset: 0;
   display: flex;
   overflow: hidden;
-}
-
-/* 侧边栏样式 */
-.sidebar {
-  width: 220px;
-  background: #334b5e;
-  color: #fff;
-  overflow-y: auto;
-}
-
-/* 用户信息盒子样式 */
-.user-info-box {
-  height: 80px;
-  margin: 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-}
-.user-name {
-  font-size: 18px;
-  color: #222129;
-  font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 主容器样式 */
@@ -514,6 +374,7 @@ function handleStoreOperation() {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 8px;
 }
 
 .breadcrumb {
@@ -546,6 +407,28 @@ function handleStoreOperation() {
   margin: 0 8px;
 }
 
+/* 搜索项样式 - 让文字和组件紧凑挨着 */
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-item .el-text {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.search-item .el-input,
+.search-item .el-date-picker {
+  margin: 0;
+}
+
+/* 按钮间距调整 */
+.breadcrumb-wrapper .el-button {
+  margin-left: 8px;
+}
+
 /* 内容盒子样式 */
 .content-box {
   flex: 1;
@@ -563,19 +446,7 @@ function handleStoreOperation() {
   background: #f5f5f5;
 }
 
-/* 图标样式 */
-.folder-icon {
-  color: #ffa500;
-  margin-right: 8px;
-  font-size: 18px;
-}
-
-.document-icon {
-  color: #1890ff;
-  margin-right: 8px;
-  font-size: 18px;
-}
-
+/* 操作图标样式 */
 .action-icon {
   color: #666;
   font-size: 16px;
@@ -587,14 +458,7 @@ function handleStoreOperation() {
   color: #1890ff;
 }
 
-/* 菜单项样式 */
-:deep(.el-menu-item),
-:deep(.el-sub-menu__title) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 操作对话框样式 */
+/* 对话框样式 */
 :deep(.el-tabs__header) {
   margin-bottom: 0;
 }
