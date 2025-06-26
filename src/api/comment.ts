@@ -2,12 +2,12 @@ import request from './request'
 
 
 //获取文章评论
-export const getCommentList = (id: number,page: number,pageSize: number) => {
+export const getCommentList = (textId: number,page: number,pageSize: number) => {
   return request({
-    url: `/api/auth/${id}/comment`,
+    url: '/api/comment/commentLists',
     method: 'get',
     params: {
-      page, pageSize
+      textId, page, pageSize
     }
   })
 }
@@ -15,7 +15,7 @@ export const getCommentList = (id: number,page: number,pageSize: number) => {
 //发表评论 ***
 export const publishComment = (data: any) => {
   return request({
-    url: '/api/auth/comment/publish',
+    url: '/api/comment/publish',
     method: 'post',
     data
   })

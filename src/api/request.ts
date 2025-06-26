@@ -22,6 +22,9 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
     response => {
+        if(response.data.code===1){
+            return response
+        }
         return response;
     },
     error => {
