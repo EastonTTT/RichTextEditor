@@ -94,9 +94,7 @@
       </el-form-item>
       <el-form-item label="编辑者" prop="editors">
         <el-select v-model="createForm.editors" multiple placeholder="请选择编辑者">
-          <el-option label="123" value="123" />
-          <el-option label="李四" value="李四" />
-          <el-option label="王五" value="王五" />
+          <el-option v-for="item in editorsOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
     </el-form>
@@ -185,7 +183,7 @@ import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { ref, onMounted, computed } from 'vue'
 // import { useRouter } from 'vue-router'
-import { getKnowledgeBaseList, addKnowledgeBase } from '@/api/knowledgeBase'
+import { getKnowledgeBaseList, addKnowledgeBase, getAllUsers, renameKnowledgeBase, deleteKnowledgeBase, searchKnowledgeBase } from '@/api/knowledgeBase'
 import { useUserStore } from '@/stores/user'
 
 // 获取用户store
@@ -256,6 +254,9 @@ const displayUserName = computed(() => {
   return name.length > 7 ? name.substring(0, 7) + '...' : name
 })
 
+// 编辑者下拉菜单选项
+const editorsOptions = ref<{ label: string; value: string }[]>([])
+
 onMounted(async () => {
   try {
     const res = await getKnowledgeBaseList(userStore.userInfo.username)
@@ -293,6 +294,15 @@ function openCreateDialog() {
   }
   // 重置校验
   if (createFormRef.value) createFormRef.value.clearValidate()
+  // 动态获取所有用户名作为下拉菜单选项
+  getAllUsers().then(res => {
+    // 过滤掉与侧边栏用户名相同的项
+    const currentUser = displayUserName.value;
+    editorsOptions.value = (res.data.data || []).filter((username: string) => username !== currentUser).map((username: string) => ({
+      label: username,
+      value: username
+    }))
+  })
 }
 
 /**
@@ -376,21 +386,31 @@ function handleStoreOperation() {
       ElNotification.warning('请输入新的知识库名称')
       return
     }
-
-    // 重命名指定行的知识库
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
-      tableData.value[currentRowIndex.value].name = renameForm.value.newName
+      const oldName = tableData.value[currentRowIndex.value].name
+      const newName = renameForm.value.newName
+      // 调用后端重命名接口
+      renameKnowledgeBase(oldName, newName).then(() => {
+        tableData.value[currentRowIndex.value].name = newName
+        ElNotification.success('知识库重命名成功！')
+        closeStoreOperationDialog()
+      }).catch(() => {
+        ElNotification.error('知识库重命名失败')
+      })
     }
-
-    ElNotification.success('知识库重命名成功！')
   } else if (activeTab.value === 'delete') {
-    // 处理删除逻辑
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
-      tableData.value.splice(currentRowIndex.value, 1) // 删除指定行的知识库
+      const name = tableData.value[currentRowIndex.value].name
+      // 调用后端删除接口
+      deleteKnowledgeBase(name).then(() => {
+        tableData.value.splice(currentRowIndex.value, 1)
+        ElNotification.success('知识库删除成功！')
+        closeStoreOperationDialog()
+      }).catch(() => {
+        ElNotification.error('知识库删除失败')
+      })
     }
-    ElNotification.success('知识库删除成功！')
   }
-  closeStoreOperationDialog()
 }
 
 // 查询知识库
@@ -399,14 +419,33 @@ function searchStore() {
   if (startDate.value && endDate.value) {
     const start = new Date(startDate.value)
     const end = new Date(endDate.value)
-
     if (start > end) {
       ElNotification.error('起始日期不能晚于结束日期')
       return
     }
   }
-
-  // 这里可以添加其他查询逻辑
+  // 发起后端查询请求
+  searchKnowledgeBase({
+    name: nameInput.value,
+    owner: onwerInput.value,
+    startDate: startDate.value,
+    endDate: endDate.value
+  }).then(res => {
+    // 假设后端返回格式与getKnowledgeBaseList一致
+    tableData.value = (res.data.data || []).map((item: { kbName: string; userName: string; accessTime: string }) => ({
+      name: item.kbName,
+      owner: item.userName,
+      date: item.accessTime,
+      action: '操作',
+    }))
+    // 清空输入框
+    nameInput.value = ''
+    onwerInput.value = ''
+    startDate.value = ''
+    endDate.value = ''
+  }).catch(() => {
+    ElNotification.error('查询失败')
+  })
 }
 
 // 新建知识库表单ref
