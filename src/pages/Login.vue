@@ -1,22 +1,3 @@
-<!-- <template>
-  <div>
-    <p>temp homepage..</p>
-    <el-button @click="gotomainbox" type="primary">登录</el-button>
-  </div>
-</template>
-
-<script>
-export default {
-  methods: {
-    gotomainbox() {
-      this.$router.push('/mainbox');
-    }
-  }
-}
-</script>
-
-<style></style> -->
-
 <template>
   <div class="login-register">
     <div class="container">
@@ -93,12 +74,16 @@ const handleLogin = async () => {
 
     if (response.data.success) {
       const userData = response.data.user || {};
+      console.log('userData:', userData);
+      ElMessage.success('111');
+
       // 保存用户登录状态
       userStore.setUserLogin({
         username: username.value,
         nickname: userData.nickname,
         avatar: userData.avatar
       });
+      ElMessage.success('222');
       ElMessage.success('登录成功');
       await router.push('/storelist');
     } else {

@@ -205,6 +205,11 @@ import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
+import { getKnowledgeBaseList } from '@/api/knowledgeBase'
+import { useUserStore } from '@/stores/user'
+
+// 获取用户store
+const userStore = useUserStore()
 
 const userName = ref('代码全都队')
 // 当前激活菜单项
@@ -215,20 +220,18 @@ const recentDocs = ref([
 ])
 
 // 知识库选项
-const knowledgeBaseOptions = ref([
-  {
-    value: 'knowledgeBase1',
-    label: '知识库A',
-  },
-  {
-    value: 'knowledgeBase2',
-    label: '知识库B',
-  },
-  {
-    value: 'knowledgeBase3',
-    label: '知识库C',
-  },
-])
+const knowledgeBaseOptions = ref<{ value: string; label: string }[]>([])
+
+// 页面加载时获取知识库列表
+getKnowledgeBaseList(userStore.userInfo.username).then(res => {
+  if (res.data && Array.isArray(res.data.data)) {
+    console.log('知识库后端返回数据:', res.data.data)
+    knowledgeBaseOptions.value = res.data.data.map((item: { kbId?: string | number; kbName?: string }) => ({
+      value: String(item.kbId ?? ''),
+      label: String(item.kbName ?? '')
+    }))
+  }
+})
 
 // 输入名称
 const nameInput = ref('')
