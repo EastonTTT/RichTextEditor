@@ -6,7 +6,7 @@
   -->
   <el-container class="home-container">
     <!-- 使用可复用的侧边栏组件 -->
-    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs"
+    <Sidebar :user-name="userName" :active-menu="activeMenu"
       :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
       @create-document="handleCreateDocument" />
     <!-- 主内容区 -->
@@ -146,9 +146,9 @@
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 // import { useRouter } from 'vue-router'
-import { getKnowledgeBaseList, addKnowledgeBase, getAllUsers, renameKnowledgeBase, deleteKnowledgeBase, searchKnowledgeBase } from '@/api/knowledgeBase'
+import { addKnowledgeBase, deleteKnowledgeBase, getAllUsers, getKnowledgeBaseList, renameKnowledgeBase, searchKnowledgeBase } from '@/api/knowledgeBase'
 import { useUserStore } from '@/stores/user'
 
 // 获取用户store
@@ -157,9 +157,6 @@ const userStore = useUserStore()
 // 侧边栏相关数据
 const userName = ref('代码全都队')
 const activeMenu = ref('1-1')
-const recentDocs = ref([
-  '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
-])
 
 // 输入名称
 const nameInput = ref('')

@@ -30,3 +30,8 @@ export function deleteKnowledgeBase(name?: string) {
 export function searchKnowledgeBase(params: { name?: string; owner?: string; startDate?: string; endDate?: string }) {
   return request.get('/api/auth/knowledgeBase/search', { params });
 }
+
+// 获取最近文档API
+export function getRecentDocuments() {
+  return request.get('/api/auth/user/recent-documents');
+}

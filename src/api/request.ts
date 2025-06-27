@@ -1,9 +1,9 @@
-import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
 // 创建axios实例
 const request = axios.create({
-    baseURL: 'http://172.30.234.1:8080',
+    baseURL: 'http://localhost:8080',
     timeout: 5000 // 请求超时时间
 });
 

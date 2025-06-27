@@ -103,6 +103,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getRecentDocuments } from '../../api/knowledgeBase'
 import UserInfoDialog from './UserInfoDialog.vue'
 
 // 定义组件名称
@@ -171,11 +172,20 @@ const displayUserName = computed(() => {
   return name.length > 7 ? name.substring(0, 7) + '...' : name;
 })
 
+const recentDocs = ref<string[]>([])
+
 /**
  * 初始化用户状态
  */
 onMounted(() => {
   userStore.initUserState()
+  getRecentDocuments().then(res => {
+    if (res.data.success) {
+      recentDocs.value = res.data.data.map((doc: any) => doc.docName)
+    }
+  }).catch(e => {
+    // 错误处理
+  })
 })
 
 /**

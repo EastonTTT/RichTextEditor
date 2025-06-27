@@ -12,7 +12,6 @@
     <Sidebar
       :user-name="userName"
       :active-menu="activeMenu"
-      :recent-docs="recentDocs"
       :knowledge-base-options="knowledgeBaseOptions"
       @menu-select="handleMenuSelect"
       @create-document="handleCreateDocument"
@@ -205,12 +204,12 @@
  *
  * @component
  */
+import { getKnowledgeBaseList } from '@/api/knowledgeBase'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
+import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
-import { getKnowledgeBaseList } from '@/api/knowledgeBase'
-import { useUserStore } from '@/stores/user'
 
 // 获取用户store
 const userStore = useUserStore()
@@ -218,10 +217,6 @@ const userStore = useUserStore()
 const userName = ref('代码全都队')
 // 当前激活菜单项
 const activeMenu = ref('1-2')
-// 最近文档列表
-const recentDocs = ref([
-  '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
-])
 
 // 知识库选项
 const knowledgeBaseOptions = ref<{ value: string; label: string }[]>([])
