@@ -66,7 +66,7 @@
           />
         </el-form-item>
         <el-form-item label="所属知识库" required>
-          <el-select v-model="createForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
+          <el-select v-model="createForm.knowledgeBaseId" placeholder="请选择知识库" style="width: 100%">
             <el-option
               v-for="item in knowledgeBaseOptions"
               :key="item.value"
@@ -98,12 +98,14 @@
 
 <script lang="ts" setup>
 import { updateUserProfile } from '@/api/user'
+import createdocument from '@/api/document'
 import logo from '@/assets/logo.png'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserInfoDialog from './UserInfoDialog.vue'
+import { searchKnowledgeBase } from '@/api/knowledgeBase'
 
 // 定义组件名称
 defineOptions({
@@ -115,7 +117,6 @@ interface Props {
   userName?: string
   activeMenu?: string
   recentDocs?: string[]
-  knowledgeBaseOptions?: Array<{ value: string; label: string }>
 }
 
 // 设置默认值
@@ -123,17 +124,13 @@ const props = withDefaults(defineProps<Props>(), {
   userName: '代码全都队',
   activeMenu: '1',
   recentDocs: () => ['文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'],
-  knowledgeBaseOptions: () => [
-    { value: 'knowledgeBase1', label: '知识库A' },
-    { value: 'knowledgeBase2', label: '知识库B' },
-    { value: 'knowledgeBase3', label: '知识库C' }
-  ]
+
 })
 
 // 定义事件
 const emit = defineEmits<{
-  menuSelect: [index: string]
-  createDocument: [documentData: { name: string; knowledgeBase: string }]
+  menuSelect: [index: string],
+  createDocument: [documentData: { docName: string; userId: number; kbId: number; isCollaborative: boolean }]
 }>()
 
 // 创建router实例
@@ -147,7 +144,7 @@ const logoUrl = logo
 const createDialogVisible = ref(false)
 const createForm = ref({
   name: '',
-  knowledgeBase: '',
+  knowledgeBaseId: '',
 })
 
 // 用户信息对话框相关
@@ -171,11 +168,32 @@ const displayUserName = computed(() => {
   return name.length > 7 ? name.substring(0, 7) + '...' : name;
 })
 
+
+const   knowledgeBaseOptions =ref([
+    { value: '1', label: '算法' },
+    { value: '2', label: '算法设计' },
+    { value: '3', label: '互联网编程' }
+  ])
 /**
  * 初始化用户状态
  */
 onMounted(() => {
   userStore.initUserState()
+  searchKnowledgeBase({
+    name: "",
+    owner: "",
+    startDate:"",
+    endDate: ""
+  }).then(res=>{
+    console.log()
+    knowledgeBaseOptions.value= res.data.data.map((item:any)=>{
+      return {
+        value:item.kbId,
+        label:item.kbName
+      }
+    })
+  })
+
 })
 
 /**
@@ -236,7 +254,7 @@ function openCreateDocument() {
   // 重置表单
   createForm.value = {
     name: '',
-    knowledgeBase: '',
+    knowledgeBaseId: '',
   }
 }
 
@@ -247,26 +265,44 @@ function closeCreateDialog() {
   createDialogVisible.value = false
 }
 
+// /**
+//  * 通过知识库名查找kbId
+//  */
+// function getKbIdByName(name: string) {
+//   const kb = props.knowledgeBaseOptions.find(item => item.label === name)
+//   return kb ? Number(kb.value) : null
+// }
+
 /**
- * 创建文档
+ * 创建文档,从这里开始下手补充代码
  */
 function createDocument() {
   if (!createForm.value.name.trim()) {
     ElNotification.warning('请输入文档名称')
-    return
+    return 
   }
 
-  if (!createForm.value.knowledgeBase) {
+  if (!createForm.value.knowledgeBaseId) {
     ElNotification.warning('请选择所属知识库')
     return
   }
 
-  // 触发创建文档事件
-  emit('createDocument', {
-    name: createForm.value.name,
-    knowledgeBase: createForm.value.knowledgeBase
-  })
+  // 通过知识库名查找kbId
 
+  // 像后端发送请求
+  // 触发创建文档事件，传递number类型的kbIdId
+  createdocument({
+    docName: createForm.value.name,
+    kbId:<any>(createForm.value.knowledgeBaseId),//要根据知识库的名称找到对应知识库id
+    userId: userStore.userInfo.userId,
+    isCollaborative: false
+  })
+  emit('createDocument', {
+    docName: createForm.value.name,
+    userId: userStore.userInfo.userId,
+    kbId: <any>(createForm.value.knowledgeBaseId),
+    isCollaborative: false
+  })
   // 显示成功提示
   ElNotification.success('文档创建成功！')
 
