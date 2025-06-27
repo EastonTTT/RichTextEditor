@@ -181,7 +181,8 @@ onMounted(() => {
   userStore.initUserState()
   getRecentDocuments().then(res => {
     if (res.data.success) {
-      recentDocs.value = res.data.data.map((doc: any) => doc.docName)
+      const names = res.data.data.map((doc: any) => doc.docName)
+      recentDocs.value = Array.from(new Set(names))
     }
   }).catch(e => {
     // 错误处理
