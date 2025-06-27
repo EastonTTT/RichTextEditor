@@ -82,6 +82,10 @@
               </template>
             </el-table-column>
           </el-table>
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination background layout="prev, pager, next" :total="1000" />
+          </div>
         </div>
       </el-main>
       <el-footer class="main-footer">Element Plus ©2024 Created by 代码全都队</el-footer>
@@ -404,6 +408,13 @@ function searchDoc() {
 </script>
 
 <style scoped>
+
+/* 分页栏居中并与表格间距 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
 /* 整体容器样式 */
 .home-container {
   position: fixed;
