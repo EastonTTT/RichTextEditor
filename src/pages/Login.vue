@@ -75,7 +75,6 @@ const handleLogin = async () => {
     if (response.data.success) {
       const userData = response.data.user || {};
       console.log('userData:', userData);
-      ElMessage.success('111');
 
       // 保存用户登录状态
       userStore.setUserLogin({
@@ -83,7 +82,6 @@ const handleLogin = async () => {
         nickname: userData.nickname,
         avatar: userData.avatar
       });
-      ElMessage.success('222');
       ElMessage.success('登录成功');
       await router.push('/storelist');
     } else {

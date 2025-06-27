@@ -6,19 +6,14 @@
   -->
   <el-container class="home-container">
     <!-- 使用可复用的侧边栏组件 -->
-    <Sidebar
-      :user-name="userName"
-      :active-menu="activeMenu"
-      :recent-docs="recentDocs"
-      :knowledge-base-options="knowledgeBaseOptions"
-      @menu-select="handleMenuSelect"
-      @create-document="handleCreateDocument"
-    />
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs"
+      :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
+      @create-document="handleCreateDocument" />
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
       <!-- 面包屑导航 -->
-      <div class="breadcrumb-container">
+     <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
           <el-text class="mx-1" size="large">我的知识库</el-text>
           <div class="search-item">
@@ -27,29 +22,17 @@
           </div>
           <div class="search-item">
             <el-text size="large">所有者</el-text>
-            <el-input v-model="onwerInput" style="width: 100px" placeholder="输入所有者"/>
+            <el-input v-model="onwerInput" style="width: 100px" placeholder="输入所有者" />
           </div>
           <div class="search-item">
             <el-text size="large">起始日期</el-text>
-            <el-date-picker
-              v-model="startDate"
-              type="date"
-              placeholder="起始日期"
-              style="width: 120px"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
           </div>
           <div class="search-item">
             <el-text size="large">结束日期</el-text>
-            <el-date-picker
-              v-model="endDate"
-              type="date"
-              placeholder="结束日期"
-              style="width: 120px"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
           </div>
           <el-button type="info" round @click="searchStore">查询</el-button>
           <el-button type="info" round @click="openCreateDialog">新建知识库</el-button>
@@ -107,23 +90,13 @@
   </el-dialog>
 
   <!-- 知识库操作对话框 -->
-  <el-dialog
-    v-model="storeOperationDialogVisible"
-    title="知识库操作"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="storeOperationDialogVisible" title="知识库操作" width="500px" :close-on-click-modal="false">
     <el-tabs v-model="activeTab" type="card">
       <!-- 重命名标签页 -->
       <el-tab-pane label="重命名" name="rename">
         <el-form :model="renameForm" label-width="100px" style="margin-top: 20px;">
           <el-form-item label="新名称" required>
-            <el-input
-              v-model="renameForm.newName"
-              placeholder="请输入新的知识库名称"
-              maxlength="50"
-              show-word-limit
-            />
+            <el-input v-model="renameForm.newName" placeholder="请输入新的知识库名称" maxlength="50" show-word-limit />
           </el-form-item>
         </el-form>
       </el-tab-pane>
@@ -138,11 +111,7 @@
           <p style="color: #666; margin-bottom: 20px;">
             您确定要删除这个知识库吗？此操作不可恢复。
           </p>
-          <el-input
-            v-model="deleteForm.confirmText"
-            placeholder="请输入 'DELETE' 确认删除"
-            style="width: 300px;"
-          />
+          <el-input v-model="deleteForm.confirmText" placeholder="请输入 'DELETE' 确认删除" style="width: 300px;" />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -150,19 +119,11 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="closeStoreOperationDialog">取消</el-button>
-        <el-button
-          v-if="activeTab === 'delete'"
-          type="danger"
-          @click="handleStoreOperation"
-          :disabled="deleteForm.confirmText !== 'DELETE'"
-        >
+        <el-button v-if="activeTab === 'delete'" type="danger" @click="handleStoreOperation"
+          :disabled="deleteForm.confirmText !== 'DELETE'">
           删除
         </el-button>
-        <el-button
-          v-else
-          type="primary"
-          @click="handleStoreOperation"
-        >
+        <el-button v-else type="primary" @click="handleStoreOperation">
           确定
         </el-button>
       </span>
