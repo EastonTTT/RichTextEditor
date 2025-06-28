@@ -1,11 +1,11 @@
-import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
 // 创建axios实例
 const request = axios.create({
-  baseURL: 'http://172.30.211.60:8080',
-  timeout: 5000, // 请求超时时间
-})
+  baseURL: 'http://localhost:8080',
+  timeout: 5000 // 请求超时时间
+});
 
 // 请求拦截器
 request.interceptors.request.use(

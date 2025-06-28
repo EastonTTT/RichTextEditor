@@ -1,6 +1,6 @@
 <template>
   <div>
-    <editor-header :editor="editor!" />
+    <editor-header :editor="editor!"/>
   </div>
   <div class="wrapper">
     <div class="toc-container">
@@ -26,10 +26,12 @@ import { Editor } from '@tiptap/vue-3';
 import { WebsocketProvider } from 'y-websocket'
 import { useCollaborationProvider } from '@/utils/useCollaborationProvider';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import type { Role } from '@/types/editorTypes'
+import { getDocument } from '@/api/document'
 
 const route = useRoute()
+const router = useRouter();
 // let provider: TiptapCollabProvider | null = null
 // let editor = ref<Editor | {}>({})
 //是否开启协作
@@ -44,6 +46,8 @@ const name = route.query.user as string || '匿名'
 const color = route.query.color as string || '#29D587'
 const role = route.query.role as Role || 'owner'
 
+// 当前文档id
+const currentDocId = ref()
 provide('isCollaborative', isCollaborative)
 provide('role', role)
 const user = {
@@ -78,8 +82,7 @@ const editor = useEditor({
       provider,
       user
     })
-  ],
-  content: '<p>start collaborating!</p>',
+  ]
 })
 
 // 切换协作模式
@@ -110,7 +113,6 @@ awareness.on('change', ({ added, updated, removed }) => {
     }
   }
 })
-
 
 // watchEffect(() => {
 //   if (isCollaborative.value && !provider) {
@@ -143,11 +145,20 @@ provider.on('error', (err) => {
   console.error('❗ Provider 错误:', err)
 })
 
-
-
 onMounted(() => {
   // 监听协作模式切换
   console.log('协作模式:', isCollaborative.value)
+  // 获取id
+  currentDocId.value = route.query.id;
+  console.log("DocId:", route.query.id)
+
+  getDocument(currentDocId.value).then(res => {
+    let data = JSON.parse(res.data.data.content)
+    console.log("从数据库拿到的文本:",data)
+    editor.value.commands.setContent(data.content)
+  })
+
+
 })
 
 onBeforeUnmount(() => {

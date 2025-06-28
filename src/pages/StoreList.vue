@@ -6,14 +6,16 @@
   -->
   <el-container class="home-container">
     <!-- 使用可复用的侧边栏组件 -->
-    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs"
-      :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
-      @create-document="handleCreateDocument" />
+    <Sidebar
+      :user-name="userName"
+      :active-menu="activeMenu"
+      @menu-select="handleMenuSelect"
+      />
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
       <!-- 面包屑导航 -->
-      <div class="breadcrumb-container">
+     <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
           <el-text class="mx-1" size="large">我的知识库</el-text>
           <div class="search-item">
@@ -41,7 +43,7 @@
       <el-main class="main-content">
         <!-- 内容展示区 -->
         <div class="content-box">
-          <el-table :data="tableData" style="width: 100%">
+          <el-table :data="currentPageData" style="width: 100%" @row-click="handleRowClick">
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
@@ -53,6 +55,17 @@
               </template>
             </el-table-column>
           </el-table>
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              background
+              layout="prev, pager, next"
+              :total="tableData.length"
+              :page-size="pageSize"
+              :current-page="currentPage"
+              @current-change="handleCurrentChange"
+            />
+          </div>
         </div>
       </el-main>
       <el-footer class="main-footer">Element Plus ©2024 Created by 代码全都队</el-footer>
@@ -60,10 +73,25 @@
   </el-container>
 
   <!-- 新建知识库对话框 -->
-  <el-dialog v-model="createDialogVisible" title="新建知识库" width="500px" :close-on-click-modal="false">
-    <el-form :model="createForm" label-width="100px">
-      <el-form-item label="知识库名称" required>
-        <el-input v-model="createForm.name" placeholder="请输入知识库名称" maxlength="50" show-word-limit />
+  <el-dialog
+    v-model="createDialogVisible"
+    title="新建知识库"
+    width="500px"
+    :close-on-click-modal="false"
+  >
+    <el-form :model="createForm" :rules="createFormRules" ref="createFormRef" label-width="100px">
+      <el-form-item label="知识库名称" prop="name" required>
+        <el-input
+          v-model="createForm.name"
+          placeholder="请输入知识库名称"
+          maxlength="50"
+          show-word-limit
+        />
+      </el-form-item>
+      <el-form-item label="编辑者" prop="editors">
+        <el-select v-model="createForm.editors" multiple placeholder="请选择编辑者">
+          <el-option v-for="item in editorsOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -127,18 +155,21 @@
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { addKnowledgeBase, deleteKnowledgeBase, getAllUsers, getKnowledgeBaseList, renameKnowledgeBase, searchKnowledgeBase } from '@/api/knowledgeBase'
+import { useUserStore } from '@/stores/user'
+//import { createDocument } from '@/api/document'
 
-// 创建router实例
+// 获取用户store
+const userStore = useUserStore()
+
+// 获取路由实例
 const router = useRouter()
 
 // 侧边栏相关数据
 const userName = ref('代码全都队')
 const activeMenu = ref('1-1')
-const recentDocs = ref([
-  '文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'
-])
 
 // 输入名称
 const nameInput = ref('')
@@ -155,61 +186,67 @@ const endDate = ref('')
 const createDialogVisible = ref(false)
 const createForm = ref({
   name: '',
+  editors: [] as string[], // 支持多选
 })
 
-// 知识库选项
-const knowledgeBaseOptions = ref([
-  {
-    value: 'knowledgeBase1',
-    label: '知识库A',
-  },
-  {
-    value: 'knowledgeBase2',
-    label: '知识库B',
-  },
-  {
-    value: 'knowledgeBase3',
-    label: '知识库C',
-  },
-])
+// 新建知识库表单校验规则
+const createFormRules = {
+  name: [
+    { required: true, message: '请输入知识库名称', trigger: 'blur' }
+  ]
+}
 
-//文档列表
-const tableData = ref([
-  {
-    name: '知识库A',
-    owner: '张三',
-    date: '2025-06-15',
-    action: '操作',
-  },
-  {
-    name: '知识库B',
-    owner: '李四',
-    date: '2025-06-15',
-    action: '操作',
-  },
-  {
-    name: '知识库C',
-    owner: '王五',
-    date: '2025-06-15',
-    action: '操作',
+// 知识库选项
+
+// 定义知识库项类型
+interface KnowledgeBaseItem {
+  name: string
+  owner: string
+  date: string
+  action: string
+}
+
+//知识库列表
+const tableData = ref<KnowledgeBaseItem[]>([])
+
+// 侧边栏显示用户名逻辑，与Sidebar一致
+const displayUserName = computed(() => {
+  const name = userStore.isGuest ? '游客用户' : (userStore.userInfo.nickname || userStore.userInfo.username)
+  return name.length > 7 ? name.substring(0, 7) + '...' : name
+})
+
+// 编辑者下拉菜单选项
+const editorsOptions = ref<{ label: string; value: string }[]>([])
+
+onMounted(async () => {
+  try {
+    const res = await getKnowledgeBaseList(userStore.userInfo.username)
+    tableData.value = res.data.data.map((item: { kbName: string; userName: string; accessTime: string }) => ({
+      name: item.kbName,         // 映射为前端需要的字段
+      owner: item.userName,
+      date: item.accessTime,
+      action: '操作',
+      // 其他字段按需添加r
+    }))
+    // 重置页码
+    currentPage.value = 1
+  } catch {
+    ElNotification.error('知识库数据加载失败')
   }
-])
+})
 
 /**
  * 菜单选择事件
- * @param index 菜单项index
  */
-function handleMenuSelect(index: string) {
-
-}
+function handleMenuSelect() {}
 
 /**
  * 处理创建文档事件（来自侧边栏组件）
- * @param documentData 文档数据
  */
-function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
-
-}
+// async function handleCreateDocument(documentData) {
+//   const res = await createdocument(documentData)
+//   // 创建成功后刷新文档列表等
+// }
 
 /**
  * 打开新建知识库对话框
@@ -219,7 +256,19 @@ function openCreateDialog() {
   // 重置表单
   createForm.value = {
     name: '',
+    editors: [],
   }
+  // 重置校验
+  if (createFormRef.value) createFormRef.value.clearValidate()
+  // 动态获取所有用户名作为下拉菜单选项
+  getAllUsers().then(res => {
+    // 过滤掉与侧边栏用户名相同的项
+    const currentUser = displayUserName.value;
+    editorsOptions.value = (res.data.data || []).filter((username: string) => username !== currentUser).map((username: string) => ({
+      label: username,
+      value: username
+    }))
+  })
 }
 
 /**
@@ -233,27 +282,41 @@ function closeCreateKnowledgeBaseDialog() {
  * 创建知识库
  */
 function createKnowledgeBase() {
-  if (!createForm.value.name.trim()) {
-    ElNotification.warning('请输入知识库名称')
-    return
-  }
-
-  // 创建新知识库对象
-  const newKnowledgeBase = {
-    name: createForm.value.name,
-    owner: '默认',
-    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
-    action: '操作'
-  }
-
-  // 将新知识库添加到列表开头
-  tableData.value.unshift(newKnowledgeBase)
-
-  // 显示成功提示
-  ElNotification.success('知识库创建成功！')
-
-  // 关闭对话框
-  closeCreateKnowledgeBaseDialog()
+  // 表单校验
+  createFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid) {
+      ElNotification.warning('请完善表单信息')
+      return
+    }
+    // 组装新知识库数据
+    const now = new Date()
+    const dateStr = now.toISOString().split('T')[0]
+    const newKnowledgeBase = {
+      name: createForm.value.name,
+      owner: displayUserName.value,
+      date: dateStr,
+      action: '操作',
+      editors: createForm.value.editors.join(', '), // 仅做展示
+    }
+    // 添加到表格
+    tableData.value.unshift(newKnowledgeBase)
+    // 重置页码
+    currentPage.value = 1
+    // 发起请求，传递新建知识库信息给后端
+    try {
+      await addKnowledgeBase({
+        name: createForm.value.name,
+        owner: displayUserName.value,
+        date: dateStr,
+        editors: createForm.value.editors
+      })
+      ElNotification.success('知识库创建成功！')
+    } catch {
+      ElNotification.error('知识库创建失败')
+    }
+    // 关闭对话框
+    closeCreateKnowledgeBaseDialog()
+  })
 }
 
 // 知识库操作对话框相关
@@ -291,21 +354,31 @@ function handleStoreOperation() {
       ElNotification.warning('请输入新的知识库名称')
       return
     }
-
-    // 重命名指定行的知识库
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
-      tableData.value[currentRowIndex.value].name = renameForm.value.newName
+      const oldName = tableData.value[currentRowIndex.value].name
+      const newName = renameForm.value.newName
+      // 调用后端重命名接口
+      renameKnowledgeBase(oldName, newName).then(() => {
+        tableData.value[currentRowIndex.value].name = newName
+        ElNotification.success('知识库重命名成功！')
+        closeStoreOperationDialog()
+      }).catch(() => {
+        ElNotification.error('知识库重命名失败')
+      })
     }
-
-    ElNotification.success('知识库重命名成功！')
   } else if (activeTab.value === 'delete') {
-    // 处理删除逻辑
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
-      tableData.value.splice(currentRowIndex.value, 1) // 删除指定行的知识库
+      const name = tableData.value[currentRowIndex.value].name
+      // 调用后端删除接口
+      deleteKnowledgeBase(name).then(() => {
+        tableData.value.splice(currentRowIndex.value, 1)
+        ElNotification.success('知识库删除成功！')
+        closeStoreOperationDialog()
+      }).catch(() => {
+        ElNotification.error('知识库删除失败')
+      })
     }
-    ElNotification.success('知识库删除成功！')
   }
-  closeStoreOperationDialog()
 }
 
 // 查询知识库
@@ -314,14 +387,64 @@ function searchStore() {
   if (startDate.value && endDate.value) {
     const start = new Date(startDate.value)
     const end = new Date(endDate.value)
-
     if (start > end) {
       ElNotification.error('起始日期不能晚于结束日期')
       return
     }
   }
+  // 发起后端查询请求
+  searchKnowledgeBase({
+    name: nameInput.value,
+    owner: onwerInput.value,
+    startDate: startDate.value,
+    endDate: endDate.value
+  }).then(res => {
+    // 假设后端返回格式与getKnowledgeBaseList一致
+    tableData.value = (res.data.data || []).map((item: { kbName: string; userName: string; accessTime: string }) => ({
+      name: item.kbName,
+      owner: item.userName,
+      date: item.accessTime,
+      action: '操作',
+    }))
+    // 重置页码
+    currentPage.value = 1
+    // 清空输入框
+    nameInput.value = ''
+    onwerInput.value = ''
+    startDate.value = ''
+    endDate.value = ''
+  }).catch(() => {
+    ElNotification.error('查询失败')
+  })
+}
 
-  // 这里可以添加其他查询逻辑
+// 新建知识库表单ref
+const createFormRef = ref()
+
+// 分页相关
+const pageSize = ref(10)
+const currentPage = ref(1)
+
+// 计算当前页显示的数据
+const currentPageData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return tableData.value.slice(start, end)
+})
+
+function handleCurrentChange(newPage: number) {
+  currentPage.value = newPage
+}
+
+function handleRowClick(row: KnowledgeBaseItem) {
+  // 跳转到文档列表页面，传递知识库信息
+  router.push({
+    name: 'doclist',
+    query: {
+      kbName: row.name,
+      kbOwner: row.owner
+    }
+  })
 }
 </script>
 
@@ -437,6 +560,13 @@ function searchStore() {
   background: #fff;
   overflow-y: auto;
   word-wrap: break-word;
+}
+
+/* 分页栏居中并与表格间距 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
 }
 
 /* 页脚样式 */

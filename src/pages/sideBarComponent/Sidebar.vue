@@ -1,12 +1,7 @@
 <template>
   <el-aside width="220px" class="sidebar">
     <!-- 用户信息区 -->
-    <div
-      class="user-info-box"
-      :class="{ 'guest-mode': isGuest }"
-      @click="handleUserInfoClick"
-      style="cursor: pointer;"
-    >
+    <div class="user-info-box" :class="{ 'guest-mode': isGuest }" @click="handleUserInfoClick" style="cursor: pointer;">
       <!-- 使用本地logo.png作为头像 -->
       <el-avatar :src="userAvatar" size="large" style="background: #fff; color: #222129;" />
       <span class="user-name">{{ displayUserName }}</span>
@@ -15,17 +10,9 @@
     </div>
 
     <!-- 导航菜单 -->
-    <el-menu
-      :default-active="activeMenu"
-      :default-openeds="['1']"
-      class="el-menu-vertical-demo"
-      background-color="#132b3e"
-      text-color="#fff"
-      active-text-color="#ffd04b"
-      @select="handleMenuSelect"
-      :unique-opened="true"
-      style="border-right: none;"
-    >
+    <el-menu :default-active="activeMenu" :default-openeds="['1']" class="el-menu-vertical-demo"
+      background-color="#132b3e" text-color="#fff" active-text-color="#ffd04b" @select="handleMenuSelect"
+      :unique-opened="true" style="border-right: none;">
       <!-- 目录树分组 -->
       <el-sub-menu index="1">
         <template #title>
@@ -50,29 +37,14 @@
     </el-menu>
 
     <!-- 新建文档对话框 -->
-    <el-dialog
-      v-model="createDialogVisible"
-      title="新建文档"
-      width="500px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="createDialogVisible" title="新建文档" width="500px" :close-on-click-modal="false">
       <el-form :model="createForm" label-width="100px">
         <el-form-item label="文档名称" required>
-          <el-input
-            v-model="createForm.name"
-            placeholder="请输入文档名称"
-            maxlength="50"
-            show-word-limit
-          />
+          <el-input v-model="createForm.name" placeholder="请输入文档名称" maxlength="50" show-word-limit />
         </el-form-item>
         <el-form-item label="所属知识库" required>
-          <el-select v-model="createForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-            <el-option
-              v-for="item in knowledgeBaseOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
+          <el-select v-model="createForm.knowledgeBaseId" placeholder="请选择知识库" style="width: 100%">
+            <el-option v-for="item in knowledgeBaseOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -85,25 +57,22 @@
     </el-dialog>
 
     <!-- 设置用户信息对话框（抽离为组件） -->
-    <UserInfoDialog
-      :visible="userInfoDialogVisible"
-      :userName="userName"
-      :userAvatar="userAvatar"
-      :loading="isSavingUserInfo"
-      @update:visible="userInfoDialogVisible = $event"
-      @save="onUserInfoSave"
-    />
+    <UserInfoDialog :visible="userInfoDialogVisible" :userName="userName" :userAvatar="userAvatar"
+      :loading="isSavingUserInfo" @update:visible="userInfoDialogVisible = $event" @save="onUserInfoSave" />
   </el-aside>
 </template>
 
 <script lang="ts" setup>
 import { updateUserProfile } from '@/api/user'
+import createdocument from '@/api/document'
 import logo from '@/assets/logo.png'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getRecentDocuments } from '../../api/knowledgeBase'
 import UserInfoDialog from './UserInfoDialog.vue'
+import { searchKnowledgeBase } from '@/api/knowledgeBase'
 
 // 定义组件名称
 defineOptions({
@@ -115,7 +84,6 @@ interface Props {
   userName?: string
   activeMenu?: string
   recentDocs?: string[]
-  knowledgeBaseOptions?: Array<{ value: string; label: string }>
 }
 
 // 设置默认值
@@ -123,17 +91,13 @@ const props = withDefaults(defineProps<Props>(), {
   userName: '代码全都队',
   activeMenu: '1',
   recentDocs: () => ['文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'],
-  knowledgeBaseOptions: () => [
-    { value: 'knowledgeBase1', label: '知识库A' },
-    { value: 'knowledgeBase2', label: '知识库B' },
-    { value: 'knowledgeBase3', label: '知识库C' }
-  ]
+
 })
 
 // 定义事件
 const emit = defineEmits<{
-  menuSelect: [index: string]
-  createDocument: [documentData: { name: string; knowledgeBase: string }]
+  menuSelect: [index: string],
+  createDocument: [documentData: { docName: string; userId: number; kbId: number; isCollaborative: boolean }]
 }>()
 
 // 创建router实例
@@ -147,7 +111,7 @@ const logoUrl = logo
 const createDialogVisible = ref(false)
 const createForm = ref({
   name: '',
-  knowledgeBase: '',
+  knowledgeBaseId: '',
 })
 
 // 用户信息对话框相关
@@ -171,11 +135,45 @@ const displayUserName = computed(() => {
   return name.length > 7 ? name.substring(0, 7) + '...' : name;
 })
 
+
+
+const knowledgeBaseOptions = ref([
+  { value: '1', label: '算法' },
+  { value: '2', label: '算法设计' },
+  { value: '3', label: '互联网编程' }
+])
+
+const recentDocs = ref<string[]>([])
 /**
  * 初始化用户状态
  */
 onMounted(() => {
   userStore.initUserState()
+
+  getRecentDocuments().then(res => {
+    if (res.data.success) {
+      const names = res.data.data.map((doc: any) => doc.docName)
+      recentDocs.value = Array.from(new Set(names))
+    }
+  }).catch(e => {
+    // 错误处理
+  })
+
+  searchKnowledgeBase({
+    name: "",
+    owner: useUserStore().userInfo.username,
+    startDate: "",
+    endDate: ""
+  }).then(res => {
+    console.log()
+    knowledgeBaseOptions.value = res.data.data.map((item: any) => {
+      return {
+        value: item.kbId,
+        label: item.kbName
+      }
+    })
+  })
+
 })
 
 /**
@@ -236,7 +234,7 @@ function openCreateDocument() {
   // 重置表单
   createForm.value = {
     name: '',
-    knowledgeBase: '',
+    knowledgeBaseId: '',
   }
 }
 
@@ -247,8 +245,16 @@ function closeCreateDialog() {
   createDialogVisible.value = false
 }
 
+// /**
+//  * 通过知识库名查找kbId
+//  */
+// function getKbIdByName(name: string) {
+//   const kb = props.knowledgeBaseOptions.find(item => item.label === name)
+//   return kb ? Number(kb.value) : null
+// }
+
 /**
- * 创建文档
+ * 创建文档,从这里开始下手补充代码
  */
 function createDocument() {
   if (!createForm.value.name.trim()) {
@@ -256,15 +262,24 @@ function createDocument() {
     return
   }
 
-  if (!createForm.value.knowledgeBase) {
+  if (!createForm.value.knowledgeBaseId) {
     ElNotification.warning('请选择所属知识库')
     return
   }
 
-  // 触发创建文档事件
-  emit('createDocument', {
-    name: createForm.value.name,
-    knowledgeBase: createForm.value.knowledgeBase
+  // 通过知识库名查找kbId
+
+  // 像后端发送请求
+  // 触发创建文档事件，传递number类型的kbIdId
+  createdocument({
+    docName: createForm.value.name,
+    kbId: <any>(createForm.value.knowledgeBaseId),//要根据知识库的名称找到对应知识库id
+    userId: userStore.userInfo.userId,
+    isCollaborative: false
+  }).then(res => {
+    console.log(res.data.data)
+
+    emit('createDocument', res.data.data)
   })
 
   // 显示成功提示
@@ -338,7 +353,7 @@ async function onUserInfoSave(data: { name: string; avatar: string }) {
 }
 
 .user-info-box:hover {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* 游客模式样式 */
