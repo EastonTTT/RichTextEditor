@@ -36,7 +36,7 @@
             <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 120px" format="YYYY-MM-DD"
               value-format="YYYY-MM-DD" />
           </div>
-          <div class="search-item" >
+          <div class="search-item">
             <el-text size="large">结束日期</el-text>
             <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 120px" format="YYYY-MM-DD"
               value-format="YYYY-MM-DD" />
@@ -66,14 +66,8 @@
           </el-table>
           <!-- 分页 -->
           <div class="pagination-wrapper">
-            <el-pagination
-              background
-              layout="prev, pager, next"
-              :total="tableData.length"
-              :page-size="pageSize"
-              :current-page="currentPage"
-              @current-change="handleCurrentChange"
-            />
+            <el-pagination background layout="prev, pager, next" :total="tableData.length" :page-size="pageSize"
+              :current-page="currentPage" @current-change="handleCurrentChange" />
           </div>
         </div>
       </el-main>
@@ -158,7 +152,7 @@
  * @component
  */
 import { getKnowledgeBaseList } from '@/api/knowledgeBase'
-import { getDocumentByuserId, deleteDocument, renameDocument, searchDocument, getDocumentsByKnowledgeBase } from '@/api/document'
+import createdocument, { getDocumentByuserId, deleteDocument, renameDocument, searchDocument, getDocumentsByKnowledgeBase } from '@/api/document'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
@@ -241,7 +235,7 @@ function handleCurrentChange(newPage: number) {
   currentPage.value = newPage
 }
 
-onMounted(()=>{
+onMounted(() => {
   // 处理路由参数
   if (route.query.kbName) {
     kbName.value = route.query.kbName as string
@@ -258,7 +252,7 @@ onMounted(()=>{
         // 使用知识库ID获取文档列表
         getDocumentsByKnowledgeBase(targetKb.kbId).then(res => {
           console.log('知识库文档列表:', res.data.data.list)
-          tableData.value=res.data.data.list;
+          tableData.value = res.data.data.list;
           currentPage.value = 1
         }).catch(() => {
           ElNotification.error('获取知识库文档失败')
@@ -269,7 +263,7 @@ onMounted(()=>{
     })
   } else {
     // 获取所有文档
-    getDocumentByuserId(useUserStore().userInfo.userId).then(res=>{
+    getDocumentByuserId(useUserStore().userInfo.userId).then(res => {
       console.log(res.data.data.list)
       // 弹窗显示list内容
       ElMessageBox.alert(
@@ -280,7 +274,7 @@ onMounted(()=>{
           confirmButtonText: '确定'
         }
       )
-      tableData.value=res.data.data.list;
+      tableData.value = res.data.data.list;
       currentPage.value = 1
     });
   }
