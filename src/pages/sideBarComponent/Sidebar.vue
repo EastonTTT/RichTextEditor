@@ -170,16 +170,29 @@ const displayUserName = computed(() => {
 })
 
 
+
 const   knowledgeBaseOptions =ref([
     { value: '1', label: '算法' },
     { value: '2', label: '算法设计' },
     { value: '3', label: '互联网编程' }
-  ])
+])
+
+const recentDocs = ref<string[]>([])
 /**
  * 初始化用户状态
  */
 onMounted(() => {
   userStore.initUserState()
+
+  getRecentDocuments().then(res => {
+    if (res.data.success) {
+      const names = res.data.data.map((doc: any) => doc.docName)
+      recentDocs.value = Array.from(new Set(names))
+    }
+  }).catch(e => {
+    // 错误处理
+  })
+
   searchKnowledgeBase({
     name: "",
     owner: "",
