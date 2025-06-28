@@ -18,6 +18,7 @@ import type { CommentApi, CommentSubmitApi, ConfigApi } from 'undraw-ui'
 import { getCommentList, publishComment } from '@/api/comment';
 import { ElMessage } from 'element-plus';
 import Loading from './Loading.vue';
+import { updateUserProfile } from '@/api/user';
 
 // 状态管理
 const isLoading = ref(false);  // 加载状态
@@ -93,6 +94,9 @@ let total = 0  // 本次获取评论数量
 const fetchComment = async() => {
   isLoading.value = true
   try {
+
+    
+
     // 设置当前用户信息到配置中
     const user = {
       id: myInfo.value.id,
