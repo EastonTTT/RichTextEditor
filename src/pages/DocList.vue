@@ -9,13 +9,8 @@
       侧边栏组件 - 功能：用户信息展示、菜单导航、最近文档、快速创建文档
       包含：用户头像和名称、知识库和文档菜单、最近访问文档列表、新建文档按钮
     -->
-    <Sidebar
-      :user-name="userName"
-      :active-menu="activeMenu"
-      :knowledge-base-options="knowledgeBaseOptions"
-      @menu-select="handleMenuSelect"
-      @create-document="handleCreateDocument"
-    />
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :knowledge-base-options="knowledgeBaseOptions"
+      @menu-select="handleMenuSelect" @create-document="handleCreateDocument" />
 
     <!-- 主内容区 -->
     <el-container class="main-container">
@@ -30,7 +25,7 @@
           <el-text class="mx-1" size="large">我的文档</el-text>
           <div class="search-item">
             <el-text size="large">名称</el-text>
-            <el-input v-model="nameInput" size= "" style="width: 100px" placeholder="输入名称" />
+            <el-input v-model="nameInput" size="" style="width: 100px" placeholder="输入名称" />
           </div>
           <div class="search-item">
             <el-text size="large">所有者</el-text>
@@ -38,28 +33,16 @@
           </div>
           <div class="search-item">
             <el-text size="large">起始日期</el-text>
-            <el-date-picker
-              v-model="startDate"
-              type="date"
-              placeholder="起始日期"
-              style="width: 120px"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker v-model="startDate" type="date" placeholder="起始日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
           </div>
-          <div class="search-item">
+          <div class="search-item" >
             <el-text size="large">结束日期</el-text>
-            <el-date-picker
-              v-model="endDate"
-              type="date"
-              placeholder="结束日期"
-              style="width: 120px"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-            />
+            <el-date-picker v-model="endDate" type="date" placeholder="结束日期" style="width: 120px" format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD" />
           </div>
           <el-button type="info" round @click="searchDoc">查询</el-button>
-          <el-button type="info" round @click="openCreateDocument">新建文档</el-button>
+          <el-button type="info" round v-show="false" @click="openCreateDocument">新建文档</el-button>
         </div>
       </div>
 
@@ -69,13 +52,13 @@
           包含：文档名称、所有者、最近查看时间、操作按钮（重命名/删除）
         -->
         <div class="content-box">
-          <el-table :data="tableData" style="width: 100%">
+          <el-table :data="tableData" style="width: 100%" @row-click=enterEdit>
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
             <el-table-column prop="" label="操作" width="80">
-              <template #default>
-                <el-icon class="action-icon" @click="openDocOperationDialog">
+              <template #default="scope">
+                <el-icon class="action-icon" @click.stop="openDocOperationDialog(scope.$index)">
                   <MoreFilled />
                 </el-icon>
               </template>
@@ -95,23 +78,13 @@
     文档操作对话框 - 功能：对选中文档进行重命名或删除操作
     包含：重命名标签页（输入新名称）、删除标签页（确认删除操作）
   -->
-  <el-dialog
-    v-model="docOperationDialogVisible"
-    title="文档操作"
-    width="500px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="docOperationDialogVisible" title="文档操作" width="500px" :close-on-click-modal="false">
     <el-tabs v-model="activeTab" type="card">
       <!-- 重命名标签页 -->
       <el-tab-pane label="重命名" name="rename">
         <el-form :model="renameForm" label-width="100px" style="margin-top: 20px;">
           <el-form-item label="新名称" required>
-            <el-input
-              v-model="renameForm.newName"
-              placeholder="请输入新的文档名称"
-              maxlength="50"
-              show-word-limit
-            />
+            <el-input v-model="renameForm.newName" placeholder="请输入新的文档名称" maxlength="50" show-word-limit />
           </el-form-item>
         </el-form>
       </el-tab-pane>
@@ -126,11 +99,7 @@
           <p style="color: #666; margin-bottom: 20px;">
             您确定要删除这个文档吗？此操作不可恢复。
           </p>
-          <el-input
-            v-model="deleteForm.confirmText"
-            placeholder="请输入 'DELETE' 确认删除"
-            style="width: 300px;"
-          />
+          <el-input v-model="deleteForm.confirmText" placeholder="请输入 'DELETE' 确认删除" style="width: 300px;" />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -138,19 +107,11 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="closeDocOperationDialog">取消</el-button>
-        <el-button
-          v-if="activeTab === 'delete'"
-          type="danger"
-          @click="handleDocOperation"
-          :disabled="deleteForm.confirmText !== 'DELETE'"
-        >
+        <el-button v-if="activeTab === 'delete'" type="danger" @click="handleDocOperation"
+          :disabled="deleteForm.confirmText !== 'DELETE'">
           删除
         </el-button>
-        <el-button
-          v-else
-          type="primary"
-          @click="handleDocOperation"
-        >
+        <el-button v-else type="primary" @click="handleDocOperation">
           确定
         </el-button>
       </span>
@@ -161,39 +122,24 @@
     新建文档对话框 - 功能：创建新的文档
     包含：文档名称输入、所属知识库选择
   -->
-  <el-dialog
-      v-model="createDocDialogVisible"
-      title="新建文档"
-      width="500px"
-      :close-on-click-modal="false"
-    >
-      <el-form :model="createDocForm" label-width="100px">
-        <el-form-item label="文档名称" required>
-          <el-input
-            v-model="createDocForm.name"
-            placeholder="请输入文档名称"
-            maxlength="50"
-            show-word-limit
-          />
-        </el-form-item>
-        <el-form-item label="所属知识库" required>
-          <el-select v-model="createDocForm.knowledgeBase" placeholder="请选择知识库" style="width: 100%">
-            <el-option
-              v-for="item in knowledgeBaseOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="closeCreateDocDialog">取消</el-button>
-          <el-button type="primary" @click="createDoc">创建</el-button>
-        </span>
-      </template>
-    </el-dialog>
+  <el-dialog v-model="createDocDialogVisible" title="新建文档" width="500px" :close-on-click-modal="false">
+    <el-form :model="createForm" label-width="100px">
+      <el-form-item label="文档名称" required>
+        <el-input v-model="createForm.name" placeholder="请输入文档名称" maxlength="50" show-word-limit />
+      </el-form-item>
+      <el-form-item label="所属知识库" required>
+        <el-select v-model="createForm.knowledgeBaseId" placeholder="请选择知识库" style="width: 100%">
+          <el-option v-for="item in knowledgeBaseOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="closeCreateDocDialog">取消</el-button>
+        <el-button type="primary" @click="createDocument">创建</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -205,13 +151,14 @@
  * @component
  */
 import { getKnowledgeBaseList } from '@/api/knowledgeBase'
-import createdocument, { getDocumentByuserId } from '@/api/document'
+import createdocument, { getDocumentByuserId, deleteDocument, renameDocument, searchDocument } from '@/api/document'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { onMounted, ref } from 'vue'
-
+import { useRouter } from 'vue-router';
+const router = useRouter()
 // 获取用户store
 const userStore = useUserStore()
 
@@ -244,14 +191,15 @@ const endDate = ref('')
 
 // 新建文档对话框相关
 const createDocDialogVisible = ref(false)
-const createDocForm = ref({
+const createForm = ref({
   name: '',
-  knowledgeBase: '',
+  knowledgeBaseId: '',
 })
 
 // 文档操作对话框相关
 const docOperationDialogVisible = ref(false)
 const activeTab = ref('rename')
+const currentRowIndex = ref(-1)// 当前选中的行索引
 const renameForm = ref({
   newName: ''
 })
@@ -261,27 +209,16 @@ const deleteForm = ref({
 
 //文档列表
 const tableData = ref([
-  {
-    name: '文档A',
-    owner: '张三',
-    date: '2025-06-15',
-  },
-  {
-    name: '文档B',
-    owner: '李四',
-    date: '2025-06-15',
-  },
-  {
-    name: '文档C',
-    owner: '王五',
-    date: '2025-06-15',
-  }
+
 ])
-onMounted(()=>{
-getDocumentByuserId(useUserStore().userInfo.userId).then(res=>{
-  console.log(res.data.data.list)
-  tableData.value=res.data.data.list;
-});
+
+
+
+onMounted(() => {
+  getDocumentByuserId(useUserStore().userInfo.userId).then(res => {
+    console.log(res.data.data.list)
+    tableData.value = res.data.data.list;
+  });
 
 })
 
@@ -292,19 +229,25 @@ function handleMenuSelect() {
 
 }
 
-/**
+// 页面跳转row
+function enterEdit(row: any) {
+  console.log(row)
+  router.push({
+    path: `/test`,
+    query: {
+      id: row.id
+    }
+  })
+}
+/**console.log(docId)
  * 处理创建文档事件(侧边栏的文档操作按钮触发)
  * @param documentData 文档数据
  */
-function handleCreateDocument(documentData: { docName: string; userId: number; kbId: number; isCollaborative: boolean }) {
+function handleCreateDocument(documentData: any) {
   // 创建新文档对象
-  const newDocument = {
-    name: documentData.docName,
-    owner: useUserStore().userInfo.nickname,
-    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
-  }
+
   // 将新文档添加到列表开头
-  tableData.value.unshift(newDocument)
+  tableData.value.unshift(documentData)
 }
 
 /**
@@ -313,9 +256,9 @@ function handleCreateDocument(documentData: { docName: string; userId: number; k
 function openCreateDocument() {
   createDocDialogVisible.value = true
   // 重置表单
-  createDocForm.value = {
+  createForm.value = {
     name: '',
-    knowledgeBase: '',
+    knowledgeBaseId: '',
   }
 }
 
@@ -329,27 +272,32 @@ function closeCreateDocDialog() {
 /**
  * 创建文档（面包屑按钮触发的对话框）
  */
-function createDoc() {
-  if (!createDocForm.value.name.trim()) {
+
+function createDocument() {
+  if (!createForm.value.name.trim()) {
     ElNotification.warning('请输入文档名称')
     return
   }
 
-  if (!createDocForm.value.knowledgeBase) {
+  if (!createForm.value.knowledgeBaseId) {
     ElNotification.warning('请选择所属知识库')
     return
   }
 
-  // 创建新文档对象
-  const newDocument = {
-    name: createDocForm.value.name,
-    owner: '默认',
-    date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
-    action: '操作'
-  }
+  // 通过知识库名查找kbId
 
-  // 将新文档添加到列表开头
-  tableData.value.unshift(newDocument)
+  // 像后端发送请求
+  // 触发创建文档事件，传递number类型的kbIdId
+  createdocument({
+    docName: createForm.value.name,
+    kbId: <any>(createForm.value.knowledgeBaseId),//要根据知识库的名称找到对应知识库id
+    userId: userStore.userInfo.userId,
+    isCollaborative: false
+  }).then(res => {
+    console.log(res.data.data)
+    handleCreateDocument(res.data.data)
+
+  })
 
   // 显示成功提示
   ElNotification.success('文档创建成功！')
@@ -361,10 +309,11 @@ function createDoc() {
 /**
  * 打开文档操作对话框
  */
-function openDocOperationDialog() {
+function openDocOperationDialog(index: number) {
   docOperationDialogVisible.value = true
   renameForm.value.newName = ''
   deleteForm.value.confirmText = ''
+  currentRowIndex.value = index
 }
 
 /**
@@ -380,12 +329,36 @@ function closeDocOperationDialog() {
 function handleDocOperation() {
   if (activeTab.value === 'rename') {
     // 处理重命名逻辑
-    ElNotification.success('文档重命名成功！')
+    if (!renameForm.value.newName.trim()) {
+      ElNotification.warning('请输入新的文档名称')
+      return
+    }
+    if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
+      const oldName = tableData.value[currentRowIndex.value].name
+      const newName = renameForm.value.newName
+      // 调用后端重命名接口
+      renameDocument(oldName, newName).then((res) => {
+        tableData.value[currentRowIndex.value].name = newName
+        ElNotification.success('文档重命名成功！')
+        closeDocOperationDialog()
+      }).catch(() => {
+        ElNotification.error('文档重命名失败')
+      })
+    }
   } else if (activeTab.value === 'delete') {
     // 处理删除逻辑
-    ElNotification.success('文档删除成功！')
+    if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
+      const docName = tableData.value[currentRowIndex.value].name
+      // 调用后端删除接口
+      deleteDocument(docName).then((res) => {
+        tableData.value.splice(currentRowIndex.value, 1)
+        ElNotification.success('文档删除成功！')
+        closeDocOperationDialog()
+      }).catch(() => {
+        ElNotification.error('文档删除失败')
+      })
+    }
   }
-  closeDocOperationDialog()
 }
 
 // 查询文档
@@ -402,17 +375,24 @@ function searchDoc() {
   }
 
   // 这里可以添加其他查询逻辑
+  searchDocument(nameInput.value, owerInput.value, startDate.value, endDate.value).then(res => {
+    console.log("chaxun ", res.data.data.list)
+    tableData.value.splice(0, tableData.value.length)
+    console.log(tableData.value)
+    tableData.value = res.data.data.list
+    console.log(tableData.value)
+  })
 }
 </script>
 
 <style scoped>
-
 /* 分页栏居中并与表格间距 */
 .pagination-wrapper {
   display: flex;
   justify-content: center;
   margin-top: 24px;
 }
+
 /* 整体容器样式 */
 .home-container {
   position: fixed;

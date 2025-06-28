@@ -39,7 +39,7 @@
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
       </div>
-      <div class="right-button">
+      <div class="right-button" @click=handleSaveDocument>
         <el-tooltip content="保存" placement="bottom">
           <button>
             <SaveIcon size="large" />
@@ -76,7 +76,11 @@ import { inject } from 'vue'
 import { Editor } from '@tiptap/vue-3';
 import { jsPDF } from "jspdf";
 import html2canvas from 'html2canvas';
-const { editor, } = defineProps<{ editor: Editor | null }>()
+import { saveDocument } from '@/api/document'
+import { useRoute } from 'vue-router'
+import { ElNotification } from 'element-plus';
+const route = useRoute()
+const { editor } = defineProps<{ editor: Editor | null }>()
 const isCollaborative = inject<boolean>('isCollaborative')
 
 const mydocument = [
@@ -89,6 +93,11 @@ const exportAsPDF = () => {
   // const content = editor?.getHTML(); // 获取 HTML 内容
   // console.log(content)
   const domElement = editor?.view.dom;
+
+  if (!domElement) {
+    console.error("Editor DOM element is not available");
+    return;
+  }
 
   html2canvas(domElement, {
     scale: 3,
@@ -157,6 +166,14 @@ const exportAsPDF = () => {
   // });
 };
 
+const handleSaveDocument = () => {
+  const jsonData = JSON.stringify(editor.getJSON())
+  console.log(jsonData)
+
+  saveDocument(route.query.id, jsonData).then(res => {
+    ElNotification.success("保存文档成功")
+  })
+}
 </script>
 
 <style lang="scss" scoped>
