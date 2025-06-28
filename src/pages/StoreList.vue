@@ -6,8 +6,8 @@
   -->
   <el-container class="home-container">
     <!-- 使用可复用的侧边栏组件 -->
-    <Sidebar 
-      :user-name="userName" 
+    <Sidebar
+      :user-name="userName"
       :active-menu="activeMenu"
       @menu-select="handleMenuSelect"
       />
@@ -43,7 +43,7 @@
       <el-main class="main-content">
         <!-- 内容展示区 -->
         <div class="content-box">
-          <el-table :data="tableData" style="width: 100%">
+          <el-table :data="currentPageData" style="width: 100%" @row-click="handleRowClick">
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
@@ -57,7 +57,14 @@
           </el-table>
           <!-- 分页 -->
           <div class="pagination-wrapper">
-            <el-pagination background layout="prev, pager, next" :total="1000" />
+            <el-pagination
+              background
+              layout="prev, pager, next"
+              :total="tableData.length"
+              :page-size="pageSize"
+              :current-page="currentPage"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </div>
       </el-main>
@@ -149,13 +156,16 @@ import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
-// import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { addKnowledgeBase, deleteKnowledgeBase, getAllUsers, getKnowledgeBaseList, renameKnowledgeBase, searchKnowledgeBase } from '@/api/knowledgeBase'
 import { useUserStore } from '@/stores/user'
 //import { createDocument } from '@/api/document'
 
 // 获取用户store
 const userStore = useUserStore()
+
+// 获取路由实例
+const router = useRouter()
 
 // 侧边栏相关数据
 const userName = ref('代码全都队')
@@ -218,6 +228,8 @@ onMounted(async () => {
       action: '操作',
       // 其他字段按需添加r
     }))
+    // 重置页码
+    currentPage.value = 1
   } catch {
     ElNotification.error('知识库数据加载失败')
   }
@@ -288,6 +300,8 @@ function createKnowledgeBase() {
     }
     // 添加到表格
     tableData.value.unshift(newKnowledgeBase)
+    // 重置页码
+    currentPage.value = 1
     // 发起请求，传递新建知识库信息给后端
     try {
       await addKnowledgeBase({
@@ -392,6 +406,8 @@ function searchStore() {
       date: item.accessTime,
       action: '操作',
     }))
+    // 重置页码
+    currentPage.value = 1
     // 清空输入框
     nameInput.value = ''
     onwerInput.value = ''
@@ -404,6 +420,32 @@ function searchStore() {
 
 // 新建知识库表单ref
 const createFormRef = ref()
+
+// 分页相关
+const pageSize = ref(10)
+const currentPage = ref(1)
+
+// 计算当前页显示的数据
+const currentPageData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return tableData.value.slice(start, end)
+})
+
+function handleCurrentChange(newPage: number) {
+  currentPage.value = newPage
+}
+
+function handleRowClick(row: KnowledgeBaseItem) {
+  // 跳转到文档列表页面，传递知识库信息
+  router.push({
+    name: 'doclist',
+    query: {
+      kbName: row.name,
+      kbOwner: row.owner
+    }
+  })
+}
 </script>
 
 <style scoped>

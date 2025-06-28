@@ -1,11 +1,11 @@
 import request from './request';
 
 // 创建文档
-export default function createdocument(data: { 
-    docName: string; 
-    kbId: number; 
-    userId: number; 
-    //content?: string 
+export default function createdocument(data: {
+    docName: string;
+    kbId: number;
+    userId: number;
+    //content?: string
     isCollaborative: boolean
 }) {
     return request({
@@ -18,7 +18,7 @@ export default function createdocument(data: {
 // 获取知识库下的文档列表
 export function getDocumentsByKnowledgeBase(knowledgeBaseId: number) {
     return request({
-        url: '/api/document/knowledge-base/${knowledgeBaseId}',
+        url: `/api/document/knowledge-base/${knowledgeBaseId}`,
         method: 'get'
     });
 }
@@ -54,7 +54,7 @@ export function saveDocument(id: number, data: { content: string }) {
         method: 'post',
         data
     });
-} 
+}
 
 //开启/关闭文档协作
 export function setDocumentCollaboration(id: number, isCollaborative: boolean) {
@@ -77,6 +77,6 @@ export function getDocumentByuserId(userId?:String){
             method: 'get',
         })
     }
-    
+
 }
 
