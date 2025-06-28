@@ -219,6 +219,7 @@ import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
 import { onMounted, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 
 // 获取用户store
 const userStore = useUserStore()
@@ -320,8 +321,17 @@ onMounted(()=>{
     })
   } else {
     // 获取所有文档
-    getDocumentByuserId().then(res=>{
+    getDocumentByuserId(useUserStore().userInfo.userId).then(res=>{
       console.log(res.data.data.list)
+      // 弹窗显示list内容
+      ElMessageBox.alert(
+        `<pre>${JSON.stringify(res.data.data.list, null, 2)}</pre>`,
+        '文档列表list内容',
+        {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: '确定'
+        }
+      )
       tableData.value=res.data.data.list;
       currentPage.value = 1
     });

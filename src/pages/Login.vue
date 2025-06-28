@@ -75,7 +75,7 @@ const handleLogin = async () => {
     if (response.data.success) {
       const userData = response.data.user || {};
       // 存储到sessionStorage
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userInfo', JSON.stringify(userData));
       // 如果有Pinia store，也可以同步
       if (userStore && userStore.setUserLogin) {
         userStore.setUserLogin(userData);

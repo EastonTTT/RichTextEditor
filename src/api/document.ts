@@ -65,7 +65,7 @@ export function setDocumentCollaboration(id: number, isCollaborative: boolean) {
     });
   }
 
-export function getDocumentByuserId(userId?:String){
+export function getDocumentByuserId(userId?:number){
     if(userId==undefined){
         return request({
             url: `/api/document/list`,
