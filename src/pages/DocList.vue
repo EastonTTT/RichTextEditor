@@ -278,7 +278,7 @@ const tableData = ref([
   }
 ])
 onMounted(()=>{
-getDocumentByuserId().then(res=>{
+getDocumentByuserId(useUserStore().userInfo.userId).then(res=>{
   console.log(res.data.data.list)
   tableData.value=res.data.data.list;
 });
