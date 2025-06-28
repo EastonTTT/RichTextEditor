@@ -104,7 +104,6 @@ const error = ref('');
 const summary = ref(''); // 完整摘要
 const truncatedSummary = ref(''); // 截断后的摘要
 const copySuccess = ref(false); // 复制成功状态
-
 // 显示组件的方法
 const showComponent = () => {
   visible.value = true;
@@ -244,4 +243,22 @@ const toggleShowMore = () => {
 
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.selected-text-display {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #666;
+}
+.show-dialog-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</style>

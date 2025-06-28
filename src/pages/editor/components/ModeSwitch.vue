@@ -1,6 +1,11 @@
 <template>
   <!-- 模式切换组件容器，根据当前模式添加对应的CSS类 -->
-  <div class="custom-mode-switch" :class="`mode-${currentMode}`">
+  <div
+    class="custom-mode-switch"
+    :class="`mode-${currentMode}`"
+    :style="{ top: `${position.y}px`, left: `${position.x}px` }"
+    @mousedown="startDrag"
+  >
     <!-- 循环渲染模式选项 -->
     <div
       v-for="option in modeOptions"
@@ -36,11 +41,12 @@ export default {
   setup(props, { emit }) {
     // 使用ref创建响应式数据，存储当前模式
     const currentMode = ref(props.modelValue);
+    const position = ref({ x: 20, y: 700 }); // 初始位置
+    const isDragging = ref(false);
     
-    // 模式选项配置数组
+    // 模式选项配置数组 - 仅保留编辑和阅读模式
     const modeOptions = [
       { value: 'edit', label: '编辑', iconUnicode: '✏️' },
-      { value: 'review', label: '修订', iconUnicode: '✅' },
       { value: 'read', label: '阅读', iconUnicode: '📖' },
     ];
     
@@ -55,6 +61,38 @@ export default {
       }
     };
     
+    const startDrag = (e) => {
+      isDragging.value = true;
+      
+      // 记录初始鼠标位置和组件位置
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startComponentX = position.value.x;
+      const startComponentY = position.value.y;
+      
+      // 监听全局鼠标移动事件
+      const onMouseMove = (moveEvent) => {
+        if (!isDragging.value) return;
+        
+        // 计算新的位置
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+        
+        position.value.x = startComponentX + deltaX;
+        position.value.y = startComponentY + deltaY;
+      };
+
+      // 监听全局鼠标释放事件
+      const onMouseUp = () => {
+        isDragging.value = false;
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+    
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
     // 监听外部传入的模式变化（用于处理父组件主动修改模式的情况）
     watch(() => props.modelValue, (newVal) => {
       if (newVal !== currentMode.value) {
@@ -65,7 +103,9 @@ export default {
     return {
       currentMode,
       modeOptions,
-      switchMode
+      position,
+      switchMode,
+      startDrag
     };
   }
 }
@@ -76,14 +116,12 @@ export default {
 .custom-mode-switch {
   display: flex;
   position: fixed;
-  top: 20px;
-  right: 20px;
   z-index: 1000;
   border-radius: 20px;
   background-color: rgba(255, 255, 255, 0.95);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  transition: all 0.3s ease;
+  cursor: move; /* 添加可拖动指示器 */
+  user-select: none; /* 防止拖动时选中文本 */
 }
 
 /* 悬停效果：提升阴影深度并轻微上浮 */
@@ -124,22 +162,10 @@ export default {
   background-color: rgba(64, 158, 255, 0.08);
 }
 
-/* 修订模式激活状态的特殊样式 */
-.mode-review .mode-option.active {
-  color: #e6a23c;
-  background-color: rgba(230, 162, 60, 0.08);
-}
-
 /* 阅读模式激活状态的特殊样式 */
 .mode-read .mode-option.active {
   color: #67c23a;
   background-color: rgba(103, 194, 58, 0.08);
-}
-
-/* 图标样式（保留原样式定义，尽管实际使用的是span.icon-unicode） */
-.mode-option i {
-  margin-right: 8px;
-  font-size: 16px;
 }
 
 /* Unicode图标样式 */

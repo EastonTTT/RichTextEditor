@@ -2,13 +2,14 @@
   <div>
     <div>
         <!-- 引入模式切换组件 -->
-      <ModeSwitch v-model="currentMode"/> 
+      <ModeSwitch v-model="currentMode" :editor="editor!"/> 
       <tool-bar v-if="editor" :editor="editor!" class="tool-bar" @toggle-collaboration="toggleCollaboration" />
       <ai-summary :editor="editor!" :mode="currentMode" class="ai-summary" />
       <editor-content :editor="editor!" class="editor-content" />
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
       <bubble-bar :editor="editor!" class="bubble-bar" />
+        <ai-helper :editor="editor" />
       <!-- 评论区组件 -->
       <div class="comment-section">
         <text-comment />
@@ -28,6 +29,7 @@ import { Editor } from '@tiptap/vue-3'
 import AiSummary from './AiSummary.vue'
 import ModeSwitch from './ModeSwitch.vue'
 import TextComment from './TextComment.vue'
+import AiHelper from './AiHelper.vue'
 const { editor } = defineProps<{ editor: Editor | null }>()
 
 const emit = defineEmits()
