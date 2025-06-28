@@ -17,12 +17,14 @@ import { computed, ref } from 'vue'
  * 用户信息接口
  *
  * @interface UserInfo
+ * @property {number} userId - 用户ID
  * @property {string} username - 用户登录名
  * @property {string} nickname - 用户昵称
  * @property {string} avatar - 用户头像
  * @property {boolean} isLoggedIn - 登录状态
  */
 interface UserInfo {
+  userId: number
   username: string
   nickname: string
   avatar: string
@@ -32,6 +34,7 @@ interface UserInfo {
 export const useUserStore = defineStore('user', () => {
   // 用户信息状态
   const userInfo = ref<UserInfo>({
+    userId: 0,
     username: '',
     nickname: '',
     avatar: '',
@@ -68,8 +71,9 @@ export const useUserStore = defineStore('user', () => {
    *          3. 保存到localStorage
    * @output 无
    */
-  function setUserLogin(data: { username: string; nickname?: string; avatar?: string }) {
+  function setUserLogin(data: { userId: number; username: string; nickname?: string; avatar?: string }) {
     userInfo.value = {
+      userId: data.userId,
       username: data.username,
       nickname: data.nickname || data.username, // 如果没有昵称，默认使用用户名
       avatar: data.avatar || '',
@@ -104,6 +108,7 @@ export const useUserStore = defineStore('user', () => {
    */
   function logout() {
     userInfo.value = {
+      userId: 0,
       username: '',
       nickname: '',
       avatar: '',

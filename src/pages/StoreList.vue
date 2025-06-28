@@ -6,9 +6,11 @@
   -->
   <el-container class="home-container">
     <!-- 使用可复用的侧边栏组件 -->
-    <Sidebar :user-name="userName" :active-menu="activeMenu"
-      :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
-      @create-document="handleCreateDocument" />
+    <Sidebar 
+      :user-name="userName" 
+      :active-menu="activeMenu"
+      @menu-select="handleMenuSelect"
+      />
     <!-- 主内容区 -->
     <el-container class="main-container">
       <el-header class="main-header" />
@@ -150,6 +152,7 @@ import { computed, onMounted, ref } from 'vue'
 // import { useRouter } from 'vue-router'
 import { addKnowledgeBase, deleteKnowledgeBase, getAllUsers, getKnowledgeBaseList, renameKnowledgeBase, searchKnowledgeBase } from '@/api/knowledgeBase'
 import { useUserStore } from '@/stores/user'
+//import { createDocument } from '@/api/document'
 
 // 获取用户store
 const userStore = useUserStore()
@@ -184,20 +187,6 @@ const createFormRules = {
 }
 
 // 知识库选项
-const knowledgeBaseOptions = ref([
-  {
-    value: 'knowledgeBase1',
-    label: '知识库A',
-  },
-  {
-    value: 'knowledgeBase2',
-    label: '知识库B',
-  },
-  {
-    value: 'knowledgeBase3',
-    label: '知识库C',
-  },
-])
 
 // 定义知识库项类型
 interface KnowledgeBaseItem {
@@ -242,7 +231,10 @@ function handleMenuSelect() {}
 /**
  * 处理创建文档事件（来自侧边栏组件）
  */
-function handleCreateDocument() {}
+// async function handleCreateDocument(documentData) {
+//   const res = await createdocument(documentData)
+//   // 创建成功后刷新文档列表等
+// }
 
 /**
  * 打开新建知识库对话框

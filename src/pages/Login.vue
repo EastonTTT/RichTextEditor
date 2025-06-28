@@ -74,15 +74,14 @@ const handleLogin = async () => {
 
     if (response.data.success) {
       const userData = response.data.user || {};
-      console.log('userData:', userData);
-
-      // 保存用户登录状态
-      userStore.setUserLogin({
-        username: username.value,
-        nickname: userData.nickname,
-        avatar: userData.avatar
-      });
+      // 存储到sessionStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+      // 如果有Pinia store，也可以同步
+      if (userStore && userStore.setUserLogin) {
+        userStore.setUserLogin(userData);
+      }
       ElMessage.success('登录成功');
+      console.log('登录成功');
       await router.push('/storelist');
     } else {
       ElMessage.error(response.data.message || '登录失败');

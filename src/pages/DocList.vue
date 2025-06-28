@@ -73,7 +73,7 @@
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
-            <el-table-column prop="action" label="操作" width="80">
+            <el-table-column prop="" label="操作" width="80">
               <template #default>
                 <el-icon class="action-icon" @click="openDocOperationDialog">
                   <MoreFilled />
@@ -205,11 +205,12 @@
  * @component
  */
 import { getKnowledgeBaseList } from '@/api/knowledgeBase'
+import createdocument, { getDocumentByuserId } from '@/api/document'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 // 获取用户store
 const userStore = useUserStore()
@@ -264,21 +265,25 @@ const tableData = ref([
     name: '文档A',
     owner: '张三',
     date: '2025-06-15',
-    action: '操作',
   },
   {
     name: '文档B',
     owner: '李四',
     date: '2025-06-15',
-    action: '操作',
   },
   {
     name: '文档C',
     owner: '王五',
     date: '2025-06-15',
-    action: '操作',
   }
 ])
+onMounted(()=>{
+getDocumentByuserId().then(res=>{
+  console.log(res.data.data.list)
+  tableData.value=res.data.data.list;
+});
+
+})
 
 /**
  * 菜单选择事件
@@ -291,15 +296,13 @@ function handleMenuSelect() {
  * 处理创建文档事件(侧边栏的文档操作按钮触发)
  * @param documentData 文档数据
  */
-function handleCreateDocument(documentData: { name: string; knowledgeBase: string }) {
+function handleCreateDocument(documentData: { docName: string; userId: number; kbId: number; isCollaborative: boolean }) {
   // 创建新文档对象
   const newDocument = {
-    name: documentData.name,
-    owner: '默认',
+    name: documentData.docName,
+    owner: useUserStore().userInfo.nickname,
     date: new Date().toISOString().split('T')[0], // 当前日期，格式：YYYY-MM-DD
-    action: '操作'
   }
-
   // 将新文档添加到列表开头
   tableData.value.unshift(newDocument)
 }
