@@ -1,0 +1,354 @@
+.ai-overview-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px; 
+  margin: 8px 0;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  /* 去掉最大宽度限制，让其水平铺满父容器可用宽度 
+  max-width: 500px; */ 
+  width: 100%; /* 让容器宽度自适应父容器，铺满水平空间 */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ai-overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px; /* 进一步减小头部与内容的间距 */
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ai-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+  display: flex;
+  align-items: center;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background-color: #409eff;
+    border-radius: 2px;
+    margin-right: 6px;
+  }
+}
+
+.ai-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.action-btn {
+  background-color: #f5f7fa;
+  border: 1px solid #dcdfe6;
+  color: #606266;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  min-width: 72px;
+  justify-content: center;
+
+  &:hover {
+    background-color: #ecf5ff;
+    border-color: #b3d8ff;
+    color: #409eff;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.action-icon {
+  font-size: 16px;
+}
+
+.copied {
+  background-color: #ecf5ff;
+  border-color: #b3d8ff;
+  color: #67c23a;
+}
+
+.copied-icon {
+  animation: pulse 1.5s ease-in-out;
+}
+
+.error-icon {
+  color: #f56c6c;
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.loading-btn {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ai-overview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e4e7ed;
+  border-radius: 50%;
+  border-top-color: #409eff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 6px;
+}
+
+.loading-text {
+  color: #909399;
+  font-size: 12px;
+}
+
+.ai-overview-error {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  color: #f56c6c;
+}
+
+.error-text {
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.ai-overview-content {
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.summary-content {
+  padding: 4px 10px; /* 大幅减小内容区域内边距，压缩垂直高度 */
+  background-color: #fafafa;
+  border-radius: 6px;
+  line-height: 1.2; /* 进一步降低行高 */
+  font-size: 14px;
+  color: #303133;
+  transition: all 0.5s ease;
+
+  h1, h2, h3 {
+    margin: 4px 0; /* 减小标题上下外边距 */
+    color: #303133;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 2px 0; /* 减小段落上下外边距 */
+  }
+
+  ul, ol {
+    margin: 2px 0 6px 0; /* 调整列表间距 */
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  pre {
+    background-color: #f5f7fa;
+    padding: 4px; /* 减小代码块内边距 */
+    border-radius: 4px;
+    overflow-x: auto;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  code {
+    font-family: Consolas, Monaco, 'Andale Mono', monospace;
+    background-color: #f5f7fa;
+    padding: 2px 3px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: #303133;
+  }
+
+  .ellipsis {
+    color: #909399;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 4px; /* 减小提示文字上边距 */
+    cursor: pointer;
+
+    i {
+      margin-right: 3px;
+    }
+  }
+}
+
+.expanded {
+  max-height: none !important;
+  padding: 8px 10px; /* 展开后恢复稍大的内边距，保证阅读体验 */
+  line-height: 1.4; 
+}
+
+.copy-toast {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 100;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+  font-size: 12px;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to { opacity: 0; transform: translate(-50%, 6px); }
+}
+
+.default-tip {
+  padding: 16px;
+  color: #909399;
+  font-size: 14px;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+  border-radius: 6px;
+}
+
+/* 在原有样式基础上添加复制成功样式 */
+.action-btn.copied {
+  background-color: #ecf5ff;
+  color: #67c23a; // 绿色表示成功
+}
+
+.copied-icon {
+  animation: pulse 1.5s ease-in-out; // 成功勾动画
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.rotate-icon {
+  transition: transform 0.3s ease;
+  transform: rotate(0);
+}
+
+.show-more .rotate-icon {
+  transform: rotate(180deg);
+}
+
+// 收起状态的浅灰色文字
+.collapsed-text {
+  color: #909399; // Element Plus的浅灰色
+  
+  // 保持标题颜色不变
+  h1, h2, h3 {
+    color: #303133; // Element Plus的默认文字颜色
+  }
+}
+
+// 展开状态恢复正常颜色
+.expanded {
+  color: #303133; // Element Plus的默认文字颜色
+}
+
+/* 按钮过渡动画 */
+.btn-fade-enter-from,
+.btn-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.btn-fade-enter-active,
+.btn-fade-leave-active {
+  transition: all 0.3s ease-in-out;
+}
+
+/* 组件过渡动画 */
+.component-fade-enter-from,
+.component-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+  transform-origin: center bottom;
+}
+
+.component-fade-enter-active,
+.component-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 按钮基础样式（优化后） */
+.ai-toggle-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #409EFF, #66b1ff);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.3);
+  z-index: 1000;
+  
+  .toggle-icon {
+    margin-right: 8px;
+    font-size: 20px;
+  }
+}
