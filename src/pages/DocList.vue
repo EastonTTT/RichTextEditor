@@ -22,7 +22,7 @@
       -->
       <div class="breadcrumb-container">
         <div class="breadcrumb-wrapper">
-          <el-text class="mx-1" size="large">我的文档</el-text>
+          <el-text class="mx-1" size="large">{{ kbName }}</el-text>
           <div class="search-item">
             <el-text size="large">名称</el-text>
             <el-input v-model="nameInput" size="" style="width: 100px" placeholder="输入名称" />
@@ -52,7 +52,7 @@
           包含：文档名称、所有者、最近查看时间、操作按钮（重命名/删除）
         -->
         <div class="content-box">
-          <el-table :data="tableData" style="width: 100%" @row-click=enterEdit>
+          <el-table :data="currentPageData" style="width: 100%" @row-click=enterEdit>
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
             <el-table-column prop="date" label="最近查看" />
@@ -66,7 +66,14 @@
           </el-table>
           <!-- 分页 -->
           <div class="pagination-wrapper">
-            <el-pagination background layout="prev, pager, next" :total="1000" />
+            <el-pagination
+              background
+              layout="prev, pager, next"
+              :total="tableData.length"
+              :page-size="pageSize"
+              :current-page="currentPage"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </div>
       </el-main>
@@ -151,16 +158,25 @@
  * @component
  */
 import { getKnowledgeBaseList } from '@/api/knowledgeBase'
-import createdocument, { getDocumentByuserId, deleteDocument, renameDocument, searchDocument } from '@/api/document'
+import { getDocumentByuserId, deleteDocument, renameDocument, searchDocument, getDocumentsByKnowledgeBase } from '@/api/document'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router';
 const router = useRouter()
 // 获取用户store
 const userStore = useUserStore()
+
+// 获取路由参数
+const route = useRoute()
+
+// 知识库名称（从路由参数获取）
+const kbName = ref('我的文档')
+const kbOwner = ref('')
 
 const userName = ref('代码全都队')
 // 当前激活菜单项
@@ -208,18 +224,66 @@ const deleteForm = ref({
 })
 
 //文档列表
-const tableData = ref([
+const tableData = ref([])
 
-])
+// 分页相关
+const pageSize = ref(10)
+const currentPage = ref(1)
 
+// 计算当前页显示的数据
+const currentPageData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return tableData.value.slice(start, end)
+})
 
+function handleCurrentChange(newPage: number) {
+  currentPage.value = newPage
+}
 
-onMounted(() => {
-  getDocumentByuserId(useUserStore().userInfo.userId).then(res => {
-    console.log(res.data.data.list)
-    tableData.value = res.data.data.list;
-  });
+onMounted(()=>{
+  // 处理路由参数
+  if (route.query.kbName) {
+    kbName.value = route.query.kbName as string
+    kbOwner.value = route.query.kbOwner as string
+  }
 
+  // 根据知识库信息获取文档列表
+  if (kbName.value !== '我的文档') {
+    // 先通过知识库名称获取知识库ID
+    getKnowledgeBaseList(userStore.userInfo.username).then(kbRes => {
+      const targetKb = kbRes.data.data.find((kb: { kbId: number; kbName: string }) => kb.kbName === kbName.value)
+
+      if (targetKb) {
+        // 使用知识库ID获取文档列表
+        getDocumentsByKnowledgeBase(targetKb.kbId).then(res => {
+          console.log('知识库文档列表:', res.data.data.list)
+          tableData.value=res.data.data.list;
+          currentPage.value = 1
+        }).catch(() => {
+          ElNotification.error('获取知识库文档失败')
+        })
+      } else {
+        ElNotification.error('未找到指定的知识库')
+      }
+    })
+  } else {
+    // 获取所有文档
+    getDocumentByuserId(useUserStore().userInfo.userId).then(res=>{
+      console.log(res.data.data.list)
+      // 弹窗显示list内容
+      ElMessageBox.alert(
+        `<pre>${JSON.stringify(res.data.data.list, null, 2)}</pre>`,
+        '文档列表list内容',
+        {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: '确定'
+        }
+      )
+      tableData.value=res.data.data.list;
+      currentPage.value = 1
+    });
+  }
 })
 
 /**

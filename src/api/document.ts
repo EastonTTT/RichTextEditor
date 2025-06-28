@@ -6,7 +6,7 @@ export default function createdocument(data: {
     docName: string;
     kbId: number;
     userId: number;
-    //content?: string 
+    //content?: string
     isCollaborative: boolean
 }) {
     return request({
