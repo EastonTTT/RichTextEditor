@@ -55,7 +55,11 @@
           <el-table :data="currentPageData" style="width: 100%" @row-click=enterEdit>
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
-            <el-table-column prop="date" label="最近查看" />
+            <el-table-column prop="date" label="最近查看">
+              <template #default="scope">
+                {{ scope.row.date ? scope.row.date.slice(0, 10) : '' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="" label="操作" width="80">
               <template #default="scope">
                 <el-icon class="action-icon" @click.stop="openDocOperationDialog(scope.$index)">
