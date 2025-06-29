@@ -26,6 +26,9 @@ const route = useRoute();
 const isLoading = ref(false);  // 加载状态
 const hasMoreComment = ref(false);  // 是否有更多评论
 const text_id = Number(route.query.id); //当前访问的文档ID
+// 新增：轮询相关变量
+const pollInterval = ref<number | null>(null); // 轮询定时器ID
+const pollTime = 5000; // 5秒轮询一次
 
 // 评论组件配置
 const config = reactive<ConfigApi>({
@@ -156,18 +159,43 @@ const handleScroll = () => {
   }
 };
 
+// 启动轮询
+const startPolling = () => {
+  if (pollInterval.value) clearInterval(pollInterval.value);
+  
+  // 首次延迟执行，避免组件刚挂载就重复请求
+  pollInterval.value = setInterval(async () => {
+    // 调用获取评论列表函数，但不更新页码
+    const currentPage = pageNum;
+    pageNum = 1; // 临时设为1，获取最新评论
+    await fetchComment();
+    pageNum = currentPage; // 恢复原页码
+  }, pollTime);
+};
+
+// 停止轮询
+const stopPolling = () => {
+  if (pollInterval.value) {
+    clearInterval(pollInterval.value);
+    pollInterval.value = null;
+  }
+};
+
 // 组件挂载时执行
 onMounted(async () => {
   // 加载评论数据
   fetchComment();
   // 监听滚动事件
   window.addEventListener('scroll', handleScroll);
+  // 启动轮询
+  startPolling();
 })
 
 // 组件卸载前执行
 onBeforeUnmount(() => {
   // 移除滚动事件监听，避免内存泄漏
   window.removeEventListener('scroll', handleScroll);
+  stopPolling(); // 停止轮询
 });
 </script>
 
