@@ -151,16 +151,14 @@
  *
  * @component
  */
+import createdocument, { deleteDocument, getDocumentByuserId, getDocumentsByKnowledgeBase, renameDocument, searchDocument } from '@/api/document'
 import { getKnowledgeBaseList } from '@/api/knowledgeBase'
-import createdocument, { getDocumentByuserId, deleteDocument, renameDocument, searchDocument, getDocumentsByKnowledgeBase } from '@/api/document'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 const router = useRouter()
 // 获取用户store
 const userStore = useUserStore()
@@ -264,16 +262,16 @@ onMounted(() => {
   } else {
     // 获取所有文档
     getDocumentByuserId(useUserStore().userInfo.userId).then(res => {
-      console.log(res.data.data.list)
-      // 弹窗显示list内容
-      ElMessageBox.alert(
-        `<pre>${JSON.stringify(res.data.data.list, null, 2)}</pre>`,
-        '文档列表list内容',
-        {
-          dangerouslyUseHTMLString: true,
-          confirmButtonText: '确定'
-        }
-      )
+      // console.log(res.data.data.list)
+      // // 弹窗显示list内容
+      // ElMessageBox.alert(
+      //   `<pre>${JSON.stringify(res.data.data.list, null, 2)}</pre>`,
+      //   '文档列表list内容',
+      //   {
+      //     dangerouslyUseHTMLString: true,
+      //     confirmButtonText: '确定'
+      //   }
+      // )
       tableData.value = res.data.data.list;
       currentPage.value = 1
     });

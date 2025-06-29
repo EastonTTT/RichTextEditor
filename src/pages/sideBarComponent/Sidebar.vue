@@ -63,16 +63,15 @@
 </template>
 
 <script lang="ts" setup>
+import createdocument, { getDocumentByuserId } from '@/api/document'
+import { searchKnowledgeBase } from '@/api/knowledgeBase'
 import { updateUserProfile } from '@/api/user'
-import createdocument from '@/api/document'
 import logo from '@/assets/logo.png'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getRecentDocuments } from '../../api/knowledgeBase'
 import UserInfoDialog from './UserInfoDialog.vue'
-import { searchKnowledgeBase } from '@/api/knowledgeBase'
 
 // 定义组件名称
 defineOptions({
@@ -90,7 +89,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   userName: '代码全都队',
   activeMenu: '1',
-  recentDocs: () => ['文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'],
+  recentDocs: () => [],
 
 })
 
@@ -143,29 +142,45 @@ const knowledgeBaseOptions = ref([
   { value: '3', label: '互联网编程' }
 ])
 
+// 最近文档列表，展示文档名
 const recentDocs = ref<string[]>([])
+
 /**
- * 初始化用户状态
+ * 初始化用户状态和最近文档
+ *
+ * @process 1. 初始化用户状态
+ *          2. 获取当前用户的所有文档
+ *          3. 按最近访问时间降序排序，取前8个文档名
+ *          4. 获取知识库选项
+ * @output recentDocs为最近文档名数组
  */
 onMounted(() => {
   userStore.initUserState()
 
-  getRecentDocuments().then(res => {
-    if (res.data.success) {
-      const names = res.data.data.map((doc: any) => doc.docName)
-      recentDocs.value = Array.from(new Set(names))
+  // 获取当前用户的所有文档，并按最近访问时间排序，取前8个
+  getDocumentByuserId(userStore.userInfo.userId).then(res => {
+    if (res.data && res.data.data && Array.isArray(res.data.data.list)) {
+      // 假设后端返回的文档有date字段表示最近访问时间
+      const sorted = res.data.data.list.sort((a: any, b: any) => {
+        // 兼容date为字符串或时间戳
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })
+      // 取前8个文档名
+      recentDocs.value = sorted.slice(0, 8).map((doc: any) => doc.name)
+    } else {
+      recentDocs.value = []
     }
-  }).catch(e => {
-    // 错误处理
+  }).catch(() => {
+    recentDocs.value = []
   })
 
+  // 获取知识库选项
   searchKnowledgeBase({
     name: "",
     owner: useUserStore().userInfo.username,
     startDate: "",
     endDate: ""
   }).then(res => {
-    console.log()
     knowledgeBaseOptions.value = res.data.data.map((item: any) => {
       return {
         value: item.kbId,
@@ -173,7 +188,6 @@ onMounted(() => {
       }
     })
   })
-
 })
 
 /**
