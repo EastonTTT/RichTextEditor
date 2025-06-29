@@ -9,7 +9,7 @@
       侧边栏组件 - 功能：用户信息展示、菜单导航、最近文档、快速创建文档
       包含：用户头像和名称、知识库和文档菜单、最近访问文档列表、新建文档按钮
     -->
-    <Sidebar :user-name="userName" :active-menu="activeMenu" :knowledge-base-options="knowledgeBaseOptions"
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs" :knowledge-base-options="knowledgeBaseOptions"
       @menu-select="handleMenuSelect" @create-document="handleCreateDocument" />
 
     <!-- 主内容区 -->
@@ -55,7 +55,11 @@
           <el-table :data="currentPageData" style="width: 100%" @row-click=enterEdit>
             <el-table-column prop="name" label="名称" width="300" />
             <el-table-column prop="owner" label="所有者" width="300" />
-            <el-table-column prop="date" label="最近查看" />
+            <el-table-column prop="date" label="最近查看">
+              <template #default="scope">
+                {{ scope.row.date ? scope.row.date.slice(0, 10) : '' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="" label="操作" width="80">
               <template #default="scope">
                 <el-icon class="action-icon" @click.stop="openDocOperationDialog(scope.$index)">
@@ -151,16 +155,14 @@
  *
  * @component
  */
+import createdocument, { deleteDocument, getDocumentByuserId, getDocumentsByKnowledgeBase, renameDocument, searchDocument } from '@/api/document'
 import { getKnowledgeBaseList } from '@/api/knowledgeBase'
-import createdocument, { getDocumentByuserId, deleteDocument, renameDocument, searchDocument, getDocumentsByKnowledgeBase } from '@/api/document'
 import Sidebar from '@/pages/sideBarComponent/Sidebar.vue'
 import { useUserStore } from '@/stores/user'
 import { MoreFilled, Warning } from '@element-plus/icons-vue'
 import { ElNotification } from 'element-plus'
-import { onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 const router = useRouter()
 // 获取用户store
 const userStore = useUserStore()
@@ -217,8 +219,27 @@ const deleteForm = ref({
   confirmText: ''
 })
 
+// 定义文档数据类型接口
+interface DocumentItem {
+  id: number
+  name: string
+  owner: string
+  date: string
+  [key: string]: any
+}
+
+// 定义最近文档数据类型接口
+interface RecentDocument {
+  id: number
+  name: string
+  [key: string]: any
+}
+
 //文档列表
-const tableData = ref([])
+const tableData = ref<DocumentItem[]>([])
+
+// 最近文档列表
+const recentDocs = ref<RecentDocument[]>([])
 
 // 分页相关
 const pageSize = ref(10)
@@ -264,16 +285,16 @@ onMounted(() => {
   } else {
     // 获取所有文档
     getDocumentByuserId(useUserStore().userInfo.userId).then(res => {
-      console.log(res.data.data.list)
-      // 弹窗显示list内容
-      ElMessageBox.alert(
-        `<pre>${JSON.stringify(res.data.data.list, null, 2)}</pre>`,
-        '文档列表list内容',
-        {
-          dangerouslyUseHTMLString: true,
-          confirmButtonText: '确定'
-        }
-      )
+      // console.log(res.data.data.list)
+      // // 弹窗显示list内容
+      // ElMessageBox.alert(
+      //   `<pre>${JSON.stringify(res.data.data.list, null, 2)}</pre>`,
+      //   '文档列表list内容',
+      //   {
+      //     dangerouslyUseHTMLString: true,
+      //     confirmButtonText: '确定'
+      //   }
+      // )
       tableData.value = res.data.data.list;
       currentPage.value = 1
     });

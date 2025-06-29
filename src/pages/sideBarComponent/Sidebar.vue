@@ -27,7 +27,7 @@
         <template #title>
           <span>最近文档</span>
         </template>
-        <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
+        <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc.id" :index="`2-${idx}`">{{ doc.name }}</el-menu-item>
       </el-sub-menu>
 
       <!-- 新建文档按钮 -->
@@ -63,16 +63,15 @@
 </template>
 
 <script lang="ts" setup>
+import createdocument, { getDocumentByuserId } from '@/api/document'
+import { searchKnowledgeBase } from '@/api/knowledgeBase'
 import { updateUserProfile } from '@/api/user'
-import createdocument from '@/api/document'
 import logo from '@/assets/logo.png'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getRecentDocuments } from '../../api/knowledgeBase'
 import UserInfoDialog from './UserInfoDialog.vue'
-import { searchKnowledgeBase } from '@/api/knowledgeBase'
 
 // 定义组件名称
 defineOptions({
@@ -83,15 +82,14 @@ defineOptions({
 interface Props {
   userName?: string
   activeMenu?: string
-  recentDocs?: string[]
+  recentDocs?: RecentDocument[]
 }
 
 // 设置默认值
 const props = withDefaults(defineProps<Props>(), {
   userName: '代码全都队',
   activeMenu: '1',
-  recentDocs: () => ['文档A', '文档B', '文档C', '文档D', '文档E', '文档F', '文档G', '文档H'],
-
+  recentDocs: () => [],
 })
 
 // 定义事件
@@ -143,29 +141,55 @@ const knowledgeBaseOptions = ref([
   { value: '3', label: '互联网编程' }
 ])
 
-const recentDocs = ref<string[]>([])
+// 定义文档数据类型接口
+interface RecentDocument {
+  id: number
+  name: string
+  [key: string]: any
+}
+
+// 最近文档列表，展示文档名和ID
+const recentDocs = ref<RecentDocument[]>([])
+
 /**
- * 初始化用户状态
+ * 初始化用户状态和最近文档
+ *
+ * @process 1. 初始化用户状态
+ *          2. 获取当前用户的所有文档
+ *          3. 按最近访问时间降序排序，取前8个文档名
+ *          4. 获取知识库选项
+ * @output recentDocs为最近文档名数组
  */
 onMounted(() => {
   userStore.initUserState()
 
-  getRecentDocuments().then(res => {
-    if (res.data.success) {
-      const names = res.data.data.map((doc: any) => doc.docName)
-      recentDocs.value = Array.from(new Set(names))
+  // 获取当前用户的所有文档，并按最近访问时间排序，取前8个
+  getDocumentByuserId(userStore.userInfo.userId).then(res => {
+    if (res.data && res.data.data && Array.isArray(res.data.data.list)) {
+      // 假设后端返回的文档有date字段表示最近访问时间
+      const sorted = res.data.data.list.sort((a: any, b: any) => {
+        // 兼容date为字符串或时间戳
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })
+      // 取前8个文档名
+      recentDocs.value = sorted.slice(0, 8).map((doc: any) => ({
+        id: doc.id,
+        name: doc.name
+      }))
+    } else {
+      recentDocs.value = []
     }
-  }).catch(e => {
-    // 错误处理
+  }).catch(() => {
+    recentDocs.value = []
   })
 
+  // 获取知识库选项
   searchKnowledgeBase({
     name: "",
     owner: useUserStore().userInfo.username,
     startDate: "",
     endDate: ""
   }).then(res => {
-    console.log()
     knowledgeBaseOptions.value = res.data.data.map((item: any) => {
       return {
         value: item.kbId,
@@ -173,7 +197,6 @@ onMounted(() => {
       }
     })
   })
-
 })
 
 /**
@@ -222,7 +245,17 @@ function handleMenuSelect(index: string) {
     router.push('/doclist')
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
-    ElNotification.primary('跳转到' + props.recentDocs[idx] + '界面（待实现）')
+    if (idx >= 0 && idx < recentDocs.value.length) {
+      const doc = recentDocs.value[idx]
+      // 跳转到编辑器页面，传递文档ID
+      router.push({
+        path: '/test',
+        query: {
+          id: doc.id
+        }
+      })
+      ElNotification.success(`打开文档：${doc.name}`)
+    }
   }
 }
 
