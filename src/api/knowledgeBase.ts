@@ -35,3 +35,8 @@ export function searchKnowledgeBase(params: { name?: string; owner?: string; sta
 export function getRecentDocuments() {
   return request.get('/api/auth/user/recent-documents');
 }
+
+// 查询有编辑权限知识库API
+export function searchRightKnowledgeBase(params: { userId: number }) {
+  return request.get('/api/auth/knowledgeBase/searchRight', { params });
+}
