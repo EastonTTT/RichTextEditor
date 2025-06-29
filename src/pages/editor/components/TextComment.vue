@@ -18,20 +18,14 @@ import type { CommentApi, CommentSubmitApi, ConfigApi } from 'undraw-ui'
 import { getCommentList, publishComment } from '@/api/comment';
 import { ElMessage } from 'element-plus';
 import Loading from './Loading.vue';
-import { updateUserProfile } from '@/api/user';
+import { useUserStore } from '@/stores/user';
+import { useRoute } from 'vue-router';
 
 // 状态管理
+const route = useRoute();
 const isLoading = ref(false);  // 加载状态
 const hasMoreComment = ref(false);  // 是否有更多评论
-
-// 用户信息
-const myInfo = ref({
-  id: 1,
-  phone: '',
-  password: '',
-  username: 'user',
-  avatar: 'https://static.juzicon.com/avatars/avatar-200602130320-HMR2.jpeg?x-oss-process=image/resize,w_100',
-});
+const text_id = Number(route.query.id); //当前访问的文档ID
 
 // 评论组件配置
 const config = reactive<ConfigApi>({
@@ -55,8 +49,8 @@ const config = reactive<ConfigApi>({
 const submit = async ({content, parentId, finish }: CommentSubmitApi) => {
   // 构建发布评论的参数
   const publishcomment = {
-    textId: 1, //todo
-    uid: myInfo.value.id, 
+    textId: text_id, //todo
+    uid: useUserStore().userInfo.userId, 
     parentId: parentId,
     content: content,
   }
@@ -68,7 +62,7 @@ const submit = async ({content, parentId, finish }: CommentSubmitApi) => {
   const comment: CommentApi = {
     id: publishresponse.data.id, // 评论ID
     parentId: parentId, // 父评论ID
-    uid: 1, // 当前用户ID
+    uid: useUserStore().userInfo.userId, // 当前用户ID
     content: content, // 评论内容
     createTime: publishresponse.data.createTime, // 发表时间
     user: {
@@ -95,18 +89,16 @@ const fetchComment = async() => {
   isLoading.value = true
   try {
 
-    
-
     // 设置当前用户信息到配置中
     const user = {
-      id: myInfo.value.id,
-      username: myInfo.value.username,
-      avatar: myInfo.value.avatar,
+      id: useUserStore().userInfo.userId,
+      username: useUserStore().userInfo.nickname,
+      avatar: useUserStore().userInfo.avatar,
     }
     config.user = user;
 
     // 调用API获取评论数据
-    const textId = 1; //todo
+    const textId = text_id; //todo
     const res = (await getCommentList(textId, pageNum, pageSize)).data
     
     // 更新评论数据
@@ -131,7 +123,7 @@ const fetchComment = async() => {
 const fetchMoreComment = async() => {
   isLoading.value = true
   try {
-    const textId = 1; //todo
+    const textId = text_id; //todo
     const res = (await getCommentList(textId, pageNum, pageSize)).data
     
     // 追加新评论到现有列表
