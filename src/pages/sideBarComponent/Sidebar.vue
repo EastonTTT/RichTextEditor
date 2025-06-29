@@ -27,7 +27,7 @@
         <template #title>
           <span>最近文档</span>
         </template>
-        <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc" :index="`2-${idx}`">{{ doc }}</el-menu-item>
+        <el-menu-item v-for="(doc, idx) in recentDocs" :key="doc.id" :index="`2-${idx}`">{{ doc.name }}</el-menu-item>
       </el-sub-menu>
 
       <!-- 新建文档按钮 -->
@@ -82,7 +82,7 @@ defineOptions({
 interface Props {
   userName?: string
   activeMenu?: string
-  recentDocs?: string[]
+  recentDocs?: RecentDocument[]
 }
 
 // 设置默认值
@@ -90,7 +90,6 @@ const props = withDefaults(defineProps<Props>(), {
   userName: '代码全都队',
   activeMenu: '1',
   recentDocs: () => [],
-
 })
 
 // 定义事件
@@ -142,8 +141,15 @@ const knowledgeBaseOptions = ref([
   { value: '3', label: '互联网编程' }
 ])
 
-// 最近文档列表，展示文档名
-const recentDocs = ref<string[]>([])
+// 定义文档数据类型接口
+interface RecentDocument {
+  id: number
+  name: string
+  [key: string]: any
+}
+
+// 最近文档列表，展示文档名和ID
+const recentDocs = ref<RecentDocument[]>([])
 
 /**
  * 初始化用户状态和最近文档
@@ -166,7 +172,10 @@ onMounted(() => {
         return new Date(b.date).getTime() - new Date(a.date).getTime()
       })
       // 取前8个文档名
-      recentDocs.value = sorted.slice(0, 8).map((doc: any) => doc.name)
+      recentDocs.value = sorted.slice(0, 8).map((doc: any) => ({
+        id: doc.id,
+        name: doc.name
+      }))
     } else {
       recentDocs.value = []
     }
@@ -236,7 +245,17 @@ function handleMenuSelect(index: string) {
     router.push('/doclist')
   } else if (index.startsWith('2-')) {
     const idx = Number(index.split('-')[1])
-    ElNotification.primary('跳转到' + props.recentDocs[idx] + '界面（待实现）')
+    if (idx >= 0 && idx < recentDocs.value.length) {
+      const doc = recentDocs.value[idx]
+      // 跳转到编辑器页面，传递文档ID
+      router.push({
+        path: '/test',
+        query: {
+          id: doc.id
+        }
+      })
+      ElNotification.success(`打开文档：${doc.name}`)
+    }
   }
 }
 

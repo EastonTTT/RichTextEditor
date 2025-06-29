@@ -9,7 +9,7 @@
       侧边栏组件 - 功能：用户信息展示、菜单导航、最近文档、快速创建文档
       包含：用户头像和名称、知识库和文档菜单、最近访问文档列表、新建文档按钮
     -->
-    <Sidebar :user-name="userName" :active-menu="activeMenu" :knowledge-base-options="knowledgeBaseOptions"
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs" :knowledge-base-options="knowledgeBaseOptions"
       @menu-select="handleMenuSelect" @create-document="handleCreateDocument" />
 
     <!-- 主内容区 -->
@@ -215,8 +215,27 @@ const deleteForm = ref({
   confirmText: ''
 })
 
+// 定义文档数据类型接口
+interface DocumentItem {
+  id: number
+  name: string
+  owner: string
+  date: string
+  [key: string]: any
+}
+
+// 定义最近文档数据类型接口
+interface RecentDocument {
+  id: number
+  name: string
+  [key: string]: any
+}
+
 //文档列表
-const tableData = ref([])
+const tableData = ref<DocumentItem[]>([])
+
+// 最近文档列表
+const recentDocs = ref<RecentDocument[]>([])
 
 // 分页相关
 const pageSize = ref(10)
