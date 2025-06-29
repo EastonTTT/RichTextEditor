@@ -80,23 +80,25 @@ const calculateScrollbarWidth = () => {
 // 获取选中文本宽度
 const getSelectedTextWidth = () => {
   if (!hasSelectedText.value) return minFloatWidth;
-  
-  // 创建临时元素计算文本宽度
+
   const tempDiv = document.createElement('div');
   tempDiv.style.position = 'absolute';
   tempDiv.style.visibility = 'hidden';
-  tempDiv.style.whiteSpace = 'pre-wrap'; // 保留换行
-  tempDiv.style.wordBreak = 'break-word'; // 允许单词换行
-  tempDiv.style.font = '14px/1.4 "Helvetica Neue", Arial, sans-serif'; // 匹配正文样式
+  tempDiv.style.whiteSpace = 'pre-wrap';
+  tempDiv.style.wordBreak = 'break-word';
+  tempDiv.style.font = '14px/1.4 "Helvetica Neue", Arial, sans-serif';
   tempDiv.textContent = selectedText.value;
   document.body.appendChild(tempDiv);
-  
-  // 获取文本宽度并添加适当的边距
-  const textWidth = tempDiv.offsetWidth + 32; // 左右内边距16px*2
+
+  // 新增：结合视口宽度限制最大宽度
+  const textWidth = tempDiv.offsetWidth + 32; // 原逻辑保留
   document.body.removeChild(tempDiv);
+
+  // 最大宽度 = 视口宽度 - 安全边距（避免贴边）
+  const maxWidthFromViewport = window.innerWidth - 40; 
+  const finalMaxWidth = Math.min(maxFloatWidth, maxWidthFromViewport);
   
-  // 限制在最小和最大宽度之间
-  return Math.min(Math.max(textWidth, minFloatWidth), maxFloatWidth) + 'px';
+  return Math.min(Math.max(textWidth, minFloatWidth), finalMaxWidth) + 'px';
 };
 
 // 监听用户选中内容
@@ -221,37 +223,37 @@ const updateFloatPosition = () => {
     const rects = range.getClientRects();
     if (rects.length === 0) return;
 
-    // 获取第一行和最后一行的包围盒
     const firstLineRect = rects[0];
     const lastLineRect = rects[rects.length - 1];
     const floatLayerRect = floatLayerRef.value.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;   // 新增：视口宽度
     const viewportHeight = window.innerHeight;
-    
-    // 计算下方空间：从最后一行底部到视口底部的距离
+
+    // --- 原有垂直位置逻辑保持 ---
     const spaceBelow = viewportHeight - lastLineRect.bottom;
-    
-    // 计算上方空间：从第一行顶部到视口顶部的距离
     const spaceAbove = firstLineRect.top;
-    
-    // 浮动层高度（考虑间距）
-    const requiredSpace = floatLayerRect.height + 10; // 额外间距
-    
+    const requiredSpace = floatLayerRect.height + 10;
     let topPos: number;
-    
-    // 智能选择位置：优先下方，空间不足则上方
     if (spaceBelow >= requiredSpace) {
-      // 下方空间充足，显示在最后一行下方
-      topPos = lastLineRect.bottom + 5; // 下方间距
+      topPos = lastLineRect.bottom + 5;
     } else if (spaceAbove >= requiredSpace) {
-      // 上方空间充足，显示在第一行上方
-      topPos = firstLineRect.top - floatLayerRect.height - 5; // 上方间距
+      topPos = firstLineRect.top - floatLayerRect.height - 5;
     } else {
-      // 上下空间都不足，优先显示在上方（可根据需求调整）
-      topPos = 10; // 兜底贴顶
+      topPos = 10;
     }
 
-    // 水平位置保持与选中文本对齐
-    const leftPos = firstLineRect.left; // 使用第一行的左边界
+    // --- 新增水平位置溢出检测 ---
+    let leftPos = firstLineRect.left; 
+    // 计算浮动层右侧坐标 = leftPos + 浮动层宽度
+    const floatLayerRight = leftPos + floatLayerRect.width; 
+    // 如果右侧超出视口，调整 leftPos 让浮动层完整显示
+    if (floatLayerRight > viewportWidth) {
+       // 计算视口中间与选中文本的中间点
+      const centerX = (firstLineRect.left + viewportWidth / 2) / 2; 
+      leftPos = centerX - (floatLayerRect.width / 2);
+      leftPos = Math.max(leftPos, 10); 
+      leftPos = Math.min(leftPos, viewportWidth - floatLayerRect.width - 10);
+    }
 
     floatLayerRef.value.style.left = `${leftPos}px`;
     floatLayerRef.value.style.top = `${topPos}px`;
@@ -356,12 +358,13 @@ const renderedAiSummary = computed(() => {
   padding: 16px;
   box-sizing: border-box;
   min-width: 200px;
+  max-width: 100vw; /* 新增：强制不超出视口 */
   opacity: 0;
   transform: translateY(8px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   position: fixed;
-  will-change: transform, opacity, left, top; /* 优化动画性能 */
+  will-change: transform, opacity, left, top;
 }
 
 .float-layer.show-animation {
