@@ -38,18 +38,18 @@ import { useRouter } from 'vue-router';
 import { login, register } from '../api/user';
 import { useUserStore } from '../stores/user';
 
-const isLogin = ref(true);
-const username = ref('');
-const password = ref('');
-const password2 = ref('');
-const rememberMe = ref(false);
-const router = useRouter();
-const userStore = useUserStore();
+  const isLogin = ref(true);
+  const username = ref('');
+  const password = ref('');
+  const password2 = ref('');
+  const rememberMe = ref(false);
+  const router = useRouter();
+  const userStore = useUserStore();
 
 const toggleForm = () => {
-  isLogin.value = !isLogin.value;
-};
-
+    isLogin.value = !isLogin.value;
+  };
+  
 /**
  * 登录处理函数
  *
@@ -130,17 +130,18 @@ const handleRegister = async () => {
     console.error('注册错误:', error);
   }
 };
-
 </script>
 
 <style scoped>
 .login-register {
-  width: 100%;
-  height: 95vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+    width: 100%;
+    min-width: 800px;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 h1 {

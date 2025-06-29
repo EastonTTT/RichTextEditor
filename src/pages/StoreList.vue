@@ -49,7 +49,7 @@
             <el-table-column prop="date" label="最近查看" />
             <el-table-column prop="action" label="操作" width="80">
               <template #default="scope">
-                <el-icon class="action-icon" @click="openStoreOperationDialog(scope.$index)">
+                <el-icon class="action-icon" @click.stop="openStoreOperationDialog(scope.$index)">
                   <MoreFilled />
                 </el-icon>
               </template>

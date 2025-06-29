@@ -1,11 +1,19 @@
 <template>
   <div>
     <div>
+        <!-- 引入模式切换组件 -->
+      <ModeSwitch v-model="currentMode" :editor="editor!"/> 
       <tool-bar v-if="editor" :editor="editor!" class="tool-bar" @toggle-collaboration="toggleCollaboration" />
+      <ai-summary :editor="editor!" :mode="currentMode" class="ai-summary" />
       <editor-content :editor="editor!" class="editor-content" />
       <code-selector :editor="editor!" :current-language="currentLanguage" :style="codeSelectorStyle"
         v-if="showCodeSelector" />
       <bubble-bar :editor="editor!" class="bubble-bar" />
+        <ai-helper :editor="editor" />
+      <!-- 评论区组件 -->
+      <div class="comment-section">
+        <text-comment />
+      </div>
     </div>
   </div>
 
@@ -17,8 +25,12 @@ import { ref, watchEffect, nextTick, defineEmits } from 'vue'
 import ToolBar from './ToolBar.vue'
 import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
-import { Editor } from '@tiptap/vue-3';
-const { editor, } = defineProps<{ editor: Editor | null }>()
+import { Editor } from '@tiptap/vue-3'
+import AiSummary from './AiSummary.vue'
+import ModeSwitch from './ModeSwitch.vue'
+import TextComment from './TextComment.vue'
+import AiHelper from './AiHelper.vue'
+const { editor } = defineProps<{ editor: Editor | null }>()
 
 const emit = defineEmits()
 const showCodeSelector = ref(false)
@@ -61,7 +73,12 @@ watchEffect(async () => {
 const toggleCollaboration = () => {
   emit('toggleCollaboration')
 }
+const currentMode = ref('edit'); // 初始模式为阅读
 
 </script>
 
-<style></style>
+<style>
+.comment-section {
+  padding-top: 3rem;
+}
+</style>

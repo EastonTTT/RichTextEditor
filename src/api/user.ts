@@ -29,3 +29,15 @@ export const updateUserProfile = (data: { username: string; nickname: string; av
         data
     });
 };
+
+// 获取用户详细信息（后端未实现）
+export const getUserInfo = (userId : number) => {
+    return request({
+        url: '/api/auth/user/getInfo',
+        method: 'get',
+        params: {
+            userId
+        }
+    });
+};
+

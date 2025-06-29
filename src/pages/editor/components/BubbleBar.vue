@@ -58,6 +58,7 @@
       </div>
     </bubble-menu>
   </div>
+  
 </template>
 
 <script lang="ts" setup>
@@ -215,4 +216,5 @@ button {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   align-items: center;
 }
+
 </style>
