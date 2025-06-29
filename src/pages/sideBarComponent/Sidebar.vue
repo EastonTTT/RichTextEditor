@@ -72,7 +72,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getRecentDocuments } from '../../api/knowledgeBase'
 import UserInfoDialog from './UserInfoDialog.vue'
-import { searchKnowledgeBase } from '@/api/knowledgeBase'
+import { searchKnowledgeBase, searchRightKnowledgeBase } from '@/api/knowledgeBase'
 
 // 定义组件名称
 defineOptions({
@@ -159,13 +159,23 @@ onMounted(() => {
     // 错误处理
   })
 
-  searchKnowledgeBase({
-    name: "",
-    owner: useUserStore().userInfo.username,
-    startDate: "",
-    endDate: ""
+  // searchKnowledgeBase({
+  //   name: "",
+  //   owner: useUserStore().userInfo.username,
+  //   startDate: "",
+  //   endDate: ""
+  // }).then(res => {
+  //   knowledgeBaseOptions.value = res.data.data.map((item: any) => {
+  //     return {
+  //       value: item.kbId,
+  //       label: item.kbName
+  //     }
+  //   })
+  // })
+
+  searchRightKnowledgeBase({
+    userId: useUserStore().userInfo.userId
   }).then(res => {
-    console.log()
     knowledgeBaseOptions.value = res.data.data.map((item: any) => {
       return {
         value: item.kbId,
@@ -173,7 +183,6 @@ onMounted(() => {
       }
     })
   })
-
 })
 
 /**
