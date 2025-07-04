@@ -1,5 +1,5 @@
 <template>
-  <!-- 自定义浮动层，替代 el-dialog -->
+  <!-- 自定义浮动层：替代对话框，显示AI生成的摘要 -->
   <div
     ref="floatLayerRef"
     class="float-layer" 
@@ -9,12 +9,14 @@
   >
     <div class="float-content">
       <div class="title">AI助手</div>
+      <!-- 加载状态显示 -->
       <div v-if="isLoading" class="loading-container">
         <div class="loading-spinner"></div>
         <span>生成中...</span>
       </div>
-       <!-- 使用 v-html 渲染转换后的 HTML 内容 -->
+      <!-- 渲染AI生成的摘要（Markdown转HTML） -->
       <p v-else class="text" v-html="renderedAiSummary"></p>
+      <!-- 操作按钮区 -->
       <div class="actions">
         <button class="btn" @click="copyText" :disabled="isLoading">
           {{ isLoading ? '加载中...' : '复制' }}
@@ -23,24 +25,27 @@
     </div>
   </div>
 
-  <!-- 手动触发对话框的按钮 -->
- <button 
-  @click="fetchAndShowSummary" 
-  class="show-dialog-btn" 
-  v-if="hasSelectedText"
-  :disabled="isLoading"
-  :style="{ position: 'fixed', right: '5px', top: '15%', transform: 'translateY(-50%)' }"
->
-  AI
-</button>
+  <!-- AI功能触发按钮：固定在视口右侧，仅在有选中文本时显示 -->
+  <button 
+    @click="fetchAndShowSummary" 
+    class="show-dialog-btn" 
+    v-if="hasSelectedText"
+    :disabled="isLoading"
+    :style="{ position: 'fixed', right: '5px', top: '15%', transform: 'translateY(-50%)' }"
+  >
+    AI
+  </button>
 </template>
 
 <script lang="ts" setup>
-import { getAiSummary } from '@/api/editor';
-import { marked } from 'marked';
+import { getAiSummary } from '@/api/editor';      // AI摘要接口
+import { marked } from 'marked';                    // Markdown解析库
 import { ref, onMounted, type PropType, computed, onUnmounted, nextTick, watch, onUpdated } from 'vue';
 
-// 定义组件属性
+/**
+ * 组件属性定义
+ * - editor: 编辑器实例，用于获取选中文本
+ */
 const props = defineProps({
   editor: {
     type: Object as PropType<any>,
@@ -48,23 +53,37 @@ const props = defineProps({
   },
 });
 
-// 组件状态
-const selectedText = ref(''); // 选中的内容
-const aiSummary = ref('');    // AI生成的摘要
-const dialogVisible = ref(false); // 对话框显示状态
-const hasSelectedText = ref(false); // 是否有选中内容
-const isLoading = ref(false);      // 加载状态
-const isScrollDisabled = ref(false); // 滚动禁用状态
-const scrollbarWidth = ref(0); // 滚动条宽度
-const floatWidth = ref('200px'); // 浮动层宽度
-const minFloatWidth = 300; // 浮动层最小宽度
-const maxFloatWidth = 600; // 浮动层最大宽度
-const floatLayerRef = ref<HTMLElement | null>(null); // 浮动层DOM引用
+/**
+ * 组件状态管理
+ * - selectedText: 选中文本内容
+ * - aiSummary: AI生成的摘要
+ * - dialogVisible: 浮动层显示状态
+ * - hasSelectedText: 是否有选中文本
+ * - isLoading: 加载状态
+ * - 其他：浮动层位置和大小控制
+ */
+const selectedText = ref('');
+const aiSummary = ref('');
+const dialogVisible = ref(false);
+const hasSelectedText = ref(false);
+const isLoading = ref(false);
+const isScrollDisabled = ref(false);
+const scrollbarWidth = ref(0);
+const floatWidth = ref('200px');
+const minFloatWidth = 300;
+const maxFloatWidth = 600;
+const floatLayerRef = ref<HTMLElement | null>(null);
 
-// 控制是否禁止滚轮滚动
+/**
+ * 计算属性：浮动层是否可见
+ * - 同时满足对话框显示且有AI摘要时为true
+ */
 const isFloatLayerVisible = computed(() => dialogVisible.value && !!aiSummary.value);
 
-// 计算滚动条宽度
+/**
+ * 工具函数：计算滚动条宽度
+ * - 用于在禁用滚动时保持页面布局稳定
+ */
 const calculateScrollbarWidth = () => {
   const div = document.createElement('div');
   div.style.overflow = 'scroll';
@@ -77,7 +96,12 @@ const calculateScrollbarWidth = () => {
   document.body.removeChild(div);
 };
 
-// 获取选中文本宽度
+/**
+ * 工具函数：获取选中文本对应的浮动层宽度
+ * - 基于选中文本内容计算合适的宽度
+ * - 限制最小和最大宽度
+ * - 考虑视口宽度避免溢出
+ */
 const getSelectedTextWidth = () => {
   if (!hasSelectedText.value) return minFloatWidth;
 
@@ -90,18 +114,19 @@ const getSelectedTextWidth = () => {
   tempDiv.textContent = selectedText.value;
   document.body.appendChild(tempDiv);
 
-  // 新增：结合视口宽度限制最大宽度
-  const textWidth = tempDiv.offsetWidth + 32; // 原逻辑保留
+  const textWidth = tempDiv.offsetWidth + 32;
   document.body.removeChild(tempDiv);
 
-  // 最大宽度 = 视口宽度 - 安全边距（避免贴边）
   const maxWidthFromViewport = window.innerWidth - 40; 
   const finalMaxWidth = Math.min(maxFloatWidth, maxWidthFromViewport);
   
   return Math.min(Math.max(textWidth, minFloatWidth), finalMaxWidth) + 'px';
 };
 
-// 监听用户选中内容
+/**
+ * 事件监听：选中文本变化时更新状态
+ * - 检测编辑器选中文本变化，更新选中内容状态
+ */
 const onSelectionUpdate = () => {
   const { state } = props.editor;
   const { from, to } = state.selection;
@@ -110,8 +135,8 @@ const onSelectionUpdate = () => {
     const selectedTextContent = state.doc.textBetween(from, to);
     selectedText.value = selectedTextContent;
     hasSelectedText.value = true;
-    aiSummary.value = ''; // 重置AI摘要
-    dialogVisible.value = false; // 隐藏浮动层
+    aiSummary.value = '';
+    dialogVisible.value = false;
   } else {
     selectedText.value = '';
     aiSummary.value = '';
@@ -120,7 +145,11 @@ const onSelectionUpdate = () => {
   }
 };
 
-// 计算浮动层位置（基于选中文本区域）
+/**
+ * 计算属性：浮动层位置样式
+ * - 基于选中文本位置计算浮动层的定位
+ * - 包含调试用的选中文本区域标记
+ */
 const floatStyle = computed(() => {
   if (!dialogVisible.value || !hasSelectedText.value || !floatLayerRef.value) return {};
   
@@ -130,7 +159,7 @@ const floatStyle = computed(() => {
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
 
-  // 创建调试用的 DOM
+  // 调试用：显示选中文本区域边界
   const debugDiv = document.createElement('div');
   debugDiv.style.position = 'fixed';
   debugDiv.style.top = `${rect.top}px`;
@@ -138,34 +167,25 @@ const floatStyle = computed(() => {
   debugDiv.style.width = `${rect.width}px`;
   debugDiv.style.height = `${rect.height}px`;
   debugDiv.style.border = '2px dashed red';
-  debugDiv.style.pointerEvents = 'none'; // 避免遮挡交互
+  debugDiv.style.pointerEvents = 'none';
   debugDiv.style.zIndex = String(99999);
   document.body.appendChild(debugDiv);
 
-  // 测试完后移除（或定时移除）
+  // 3秒后移除调试标记
   setTimeout(() => {
     debugDiv.remove();
   }, 3000);
 
   const floatLayerRect = floatLayerRef.value.getBoundingClientRect();
   
-  // 计算理想顶部位置（选中文本下方，增加间距）
-  let topPos = rect.top+rect.height+5; 
-  
-  // 计算选中文本高度，用于判断是否可能重叠
+  // 计算垂直位置（避免覆盖选中文本）
+  let topPos = rect.top + rect.height + 5; 
   const selectionHeight = rect.height;
   const floatLayerHeight = floatLayerRect.height;
   
-  // 检查是否会覆盖选中文本或溢出视口底部
-  if (topPos + floatLayerHeight > window.
-  innerHeight || topPos < rect.top + selectionHeight) {
-    // 如果会覆盖或溢出，显示在选中文本上方
-    topPos = rect.top - floatLayerHeight - 15; // 上方增加15px间距
-    
-    // 确保不溢出视口顶部
-    if (topPos < 0) {
-      topPos = 10;
-    }
+  if (topPos + floatLayerHeight > window.innerHeight || topPos < rect.top + selectionHeight) {
+    topPos = rect.top - floatLayerHeight - 15;
+    if (topPos < 0) topPos = 10;
   }
 
   return {
@@ -174,9 +194,14 @@ const floatStyle = computed(() => {
     position: 'fixed',
     zIndex: 9999,
   };
-})as any;
+}) as any;
 
-// 获取AI摘要并显示浮动层
+/**
+ * 核心功能：获取AI摘要并显示浮动层
+ * - 校验选中文本和加载状态
+ * - 调用AI接口生成摘要
+ * - 处理响应数据并更新UI
+ */
 const fetchAndShowSummary = async () => {
   if (!hasSelectedText.value || isLoading.value) return;
   
@@ -184,7 +209,6 @@ const fetchAndShowSummary = async () => {
   dialogVisible.value = true;
   
   try {
-    // 显示加载状态
     aiSummary.value = '';
     setFloatWidth();
     
@@ -209,11 +233,19 @@ const fetchAndShowSummary = async () => {
   }
 };
 
-// 设置浮动层宽度
+/**
+ * 设置浮动层宽度
+ * - 调用getSelectedTextWidth计算合适宽度
+ */
 const setFloatWidth = () => {
   floatWidth.value = String(getSelectedTextWidth());
 };
 
+/**
+ * 更新浮动层位置
+ * - 优化垂直和水平位置计算
+ * - 处理视口边界情况
+ */
 const updateFloatPosition = () => {
   if (!dialogVisible.value || !hasSelectedText.value || !floatLayerRef.value) return;
 
@@ -226,10 +258,10 @@ const updateFloatPosition = () => {
     const firstLineRect = rects[0];
     const lastLineRect = rects[rects.length - 1];
     const floatLayerRect = floatLayerRef.value.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;   // 新增：视口宽度
+    const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // --- 原有垂直位置逻辑保持 ---
+    // 垂直位置计算
     const spaceBelow = viewportHeight - lastLineRect.bottom;
     const spaceAbove = firstLineRect.top;
     const requiredSpace = floatLayerRect.height + 10;
@@ -242,13 +274,10 @@ const updateFloatPosition = () => {
       topPos = 10;
     }
 
-    // --- 新增水平位置溢出检测 ---
+    // 水平位置计算（新增溢出处理）
     let leftPos = firstLineRect.left; 
-    // 计算浮动层右侧坐标 = leftPos + 浮动层宽度
     const floatLayerRight = leftPos + floatLayerRect.width; 
-    // 如果右侧超出视口，调整 leftPos 让浮动层完整显示
     if (floatLayerRight > viewportWidth) {
-       // 计算视口中间与选中文本的中间点
       const centerX = (firstLineRect.left + viewportWidth / 2) / 2; 
       leftPos = centerX - (floatLayerRect.width / 2);
       leftPos = Math.max(leftPos, 10); 
@@ -260,13 +289,19 @@ const updateFloatPosition = () => {
   }
 };
 
-// 关闭浮动层
+/**
+ * 关闭浮动层
+ * - 隐藏对话框并恢复页面滚动
+ */
 const closeDialog = () => {
   dialogVisible.value = false;
   enableScroll();
 };
 
-// 复制文本
+/**
+ * 复制摘要文本
+ * - 调用剪贴板API复制摘要内容
+ */
 const copyText = () => {
   if (isLoading.value) return;
   
@@ -279,26 +314,33 @@ const copyText = () => {
   });
 };
 
-// 禁用滚动
+/**
+ * 滚动控制函数
+ * - disableScroll: 禁用页面滚动并调整布局
+ * - enableScroll: 恢复页面滚动
+ */
 const disableScroll = () => {
   isScrollDisabled.value = true;
   document.body.style.overflow = 'hidden';
   document.body.style.paddingRight = `${scrollbarWidth.value}px`;
 };
 
-// 启用滚动
 const enableScroll = () => {
   isScrollDisabled.value = false;
   document.body.style.overflow = '';
   document.body.style.paddingRight = '';
 };
 
-// 初始化监听
+/**
+ * 生命周期钩子
+ * - onMounted: 初始化监听和配置
+ * - onUnmounted: 清理资源和监听
+ */
 onMounted(() => {
   calculateScrollbarWidth();
   props.editor.on('selectionUpdate', onSelectionUpdate);
   
-  // 监听点击空白处隐藏浮动层
+  // 点击空白处关闭浮动层
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     if (
@@ -310,14 +352,17 @@ onMounted(() => {
   });
 });
 
-// 监听选中文本变化，更新浮动层宽度
+/**
+ * 监听函数
+ * - 选中文本变化时更新浮动层宽度
+ * - 浮动层显示状态变化时控制页面滚动
+ */
 watch(selectedText, () => {
   if (dialogVisible.value) {
     setFloatWidth();
   }
 });
 
-// 监听浮动层显示状态，同步滚动控制和宽度设置
 watch(() => dialogVisible.value, (visible) => {
   if (visible) {
     disableScroll();
@@ -327,29 +372,37 @@ watch(() => dialogVisible.value, (visible) => {
   }
 });
 
-// 组件更新时更新位置（处理内容变化导致的位置偏移）
+/**
+ * 组件更新时钩子
+ * - 确保内容变化时重新计算浮动层位置
+ */
 onUpdated(() => {
   if (dialogVisible.value) {
     updateFloatPosition();
   }
 });
 
-// 组件卸载时清理
+/**
+ * 组件卸载钩子
+ * - 清理监听和资源
+ */
 onUnmounted(() => {
   props.editor.off('selectionUpdate', onSelectionUpdate);
   document.removeEventListener('click', closeDialog);
   enableScroll();
 });
 
-// 转换 Markdown 为 HTML
+/**
+ * 计算属性：渲染AI摘要（Markdown转HTML）
+ * - 使用marked库将Markdown格式的摘要转换为HTML
+ */
 const renderedAiSummary = computed(() => {
-  // 这里进行 Markdown 到 HTML 的转换
   return marked.parse(aiSummary.value);
 });
 </script>
 
 <style lang="scss" scoped>
-/* 基础样式 */
+/* 基础样式：浮动层整体样式 */
 .float-layer {
   background: white;
   border: 1px solid #e5e7eb;
@@ -358,7 +411,7 @@ const renderedAiSummary = computed(() => {
   padding: 16px;
   box-sizing: border-box;
   min-width: 200px;
-  max-width: 100vw; /* 新增：强制不超出视口 */
+  max-width: 100vw;
   opacity: 0;
   transform: translateY(8px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -373,11 +426,10 @@ const renderedAiSummary = computed(() => {
   pointer-events: all;
 }
 
-/* 其他样式保持不变... */
-
+/* 浮动层内容区样式 */
 .float-content {
   width: 100%;
-  padding: 0px 16px; /* 新增，让内容与浮动层边框有间距 */
+  padding: 0px 16px;
 }
 
 .title {
@@ -457,7 +509,7 @@ const renderedAiSummary = computed(() => {
   }
 }
 
-/* 按钮样式 */
+/* 触发按钮样式 */
 .show-dialog-btn {
   margin-top: 10px;
   padding: 8px 16px;
