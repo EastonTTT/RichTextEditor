@@ -19,6 +19,16 @@ import { ElMessage } from 'element-plus'                         // 消息提示
 import Loading from './Loading.vue'                              // 加载组件
 import { useUserStore } from '@/stores/user'                     // 用户状态
 import { useRoute } from 'vue-router'                            // 路由信息
+import DOMPurify from 'dompurify'                                // HTML净化库
+
+/** 
+ * 安全配置区 
+ */
+const SECURITY_CONFIG = {
+  MAX_COMMENT_LENGTH: 1000,                   // 最大评论长度
+  COMMENT_TAGS_WHITELIST: ['p', 'br', 'a', 'strong', 'em', 'u', 's'], // 允许的HTML标签
+  COMMENT_ATTRS_WHITELIST: ['href', 'target'] // 允许的HTML属性
+}
 
 /** 
  * 状态管理区 
@@ -31,7 +41,37 @@ const text_id = Number(route.query.id)       // 当前文档ID（从路由参数
 
 // 轮询控制
 const pollInterval = ref<number | null>(null) // 定时器ID
-const pollTime = 5000                          // 轮询间隔（5秒）
+const pollTime = 3000                          // 轮询间隔（3秒）
+
+/** 
+ * 安全工具函数 
+ */
+// 净化HTML内容，防止XSS攻击
+const sanitizeHtml = (html: string) => {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: SECURITY_CONFIG.COMMENT_TAGS_WHITELIST,
+    ALLOWED_ATTR: SECURITY_CONFIG.COMMENT_ATTRS_WHITELIST,
+    FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'input'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick']
+  })
+}
+
+// 验证评论内容安全性
+const validateComment = (content: string) => {
+  // 长度验证
+  if (content.length > SECURITY_CONFIG.MAX_COMMENT_LENGTH) {
+    return { valid: false, message: `评论长度不能超过${SECURITY_CONFIG.MAX_COMMENT_LENGTH}字符` }
+  }
+  
+  // 敏感词验证（示例）
+  const sensitiveWords = ['攻击', '恶意', '病毒', '<script']
+  const hasSensitiveWord = sensitiveWords.some(word => content.includes(word))
+  if (hasSensitiveWord) {
+    return { valid: false, message: '评论包含敏感词汇，请修改后提交' }
+  }
+  
+  return { valid: true }
+}
 
 /** 
  * 评论组件配置区 
@@ -55,36 +95,48 @@ const config = reactive<ConfigApi>({
  *  - 处理发布评论的异步流程
  */
 const submit = async ({ content, parentId, finish }: CommentSubmitApi) => {
-  // 构造请求参数
+  // 1. 客户端验证
+  const validation = validateComment(content)
+  if (!validation.valid) {
+    ElMessage.error(validation.message)
+    return
+  }
+  
+  // 2. 净化HTML内容
+  const cleanContent = sanitizeHtml(content)
+  
+  // 3. 构造请求参数
   const publishcomment = {
     textId: text_id,
     uid: useUserStore().userInfo.userId, // 当前用户ID（从Pinia获取）
     parentId,                            // 父评论ID（回复场景使用）
-    content                              // 评论内容
+    content: cleanContent                // 净化后的评论内容
   }
 
-  // 调用发布接口
-  const publishresponse = (await publishComment(publishcomment)).data
+  // 4. 调用发布接口
+  try {
+    const publishresponse = (await publishComment(publishcomment)).data
 
-  // 构造回显的评论数据（需符合CommentApi结构）
-  const comment: CommentApi = {
-    id: publishresponse.data.id,         // 接口返回的评论ID
-    parentId,                            // 父评论ID
-    uid: useUserStore().userInfo.userId, // 当前用户ID
-    content,                             // 评论内容
-    createTime: publishresponse.data.createTime, // 发布时间
-    user: {                              // 当前用户信息
-      username: config.user.username,
-      avatar: config.user.avatar
-    },
-    reply: null                          // 回复内容（初始空）
-  }
+    // 5. 构造回显的评论数据（需符合CommentApi结构）
+    const comment: CommentApi = {
+      id: publishresponse.data.id,         // 接口返回的评论ID
+      parentId,                            // 父评论ID
+      uid: useUserStore().userInfo.userId, // 当前用户ID
+      content: cleanContent,              // 使用净化后的内容
+      createTime: publishresponse.data.createTime, // 发布时间
+      user: {                              // 当前用户信息
+        username: config.user.username,
+        avatar: config.user.avatar
+      },
+      reply: null                          // 回复内容（初始空）
+    }
 
-  // 模拟延迟后更新UI & 提示成功
-  setTimeout(() => {
+    // 6. 更新UI & 提示成功
     finish(comment)         // 通知组件更新评论列表
     ElMessage.success('评论成功') // 成功反馈
-  }, 200)
+  } catch (error: any) {
+    ElMessage.error(error.message || '发布评论失败')
+  }
 }
 
 /** 
@@ -111,7 +163,12 @@ const fetchComment = async () => {
     const textId = text_id
     const res = (await getCommentList(textId, pageNum, pageSize)).data
 
-    // 3. 更新评论数据 & 分页状态
+     // 3. 净化并更新评论数据
+    const sanitizedComments = res.data.list.map((comment: any) => ({
+      ...comment,
+      content: sanitizeHtml(comment.content) // 净化评论内容
+    }))
+
     config.comments = res.data.list
     total = res.data.list.length
 
@@ -120,6 +177,7 @@ const fetchComment = async () => {
     if (hasMoreComment.value) pageNum++ // 准备下一次加载更多
   } catch (error) {
     console.error("加载评论区失败", error)
+    ElMessage.error('加载评论失败')
   } finally {
     isLoading.value = false
   }
@@ -132,8 +190,13 @@ const fetchMoreComment = async () => {
     const textId = text_id
     const res = (await getCommentList(textId, pageNum, pageSize)).data
 
-    // 追加新评论（保持原有列表 + 新增数据）
-    config.comments.push(...res.data.list)
+    // 净化并追加新评论
+    const sanitizedComments = res.data.list.map((comment: any) => ({
+      ...comment,
+      content: sanitizeHtml(comment.content) // 净化评论内容
+    }))
+
+    config.comments.push(...sanitizedComments)
     total = res.data.list.length
 
     // 更新分页状态
@@ -141,6 +204,7 @@ const fetchMoreComment = async () => {
     if (hasMoreComment.value) pageNum++
   } catch (error) {
     console.error("加载更多失败", error)
+    ElMessage.error('加载更多评论失败')
   } finally {
     isLoading.value = false
   }
@@ -179,6 +243,12 @@ const startPolling = () => {
       // 固定请求第1页数据（获取最新评论）
       const res = (await getCommentList(textId, 1, pageSize)).data
       const latestComments = res.data.list
+
+      // 净化最新评论
+      const sanitizedComments = latestComments.map((comment: any) => ({
+        ...comment,
+        content: sanitizeHtml(comment.content) // 净化评论内容
+      }))
 
       // 去重逻辑：通过评论ID过滤已有数据
       const existingIds = new Set(config.comments.map(item => item.id))
