@@ -126,7 +126,7 @@ const fetchComment = async() => {
 const fetchMoreComment = async() => {
   isLoading.value = true
   try {
-    const textId = text_id; //todo
+    const textId = text_id; 
     const res = (await getCommentList(textId, pageNum, pageSize)).data
     
     // 追加新评论到现有列表
@@ -162,14 +162,24 @@ const handleScroll = () => {
 // 启动轮询
 const startPolling = () => {
   if (pollInterval.value) clearInterval(pollInterval.value);
-  
-  // 首次延迟执行，避免组件刚挂载就重复请求
+
   pollInterval.value = setInterval(async () => {
-    // 调用获取评论列表函数，但不更新页码
-    const currentPage = pageNum;
-    pageNum = 1; // 临时设为1，获取最新评论
-    await fetchComment();
-    pageNum = currentPage; // 恢复原页码
+    try {
+      // 单独请求第 1 页最新评论（不影响当前 pageNum）
+      const textId = text_id;
+      const res = (await getCommentList(textId, 1, pageSize)).data; 
+      const latestComments = res.data.list;
+
+      // 和现有评论合并（去重、置顶新评论）
+      // 用 Set 去重（根据评论 id 判断）
+      const existingIds = new Set(config.comments.map(item => item.id));
+      const newComments = latestComments.filter((item: { id: string | number; }) => !existingIds.has(item.id));
+
+      // 新评论插入到列表最前面
+      config.comments.unshift(...newComments);
+    } catch (error) {
+      console.error("轮询获取最新评论失败", error);
+    }
   }, pollTime);
 };
 

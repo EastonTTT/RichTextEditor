@@ -64,7 +64,6 @@
 
 <script lang="ts" setup>
 import createdocument, { getDocumentByuserId } from '@/api/document'
-import { searchKnowledgeBase } from '@/api/knowledgeBase'
 import { updateUserProfile } from '@/api/user'
 import logo from '@/assets/logo.png'
 import { useUserStore } from '@/stores/user'
