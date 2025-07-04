@@ -71,7 +71,7 @@ import { ElMessageBox, ElNotification } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UserInfoDialog from './UserInfoDialog.vue'
-import { searchKnowledgeBase, searchRightKnowledgeBase } from '@/api/knowledgeBase'
+import {  searchRightKnowledgeBase } from '@/api/knowledgeBase'
 
 // 定义组件名称
 defineOptions({
