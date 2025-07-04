@@ -123,7 +123,7 @@ const generateSummary = async () => {
      // 使用 getHTML() 方法获取带格式的内容
     const documentContent = editor.getHTML();
     
-    const description = "请简要为下面这篇文档内容做个总结,总结可以掺杂一些emoji(控制在300字左右):\n"
+    const description = "请简要为下面这篇文档内容做个总结,总结可以掺杂一些emoji(控制在300字左右，采用尽量多段落罗列的形式):\n"
 
     const tmp = await getAiSummary(description+documentContent);
     const summaryMarkdown = tmp.data;
