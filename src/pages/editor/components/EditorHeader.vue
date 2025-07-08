@@ -9,7 +9,7 @@
       </div>
     </div>
     <div class="right-side">
-      <div class="collaborators" v-if="isCollaborative">
+      <!-- <div class="collaborators" v-if="isCollaborative">
         <p>collaborators:</p>
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
@@ -17,7 +17,7 @@
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
-      </div>
+      </div> -->
       <div class="right-button">
         <el-tooltip content="保存" placement="bottom">
           <button @click=handleSaveDocument>
@@ -36,7 +36,7 @@
         </el-tooltip> -->
       </div>
       <div class="avatar">
-        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+        <el-avatar :src=avatar />
       </div>
     </div>
   </div>
@@ -58,9 +58,13 @@ import html2canvas from 'html2canvas';
 import { saveDocument } from '@/api/document'
 import { useRoute } from 'vue-router'
 import { ElNotification } from 'element-plus';
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 const route = useRoute()
 const { editor } = defineProps<{ editor: Editor | null }>()
 const isCollaborative = inject<boolean>('isCollaborative')
+const avatar = userStore.userInfo.avatar
 
 const mydocument = [
   { id: 1, name: 'Document 1' },

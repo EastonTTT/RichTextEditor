@@ -416,6 +416,8 @@ function handleDocOperation() {
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
       const docId = tableData.value[currentRowIndex.value].id
       const newName = renameForm.value.newName
+      console.log(currentRowIndex.value)
+      console.log(tableData.value[currentRowIndex.value])
       // 调用后端重命名接口
       renameDocument(docId, newName).then((res) => {
         tableData.value[currentRowIndex.value].name = newName
