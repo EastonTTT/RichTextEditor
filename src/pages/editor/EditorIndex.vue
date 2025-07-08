@@ -29,7 +29,9 @@ import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
 import { useRoute, useRouter } from 'vue-router';
 import type { Role } from '@/types/editorTypes'
 import { getDocument } from '@/api/document'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter();
 // let provider: TiptapCollabProvider | null = null
@@ -42,9 +44,12 @@ const onlineUsers = ref(0)
 const doc = new Y.Doc()
 
 const documentName = 'demo'
-const name = route.query.user as string || '匿名'
-const color = route.query.color as string || '#29D587'
+const name = userStore.userInfo.nickname as string || '匿名'
 const role = route.query.role as Role || 'owner'
+
+const colorPalette = ['#29D587', '#FF6B6B', '#FFB84C', '#4D96FF', '#AA96DA', '#00BFA6']
+const randomColor = colorPalette[Math.floor(Math.random() * colorPalette.length)]
+const color = route.query.color as string || randomColor
 
 // 当前文档id
 const currentDocId = ref()
