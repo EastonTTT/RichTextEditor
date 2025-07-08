@@ -10,8 +10,7 @@
             <div class="remember">
               <input type="checkbox" id="remember" v-model="rememberMe" />记住密码
             </div>
-            <a href="#">忘记密码？</a>
-            <button type="submit">登 录</button>
+            <button type="submit" style="margin-top:10px">登 录</button>
           </form>
           <form v-else @submit.prevent="handleRegister">
             <h1>注册</h1>
@@ -38,18 +37,18 @@ import { useRouter } from 'vue-router';
 import { login, register } from '../api/user';
 import { useUserStore } from '../stores/user';
 
-  const isLogin = ref(true);
-  const username = ref('');
-  const password = ref('');
-  const password2 = ref('');
-  const rememberMe = ref(false);
-  const router = useRouter();
-  const userStore = useUserStore();
+const isLogin = ref(true);
+const username = ref('');
+const password = ref('');
+const password2 = ref('');
+const rememberMe = ref(false);
+const router = useRouter();
+const userStore = useUserStore();
 
 const toggleForm = () => {
-    isLogin.value = !isLogin.value;
-  };
-  
+  isLogin.value = !isLogin.value;
+};
+
 /**
  * 登录处理函数
  *
@@ -134,14 +133,14 @@ const handleRegister = async () => {
 
 <style scoped>
 .login-register {
-    width: 100%;
-    min-width: 800px;
-    height: 95vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center; 
-    align-items: center; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  min-width: 800px;
+  height: 95vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 h1 {

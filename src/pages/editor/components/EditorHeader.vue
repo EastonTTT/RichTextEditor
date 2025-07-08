@@ -1,31 +1,10 @@
 <template>
   <div class="editor-header">
     <div class="left-side">
-      <div class="left-icon">
-        <el-popover placement="bottom" :width="250" trigger="hover">
-          <template #reference>
-            <button>
-              <UserListIcon />
-            </button>
-          </template>
-          <div v-for="document in mydocument" :key="document.id">
-            <div class="document-item">
-              <p>{{ document.name }}</p>
-            </div>
-          </div>
-        </el-popover>
-        <el-tooltip content="回到首页" placement="bottom">
-          <button>
-            <HomeIcon size="large" />
-          </button>
-        </el-tooltip>
-      </div>
       <div class="breadcrumb">
         <el-breadcrumb :separator-icon="ArrowRight">
-          <el-breadcrumb-item :to="{ path: '/' }">homepage</el-breadcrumb-item>
-          <el-breadcrumb-item>user-name</el-breadcrumb-item>
-          <el-breadcrumb-item>Knowledge Base</el-breadcrumb-item>
-          <el-breadcrumb-item>Document Name</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/doclist' }"><b> ---Esc--- </b></el-breadcrumb-item>
+
         </el-breadcrumb>
       </div>
     </div>
@@ -39,9 +18,9 @@
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" class="avatar" />
       </div>
-      <div class="right-button" @click=handleSaveDocument>
+      <div class="right-button">
         <el-tooltip content="保存" placement="bottom">
-          <button>
+          <button @click=handleSaveDocument>
             <SaveIcon size="large" />
           </button>
         </el-tooltip>
@@ -50,11 +29,11 @@
             <FileExportIcon size="large" />
           </button>
         </el-tooltip>
-        <el-tooltip content="搜索" placement="bottom">
+        <!-- <el-tooltip content="搜索" placement="bottom">
           <button>
             <SearchIcon size="large" />
           </button>
-        </el-tooltip>
+        </el-tooltip> -->
       </div>
       <div class="avatar">
         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
@@ -169,7 +148,6 @@ const exportAsPDF = () => {
 const handleSaveDocument = () => {
   const jsonData = JSON.stringify(editor.getJSON())
   console.log(jsonData)
-
   saveDocument(route.query.id, jsonData).then(res => {
     ElNotification.success("保存文档成功")
   })
@@ -278,5 +256,12 @@ button:hover {
 .document-item:hover {
   background-color: #f0f0f0;
   transform: scale(1.1);
+}
+
+b {
+  background-color: #42f05a;
+  color: #f6ff00;
+  font-size: 15px;
+  border-radius: 8px;
 }
 </style>

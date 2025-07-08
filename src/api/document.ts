@@ -1,4 +1,3 @@
-import { useUserStore } from '@/stores/user';
 import request from './request';
 
 // 创建文档
@@ -6,11 +5,11 @@ export default function createdocument(data: {
     docName: string;
     kbId: number;
     userId: number;
-    //content?: string
+    //content?: string 
     isCollaborative: boolean
 }) {
     return request({
-        url: '/api/document/create',
+        url: `/api/document/create`,
         method: 'post',
         data
     });
@@ -49,12 +48,13 @@ export function getCollaborationStatus(id: number) {
 }
 
 // 保存文档内容
-export function saveDocument(id: number | string, content: string) {
+export function saveDocument(id: number, data: { content: string }) {
     return request({
         url: `/api/document/${id}/content`,
         method: 'post',
-        data: {
-            content
+        data,
+        headers: {
+            'Content-Type': 'application/json'
         }
     });
 }
@@ -84,30 +84,31 @@ export function getDocumentByuserId(userId?: number) {
 }
 
 // 删除文档
-export function deleteDocument(name?: string) {
+export function deleteDocument(docId?: number) {
+
     return request({
-        url: '/api/document/delete',
+        url: `/api/document/delete`,
         method: 'post',
-        params: { name }
+        params: { docId }
     });
 }
 
 // 重命名文档
-export function renameDocument(oldName?: string, newName?: string) {
+export function renameDocument(docId?: number, newName?: string) {
     return request({
-        url: '/api/document/rename',
+        url: `/api/document/rename`,
         method: 'post',
-        params: { oldName, newName }
+        params: { docId, newName }
     });
 }
-// 查询文档
-export function searchDocument(docName = "", nickName = "", begin = "", end = "") {
+
+// 搜索文档
+export function searchDocument(docName?: string, nickName?: string, begin?: string, end?: string, userId?: number) {
     return request({
-        url: '/api/document/search',
+        url: `/api/document/search`,
         method: 'post',
-        params: { userId: useUserStore().userInfo.userId },
-        data: {
-            docName, nickName, begin, end
-        }
+        data: { docName, nickName, begin, end },
+        params: { userId }
     });
 }
+

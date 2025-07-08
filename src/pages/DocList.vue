@@ -9,8 +9,9 @@
       侧边栏组件 - 功能：用户信息展示、菜单导航、最近文档、快速创建文档
       包含：用户头像和名称、知识库和文档菜单、最近访问文档列表、新建文档按钮
     -->
-    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs" :knowledge-base-options="knowledgeBaseOptions"
-      @menu-select="handleMenuSelect" @create-document="handleCreateDocument" />
+    <Sidebar :user-name="userName" :active-menu="activeMenu" :recent-docs="recentDocs"
+      :knowledge-base-options="knowledgeBaseOptions" @menu-select="handleMenuSelect"
+      @create-document="handleCreateDocument" />
 
     <!-- 主内容区 -->
     <el-container class="main-container">
@@ -413,10 +414,10 @@ function handleDocOperation() {
       return
     }
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
-      const oldName = tableData.value[currentRowIndex.value].name
+      const docId = tableData.value[currentRowIndex.value].id
       const newName = renameForm.value.newName
       // 调用后端重命名接口
-      renameDocument(oldName, newName).then((res) => {
+      renameDocument(docId, newName).then((res) => {
         tableData.value[currentRowIndex.value].name = newName
         ElNotification.success('文档重命名成功！')
         closeDocOperationDialog()
@@ -427,9 +428,9 @@ function handleDocOperation() {
   } else if (activeTab.value === 'delete') {
     // 处理删除逻辑
     if (currentRowIndex.value >= 0 && currentRowIndex.value < tableData.value.length) {
-      const docName = tableData.value[currentRowIndex.value].name
+      const docId = tableData.value[currentRowIndex.value].id
       // 调用后端删除接口
-      deleteDocument(docName).then((res) => {
+      deleteDocument(docId).then((res) => {
         tableData.value.splice(currentRowIndex.value, 1)
         ElNotification.success('文档删除成功！')
         closeDocOperationDialog()
@@ -453,13 +454,13 @@ function searchDoc() {
     }
   }
 
-  // 这里可以添加其他查询逻辑
-  searchDocument(nameInput.value, owerInput.value, startDate.value, endDate.value).then(res => {
-    console.log("chaxun ", res.data.data.list)
-    tableData.value.splice(0, tableData.value.length)
-    console.log(tableData.value)
+  // 调用搜索接口，传递用户ID
+  searchDocument(nameInput.value, owerInput.value, startDate.value, endDate.value, userStore.userInfo.userId).then(res => {
+    console.log("查询结果: ", res.data.data.list)
     tableData.value = res.data.data.list
-    console.log(tableData.value)
+  }).catch(error => {
+    console.error("查询失败: ", error)
+    ElNotification.error('查询失败，请重试')
   })
 }
 </script>

@@ -5,7 +5,10 @@ import { ElMessage } from 'element-plus';
 const request = axios.create({
     // baseURL: 'http://172.30.211.5:8080', // 设置基础URL
     baseURL: 'http://localhost:8080',
-    timeout: 5000 // 请求超时时间
+    timeout: 500000, // 请求超时时间
+    headers: {
+      'Content-Type': 'application/json'
+    }
 });
 
 // 请求拦截器

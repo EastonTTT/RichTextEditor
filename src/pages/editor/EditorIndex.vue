@@ -1,6 +1,6 @@
 <template>
   <div>
-    <editor-header :editor="editor!"/>
+    <editor-header :editor="editor!" />
   </div>
   <div class="wrapper">
     <div class="toc-container">
@@ -154,8 +154,8 @@ onMounted(() => {
 
   getDocument(currentDocId.value).then(res => {
     let data = JSON.parse(res.data.data.content)
-    console.log("从数据库拿到的文本:",data)
-    editor.value.commands.setContent(data.content)
+    console.log("从数据库拿到的文本:", data)
+    editor.value.commands.setContent(data)
   })
 
 
