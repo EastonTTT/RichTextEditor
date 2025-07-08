@@ -1,8 +1,8 @@
 <template>
-  <!-- 按钮过渡组 -->
+  <!-- 按钮过渡组：控制 AI 速览按钮的渐显渐隐动画 -->
   <transition-group name="btn-fade" tag="div" class="toggle-btn-container">
     <button 
-      v-if="!visible&&mode=='read'" 
+      v-if="!visible && mode === 'read'" 
       @click="showComponent" 
       class="ai-toggle-btn"
       key="btn"
@@ -11,19 +11,24 @@
       <span>AI速览</span>
     </button>
   </transition-group>
-   <transition name="component-fade" mode="out-in">
-    <div class="ai-overview-container" v-show="visible&&mode=='read'">
+
+  <!-- 组件过渡：控制 AI 速览容器的出场入场动画 -->
+  <transition name="component-fade" mode="out-in">
+    <div class="ai-overview-container" v-show="visible && mode === 'read'">
+      <!-- 头部区域：包含标题和操作按钮 -->
       <div class="ai-overview-header">
         <h3 class="ai-title">AI速览</h3>
         <div class="ai-actions">
+          <!-- 生成/刷新摘要按钮 -->
           <button @click="refreshSummary" class="action-btn" :class="{ 'loading-btn': loading }">
             <el-icon v-if="!loading" class="action-icon"><Refresh /></el-icon>
             <el-icon v-else class="action-icon spin-icon"><Loading /></el-icon>
             <span>{{ loading ? '生成中...' : '总结' }}</span>
           </button>
+
+          <!-- 展开/收起按钮 -->
           <button @click="toggleShowMore" class="action-btn">
             <el-icon class="action-icon" :class="{ 'rotate-icon': showMore }">
-              <!-- 根据状态显示不同图标 -->
               <template v-if="showMore">
                 <CaretTop />
               </template>
@@ -33,38 +38,46 @@
             </el-icon>
             <span>{{ showMore ? '收起' : '展开' }}</span>
           </button>
+
+          <!-- 复制按钮 -->
           <button @click="copySummary" class="action-btn" :class="{ 'copied': copySuccess }">
             <el-icon v-if="!copySuccess" class="action-icon"><DocumentCopy /></el-icon>
             <el-icon v-else class="action-icon copied-icon"><Check /></el-icon>
             <span>{{ copySuccess ? '已复制' : '复制' }}</span>
           </button>
+
+          <!-- 关闭按钮 -->
           <button @click="toggleVisibility" class="action-btn">
             <el-icon class="action-icon"><Close /></el-icon>
             <span>关闭</span>
           </button>
         </div>
       </div>
-      
+
+      <!-- 加载状态：生成摘要时显示 -->
       <div v-if="loading" class="ai-overview-loading">
         <div class="spinner"></div>
         <p class="loading-text">正在生成摘要...</p>
       </div>
-      
+
+      <!-- 错误状态：生成失败时显示 -->
       <div v-else-if="error" class="ai-overview-error">
         <el-icon class="error-icon"><CircleClose /></el-icon>
         <p class="error-text">{{ error }}</p>
       </div>
-      
+
+      <!-- 内容区域：正常状态下显示摘要 -->
       <div v-else class="ai-overview-content">
         <div 
           class="summary-content"
-          :class="{ 'expanded': showMore ,'collapsed-text': !showMore }"
+          :class="{ 'expanded': showMore, 'collapsed-text': !showMore }"
         >
-          <!-- 增加内容为空时的默认提示 -->
+          <!-- 内容为空提示 -->
           <div v-if="!summary && !truncatedSummary" class="default-tip">
             <p>暂无摘要内容，点击"总结"按钮生成摘要</p>
           </div>
-          
+
+          <!-- 渲染摘要内容（完整/截断） -->
           <div v-else v-html="showMore ? summary : truncatedSummary"></div>
         </div>
       </div>
@@ -75,41 +88,71 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue';
 import type { Editor } from '@tiptap/vue-3';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { marked } from 'marked'; // Markdown 转 HTML 工具
+import DOMPurify from 'dompurify'; // HTML 净化工具（防 XSS）
+// Element Plus 图标
 import { 
   Refresh, Loading, CaretRight, CaretTop,
-  DocumentCopy, Check, Close, CircleClose ,Lightning 
+  DocumentCopy, Check, Close, CircleClose, Lightning 
 } from '@element-plus/icons-vue';
-import '@/styles/summary.scss'; // 引入样式文件
-import { getAiSummary } from '@/api/editor';
+import '@/styles/summary.scss'; // 组件专属样式
+import { getAiSummary } from '@/api/editor'; // 生成摘要的接口
 
-// 只接收editor作为参数
+/**
+ * 接收父组件参数
+ * - editor：编辑器实例，用于获取文档内容
+ * - mode：当前模式（仅在 'read' 模式下显示 AI 速览）
+ */
 const { editor, mode } = defineProps<{
   editor: Editor | null;
-  mode: String;
+  mode: string;
 }>();
 
-// 配置marked选项
+/**
+ * Markdown 解析配置
+ * - gfm：启用 GitHub 风格的 Markdown 语法
+ * - breaks：支持换行符转换为 <br>
+ */
 marked.setOptions({
-  gfm: true,        // 支持GitHub风格的Markdown
-  breaks: true,     // 支持换行符
+  gfm: true,        
+  breaks: true,     
 });
 
-// 组件状态
+/**
+ * 组件状态管理
+ * - visible：控制 AI 速览容器的显示/隐藏
+ * - showMore：控制摘要内容的展开/收起
+ * - loading：生成摘要时的加载状态
+ * - error：生成失败时的错误信息
+ * - summary：存储完整的摘要内容（HTML 格式）
+ * - truncatedSummary：存储截断后的摘要内容（HTML 格式）
+ * - copySuccess：复制操作的成功状态
+ */
 const visible = ref(false);
 const showMore = ref(false);
 const loading = ref(false);
 const error = ref('');
-const summary = ref(''); // 完整摘要
-const truncatedSummary = ref(''); // 截断后的摘要
-const copySuccess = ref(false); // 复制成功状态
-// 显示组件的方法
+const summary = ref('');
+const truncatedSummary = ref('');
+const copySuccess = ref(false);
+
+/**
+ * 显示 AI 速览容器
+ * - 修改 visible 状态，触发过渡动画
+ */
 const showComponent = () => {
   visible.value = true;
 };
 
-// 生成摘要
+/**
+ * 核心逻辑：生成文档摘要
+ * 1. 校验编辑器实例是否存在
+ * 2. 开启加载状态，清空错误信息
+ * 3. 获取编辑器内容（带格式的 HTML）
+ * 4. 调用 AI 接口生成摘要（Markdown 格式）
+ * 5. 将 Markdown 转换为安全的 HTML
+ * 6. 生成截断后的摘要，重置展开状态
+ */
 const generateSummary = async () => {
   if (!editor) {
     error.value = '编辑器实例不存在';
@@ -120,24 +163,23 @@ const generateSummary = async () => {
   error.value = '';
 
   try {
-     // 使用 getHTML() 方法获取带格式的内容
+    // 获取编辑器内容（带 HTML 格式）
     const documentContent = editor.getHTML();
-    
-    const description = "请简要为下面这篇文档内容做个总结,总结可以掺杂一些emoji(控制在300字左右):\n"
+    // 拼接提示词，引导 AI 生成摘要
+    const description = "请简要为下面这篇文档内容做个总结,总结可以掺杂一些emoji(控制在300字左右，采用尽量多段落罗列的形式):\n";
 
-    const tmp = await getAiSummary(description+documentContent);
+    // 调用 AI 接口
+    const tmp = await getAiSummary(description + documentContent);
     const summaryMarkdown = tmp.data;
 
-    // 使用marked将Markdown转换为HTML
+    // Markdown 转 HTML + 净化（防止 XSS 攻击）
     const rawHtml = marked.parse(summaryMarkdown);
-    
-    // 使用DOMPurify净化HTML，防止XSS攻击
     summary.value = DOMPurify.sanitize(rawHtml as string);
-    
-    // 生成截断的摘要
+
+    // 生成截断后的摘要
     truncatedSummary.value = truncateHtml(summary.value);
 
-    // 添加展开/收起动画
+    // 确保 DOM 更新后再操作展开状态
     await nextTick();
     showMore.value = false;
   } catch (err: any) {
@@ -148,46 +190,57 @@ const generateSummary = async () => {
   }
 };
 
-// 刷新摘要
+/**
+ * 刷新摘要：调用 generateSummary 重新生成
+ * - 防止重复点击（通过 loading 状态控制）
+ */
 const refreshSummary = async () => {
-  if (loading.value) return; // 防止重复点击
+  if (loading.value) return; 
   await generateSummary();
 };
 
-// 截断HTML内容（优先显示第一个标题或第一个<p>标签内容）
+/**
+ * 截断 HTML 内容：优先显示标题 + 第一段
+ * 1. 创建临时 DOM 解析 HTML
+ * 2. 查找第一个标题（h1/h2/h3）或段落（p）
+ * 3. 拼接需要显示的内容，并添加省略号提示
+ */
 const truncateHtml = (html: string): string => {
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
   
-  // 查找第一个标题元素或第一个<p>标签
+  // 查找第一个标题或段落
   const firstElement = tempDiv.querySelector('h1, h2, h3, p');
   
   if (!firstElement) {
-    return html; // 没有标题和<p>标签，返回全部内容
+    return html; // 无标题/段落时返回全部内容
   }
   
   const container = document.createElement('div');
-  
-  // 如果是标题，显示标题及其后的第一个<p>标签
+
+  // 标题逻辑：显示标题 + 其后第一个段落
   if (['H1', 'H2', 'H3'].includes(firstElement.tagName)) {
     container.appendChild(firstElement.cloneNode(true));
     
-    // 查找标题后的第一个<p>标签
     const firstParagraph = firstElement.nextElementSibling;
     if (firstParagraph && firstParagraph.tagName === 'P') {
       container.appendChild(firstParagraph.cloneNode(true));
     }
   } 
-  // 如果是<p>标签，直接显示
+  // 段落逻辑：直接显示第一个段落
   else if (firstElement.tagName === 'P') {
     container.appendChild(firstElement.cloneNode(true));
   }
   
+  // 添加省略号提示
   appendEllipsis(container);
   return container.innerHTML;
 };
 
-// 添加省略号提示
+/**
+ * 追加省略号提示：引导用户点击展开
+ * - 创建带提示文案的 DOM 元素，添加到容器中
+ */
 const appendEllipsis = (container: HTMLElement) => {
   const ellipsis = document.createElement('p');
   ellipsis.className = 'ellipsis';
@@ -195,28 +248,30 @@ const appendEllipsis = (container: HTMLElement) => {
   container.appendChild(ellipsis);
 };
 
-// 复制摘要内容
+/**
+ * 复制摘要内容：纯文本复制
+ * 1. 创建临时 DOM 提取纯文本
+ * 2. 调用剪贴板 API 复制
+ * 3. 反馈复制结果（动画 + 状态重置）
+ */
 const copySummary = async () => {
   if (!summary.value) return;
   
-  copySuccess.value = false; // 重置状态
+  copySuccess.value = false; 
 
-  // 创建临时元素用于复制纯文本内容
   const tempElement = document.createElement('div');
   tempElement.innerHTML = summary.value;
   
-   try {
+  try {
     await navigator.clipboard.writeText(tempElement.textContent || '');
-    
-    // 显示复制成功状态
     copySuccess.value = true;
-    
-    // 3秒后恢复默认状态
+
+    // 3 秒后重置复制状态
     setTimeout(() => {
       copySuccess.value = false;
     }, 3000);
-    
-    // 显示复制成功提示
+
+    // 显示复制成功提示（动画消失）
     const toast = document.createElement('div');
     toast.className = 'copy-toast';
     toast.innerHTML = '<i class="el-icon-check"></i> 摘要已复制到剪贴板';
@@ -231,19 +286,25 @@ const copySummary = async () => {
   }
 };
 
-// 切换可见性
+/**
+ * 切换 AI 速览容器的显示/隐藏
+ * - 修改 visible 状态，触发过渡动画
+ */
 const toggleVisibility = () => {
   visible.value = !visible.value;
 };
 
-// 切换显示更多/更少
+/**
+ * 切换摘要内容的展开/收起
+ * - 修改 showMore 状态，触发内容高度过渡
+ */
 const toggleShowMore = () => {
   showMore.value = !showMore.value;
 };
-
 </script>
 
 <style lang="scss" scoped>
+/* 原样式保持不变，可根据需要补充注释 */
 .selected-text-display {
   margin-top: 10px;
   padding: 10px;
@@ -252,6 +313,7 @@ const toggleShowMore = () => {
   font-size: 14px;
   color: #666;
 }
+
 .show-dialog-btn {
   margin-top: 10px;
   padding: 8px 16px;

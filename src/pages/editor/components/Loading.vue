@@ -6,8 +6,6 @@
 </template>
 
 <script setup lang="ts">
-// 导入 defineProps 类型
-import { defineProps } from 'vue';
 
 /**
  * 加载动画组件
