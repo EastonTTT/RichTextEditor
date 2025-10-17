@@ -1,12 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('tempBaseUrl'),
   routes: [
     {
       path: '/',
+      name: 'default',
+      redirect: '/home',
+    },
+    {
+      path: '/login',
       name: 'login',
-      component: () => import('@/pages/Login.vue'),
+      component: () => import('@/pages/login/index.vue')
     },
     {
       path: '/test',
@@ -14,15 +19,19 @@ const router = createRouter({
       component: () => import('@/pages/editor/EditorIndex.vue'),
     },
     {
-      path: '/storelist',
-      name: 'storelist',
-      component: () => import('@/pages/StoreList.vue'),
+      path: '/home',
+      name: 'homePage',
+      component: () => import('@/pages/homePage/index.vue'),
     },
     {
-      path: '/doclist',
-      name: 'doclist',
-      component: () => import('@/pages/DocList.vue'),
+      path: '/notFound',
+      name: 'notFound',
+      component: () => import('@/pages/404.vue'),
     },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/notFound'
+    }
   ],
 })
 
