@@ -65,4 +65,4 @@ const scrollToHeading = (pos: number) => {
 
 </script>
 
-<style lang="scss" setup></style>
+<style lang="scss"></style>

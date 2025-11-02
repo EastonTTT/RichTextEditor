@@ -1,15 +1,15 @@
 <template>
   <div class="table">
     <div class="table-header">
-      <div v-for="(col, index) in columns" :key="col.key" class="table-cell header-cell">
+      <div v-for="(col, index) in columns" :key="col.key" class="table-cell header-cell" :style="{ width: col.width + 'px'}">
         <div>{{ col.title }}</div>
         <!-- 宽度调整拖拽 -->
         <div class="resizer" v-if="index !== columns.length - 1" @mousedown="startResizing($event, index)"></div>
       </div>
     </div>
     <div class="table-body">
-      <div v-for="(item, index) in data" :key="index">
-        <div v-for="col in columns" :key="col.key">
+      <div v-for="(item, index) in data" :key="index" class="row">
+        <div v-for="col in columns" :key="col.key" class="cont-cell" :style="{ width: col.width + 'px'}">
           <slot :name="col.key" :row="item">
             <div>{{ item[col.key] }}</div>
           </slot>
@@ -54,9 +54,36 @@ function stopResizing() {
 
 <style lang="scss" scoped>
 .table {
+  font-size: 18px;
   .table-header {
     display: flex;
-    border-bottom: 1px solid gray;
+    margin-bottom: 5px;
+  }
+
+  .resizer{
+
+  }
+
+  .table-body{
+    .row{
+      display: flex;
+      align-items: center;
+      height: 50px;
+      border-bottom: 2px solid #dededf;
+      border-top: 2px solid #dededf;
+
+      &:hover{
+        background-color:#edeeee;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+
+      }
+
+      .cont-cell{
+        display: flex;
+      }
+    }
   }
 
 

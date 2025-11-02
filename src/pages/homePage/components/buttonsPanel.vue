@@ -38,24 +38,29 @@ const conts = [
 <style lang="scss" scoped>
 .wrapper {
   display: flex;
-  justify-content: space-around;
   align-items: center;
-
-
 
   .button {
     padding: 5px;
     border-radius: 10px;
     border: 1px solid #dee0e3;
     flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
 
     &:hover {
+      cursor: pointer;
       background-color: #edeeee;
     }
 
     .icon {
-      width: 40px;
-      height: 40px;
+      width: 30px;
+      height: 30px;
+      margin-right: 10px;
     }
 
     .text {

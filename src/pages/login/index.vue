@@ -8,6 +8,6 @@ defineOptions({
   name: 'loginPage',
 })
 </script>
-<style lang="">
+<style lang="scss" scoped>
 
 </style>

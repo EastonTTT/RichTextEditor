@@ -24,10 +24,18 @@ const tabs = [
 <style lang="scss" scoped>
 .wrapper {
   display: flex;
+  margin: 10px 0;
 
   .tab {
-    color: #646a73;
-    font-size: 28px;
+    color: #575a5f;
+    font-size: 20px;
+    margin-right: 30px;
+    padding: 5px;
+     &:hover{
+      cursor: pointer;
+      background-color: #edeeee;
+      border-radius: 5px;
+     }
   }
 }
 </style>
