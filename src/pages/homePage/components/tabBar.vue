@@ -24,6 +24,7 @@ const tabs = [
 <style lang="scss" scoped>
 .wrapper {
   display: flex;
+<<<<<<< HEAD
   margin: 10px 0;
 
   .tab {
@@ -36,6 +37,19 @@ const tabs = [
       background-color: #edeeee;
       border-radius: 5px;
      }
+=======
+
+  .tab {
+    color: #646a73;
+    font-size: 20px;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 10px;
+
+    &:hover {
+      background-color: #edeeee;
+    }
+>>>>>>> 270065f866d7a687ae93403ab51c8227addde799
   }
 }
 </style>

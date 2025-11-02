@@ -38,13 +38,22 @@ const conts = [
 <style lang="scss" scoped>
 .wrapper {
   display: flex;
+<<<<<<< HEAD
   align-items: center;
 
+=======
+  justify-content: space-around;
+  align-items: center;
+
+
+
+>>>>>>> 270065f866d7a687ae93403ab51c8227addde799
   .button {
     padding: 5px;
     border-radius: 10px;
     border: 1px solid #dee0e3;
     flex: 1;
+<<<<<<< HEAD
     min-width: 200px;
     max-width: 400px;
     height: 60px;
@@ -54,13 +63,22 @@ const conts = [
 
     &:hover {
       cursor: pointer;
+=======
+
+    &:hover {
+>>>>>>> 270065f866d7a687ae93403ab51c8227addde799
       background-color: #edeeee;
     }
 
     .icon {
+<<<<<<< HEAD
       width: 30px;
       height: 30px;
       margin-right: 10px;
+=======
+      width: 40px;
+      height: 40px;
+>>>>>>> 270065f866d7a687ae93403ab51c8227addde799
     }
 
     .text {
