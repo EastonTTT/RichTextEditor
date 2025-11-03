@@ -1,6 +1,6 @@
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import type { requestResponse } from "./types";
-
+import { addPendingRequest, removePendingRequest } from "./cancelManager";
 /*
  * 设置请求拦截器函数，自动注入token，或设置自定义header
  */
@@ -13,6 +13,8 @@ export function setInterceptor(instance: AxiosInstance){
         config.headers.Authorization = `Bearer ${token}`
       }
 
+      addPendingRequest(config)
+
       /* 这里还可以对header做其他补充 e.g. config.header.xxx = '' */
       return config
     },
@@ -23,6 +25,7 @@ export function setInterceptor(instance: AxiosInstance){
 
   instance.interceptors.response.use(
     (response: AxiosResponse<requestResponse>) => {
+      removePendingRequest(response.config)
       const res = response.data
       if(res.code !== 200) {
         console.log('warning -- request err ' + res.msg)
@@ -31,6 +34,7 @@ export function setInterceptor(instance: AxiosInstance){
       return res.data
     },
     (error) => {
+      removePendingRequest(error.config)
       return Promise.reject(error)
     }
   )

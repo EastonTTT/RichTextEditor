@@ -1,4 +1,5 @@
-import axios,{AxiosInstance, AxiosRequestConfig } from "axios";
+import axios from "axios";
+import type {AxiosInstance, AxiosRequestConfig } from 'axios'
 const baseURL = import.meta.env.VITE_DEV_API_BASE_URL
 
 const httpClient: AxiosInstance = axios.create({
@@ -6,7 +7,7 @@ const httpClient: AxiosInstance = axios.create({
   timeout: 10000,
 })
 
-export function request(config: AxiosRequestConfig){
+export async function request(config: AxiosRequestConfig){
   return httpClient.request(config)
 }
 
