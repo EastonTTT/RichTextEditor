@@ -1,79 +1,90 @@
 <template>
   <div class="wrapper">
-    <div class="button" v-for="(cont, index) in conts" :key="index">
+    <button class="button primary" @click="emit('create')">
       <div class="icon">
-        <component :is="cont.icon" />
+        <DocumentAdd />
       </div>
       <div class="text">
-        <div class="title">{{ cont.title }}</div>
-        <div class="desc">{{ cont.desc }}</div>
+        <div class="title">New Document</div>
+        <div class="desc">Create a blank document and open it immediately.</div>
+      </div>
+    </button>
+    <div class="button" v-for="(action, index) in secondaryActions" :key="index">
+      <div class="icon">
+        <component :is="action.icon" />
+      </div>
+      <div class="text">
+        <div class="title">{{ action.title }}</div>
+        <div class="desc">{{ action.desc }}</div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
+const emit = defineEmits<{
+  create: []
+}>()
 
-const conts = [
-  {
-    icon: 'DocumentAdd',
-    title: '新建',
-    desc: '新建文档开始写作',
-  },
+const secondaryActions = [
   {
     icon: 'UploadFilled',
-    title: '上传',
-    desc: '上传本地文件',
+    title: 'Import',
+    desc: 'Reserved for importing local files in the next iteration.',
   },
   {
     icon: 'MessageBox',
-    title: '模板库',
-    desc: '选择模板快速新建',
-  }
+    title: 'Templates',
+    desc: 'Reserved for document templates in the next iteration.',
+  },
 ]
-
 </script>
 
 <style lang="scss" scoped>
 .wrapper {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
 
-  .button {
-    padding: 5px;
-    border-radius: 10px;
-    border: 1px solid #dee0e3;
-    flex: 1;
-    min-width: 200px;
-    max-width: 400px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    margin-right: 20px;
+.button {
+  appearance: none;
+  background: #fff;
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid #dee0e3;
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
 
-    &:hover {
-      cursor: pointer;
-      background-color: #edeeee;
-    }
+.button:hover {
+  cursor: pointer;
+  background-color: #edeeee;
+}
 
-    .icon {
-      width: 30px;
-      height: 30px;
-      margin-right: 10px;
-    }
+.button.primary {
+  border-color: #1677ff;
+  background: #f4f8ff;
+}
 
-    .text {
-      .title {
-        font-size: 14px;
-        margin-bottom: 5px;
-      }
+.icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+}
 
-      .desc {
-        font-size: 12px;
-        color: #646f7c;
-      }
-    }
-  }
+.title {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.desc {
+  font-size: 12px;
+  color: #646f7c;
 }
 </style>

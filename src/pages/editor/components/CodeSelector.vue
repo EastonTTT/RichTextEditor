@@ -2,9 +2,9 @@
   <div class="code-selector">
     <select v-model="selected">
       <option disabled value="">language</option>
-      <option v-for="lang in codeLanguages" :key="lang.value" :value="lang.value" @change="onChange">
+      <option v-for="lang in codeLanguages" :key="lang.value" :value="lang.value">
         {{ lang.label }}
-      </option>>
+      </option>
     </select>
   </div>
 </template>
@@ -23,6 +23,9 @@ const onChange = () => {
 }
 
 watch(() => selected.value, onChange)
+watch(() => currentLanguage, (value) => {
+  selected.value = value
+})
 </script>
 
 <style lang="scss" scoped>

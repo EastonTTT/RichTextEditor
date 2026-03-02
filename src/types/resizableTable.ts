@@ -1,6 +1,6 @@
 export interface tableColumns {
   title: string
   key: string
-  minwidth: number
-  width: number
+  minwidth?: number
+  width?: number
 }

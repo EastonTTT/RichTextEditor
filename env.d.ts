@@ -8,6 +8,7 @@ declare module '*.vue' {
 
 interface ImportMetaEnv {
   readonly VITE_DEV_API_BASE_URL: string
+  readonly VITE_COLLAB_WS_URL?: string
 }
 
 interface ImportMeta {

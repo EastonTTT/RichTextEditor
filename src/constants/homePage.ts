@@ -1,13 +1,27 @@
 export const menuTabs = [
   {
-    name: '主页',
-    val: 'homePage',
-    icon: 'House'
+    name: 'Home',
+    val: 'home',
+    icon: 'House',
   },
   {
-    name: '知识库',
-    val: 'knowledgeBase',
-    icon: 'MessageBox'
+    name: 'Documents',
+    val: 'documents',
+    icon: 'Document',
   },
+]
 
+export const homeFilters = [
+  {
+    label: 'All',
+    value: 'all',
+  },
+  {
+    label: 'Private',
+    value: 'private',
+  },
+  {
+    label: 'Shared',
+    value: 'shared',
+  },
 ]

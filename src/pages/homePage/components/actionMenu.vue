@@ -1,46 +1,43 @@
-<template >
-  <div class="icon" @click="handleClicked">
-    <More />
-    <div class="menu" v-if="isShowMenu">
-      1111
-    </div>
+<template>
+  <div class="menu">
+    <button class="action-button" @click.stop="emit('open', row.id)">Open</button>
+    <button class="action-button danger" @click.stop="emit('delete', row.id)">Delete</button>
   </div>
 </template>
+
 <script setup lang="ts">
-import { ref } from 'vue';
-const props = defineProps<{
-  row
+defineProps<{
+  row: {
+    id: string
+  }
 }>()
-const emit = defineEmits(['actionEmit'])
 
-const isShowMenu = ref(false)
-const eventType = null
-function handleClicked() {
-  isShowMenu.value = !isShowMenu.value
-}
-
-function handleSelected(){
-  emit('actionEmit',eventType)
-}
+const emit = defineEmits<{
+  open: [id: string]
+  delete: [id: string]
+}>()
 </script>
+
 <style lang="scss" scoped>
-.icon{
-  margin-left: 5px;
-  width: 25px;
-  height: 25px;
-  position: relative;
-  & :hover{
-    border-radius: 4px;
-    background-color: #d8dada;
-  }
-  .menu{
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: translateX(-100%);
-    background-color: #fff;
-    border-radius: 5px ;
-    padding: 5px;
-  }
+.menu {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  appearance: none;
+  border: 1px solid #d0d7de;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.action-button:hover {
+  background: #f8fafc;
+}
+
+.danger {
+  color: #b42318;
 }
 </style>

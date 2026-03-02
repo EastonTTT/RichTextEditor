@@ -1,124 +1,107 @@
 <template>
   <div class="wrapper">
-    <div class="user-info"> Hi~ EastonTT</div>
-    <div class="search">click to search</div>
+    <div class="user-card">
+      <div class="user-title">Workspace</div>
+      <div class="user-name">{{ userName }}</div>
+    </div>
+    <div class="search-card">
+      <div class="search-title">Overview</div>
+      <div class="search-desc">{{ documentCount }} documents stored locally</div>
+    </div>
     <div v-for="tab in menuTabs" :key="tab.val" class="tab">
       <component :is="tab.icon" class="icon"></component>
       <p class="name">{{ tab.name }}</p>
     </div>
-    <div v-for="topCont in topConts" :key="topCont.val" class="collapse">
-      <div class="header" @click="setExpandByName(topCont.name)">
-        <div>{{ topCont.name }}</div>
-        <el-icon v-if="!topCont.expand" class="icon">
-          <ArrowRight />
-        </el-icon>
-        <el-icon v-if="topCont.expand" class="icon">
-          <ArrowDown />
-        </el-icon>
-      </div>
-      <div v-if="topCont.expand" class="list">
-        <component :is="topCont.icon" class="icon"></component>
-        <div>111</div>
+    <div class="section">
+      <div class="header">Pinned</div>
+      <div class="list">
+        <Document class="icon" />
+        <div>Latest document appears in the list on the right.</div>
       </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-import { menuTabs, } from '@/constants/homePage';
-import { } from '@/constants/homePage';
-import { reactive } from 'vue';
+import { menuTabs } from '@/constants/homePage'
 
-const topConts = reactive([
-  {
-    name: '置顶文档',
-    val: 'topDoc',
-    icon: 'Document',
-    expand: false,
-  },
-  {
-    name: '置顶知识库',
-    val: 'topKnowledgeBase',
-    icon: 'Collection',
-    expand: false,
-  }
-])
-// const resizable = {
-//   minWidth: 200,
-//   maxWidth: 600,
-//   initialWidth: 250,
-//   unit: 'px',
-// }
-
-function setExpandByName(tabName: string) {
-  const target = topConts.find(item => item.name === tabName)
-  if (target) {
-    target.expand = !target.expand
-  } else {
-    console.log('未找到符合条件的tab')
-  }
-}
-
-
+defineProps<{
+  userName: string
+  documentCount: number
+}>()
 </script>
+
 <style lang="scss" scoped>
 .wrapper {
-  background-color: #F5F6F7;
+  background-color: #f5f6f7;
   min-width: 250px;
   max-width: 300px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 16px;
+  border-right: 1px solid #e5e7eb;
+}
 
-  .user-info {
-    text-align: center;
-    height: 40px;
-  }
+.user-card,
+.search-card {
+  padding: 14px;
+  background-color: #fff;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
 
-  .search {
-    padding: 10px;
-    background-color: #fff;
-    font-size: 15px;
-    color: gray;
-    border-radius: 10px;
-  }
+.user-title,
+.search-title {
+  font-size: 12px;
+  color: #667085;
+  text-transform: uppercase;
+}
 
-  .icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-  }
+.user-name {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 700;
+}
 
-  .tab {
-    height: 30px;
-    padding: 5px;
-    margin: 5px;
-    display: flex;
-    align-items: center;
-    font-size: 20px;
-  }
+.search-desc {
+  margin-top: 8px;
+  color: #475467;
+}
 
-  .collapse {
-    padding: 5px;
-    margin: 5px;
-    font-size: 15px;
-    color: #a1a1a1;
+.icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
 
-    .header {
-      display: flex;
-      align-items: center;
+.tab,
+.list {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  border-radius: 8px;
+}
 
-      .icon {
-        margin-left: 5px;
-      }
-    }
+.tab:hover {
+  background-color: #e9eef5;
+}
 
-    .list {
-      padding: 5px 5px;
-      display: flex;
-      align-items: center;
-      color: #000;
-    }
-  }
+.section {
+  margin-top: 20px;
+}
+
+.header {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #667085;
+  text-transform: uppercase;
+}
+
+.list {
+  color: #475467;
+  background: #fff;
 }
 </style>

@@ -1,19 +1,25 @@
-import router from ".";
-const whiteList = [ '/login', '/homePage', '/notFound' ]
+import { hasToken } from '@/api/user'
+import router from '.'
 
-router.beforeEach((to, from ,next) => {
-  const token = true
-  if(token){
-    if(to.path === '/login'){
-      next({ path: '/'})
-    } else{
-      next()
+const whiteList = ['/login', '/notFound']
+
+router.beforeEach((to, from, next) => {
+  const token = hasToken()
+
+  if (token) {
+    if (to.path === '/login') {
+      next({ path: '/home' })
+      return
     }
-  } else{
-    if(whiteList.includes(to.path)){
-      next()
-    } else{
-      next({path: `/login?redirect=${to.fullPath}`}) // 便于登陆后返回原页面
-    }
+
+    next()
+    return
   }
+
+  if (whiteList.includes(to.path)) {
+    next()
+    return
+  }
+
+  next({ path: `/login?redirect=${encodeURIComponent(to.fullPath)}` })
 })

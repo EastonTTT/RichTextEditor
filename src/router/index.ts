@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
-  history: createWebHistory('tempBaseUrl'),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
@@ -11,11 +11,11 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/pages/login/index.vue')
+      component: () => import('@/pages/login/index.vue'),
     },
     {
-      path: '/test',
-      name: 'test',
+      path: '/documents/:id',
+      name: 'documentEditor',
       component: () => import('@/pages/editor/EditorIndex.vue'),
     },
     {
@@ -30,8 +30,8 @@ const router = createRouter({
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/notFound'
-    }
+      redirect: '/notFound',
+    },
   ],
 })
 

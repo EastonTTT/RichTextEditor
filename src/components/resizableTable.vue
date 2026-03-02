@@ -1,16 +1,24 @@
 <template>
   <div class="table">
-    <div class="table-header" @mouseenter="showResizer" @mouseleave="hideResizer">
-      <div v-for="(col, index) in columns" :key="col.key" class="table-cell header-cell"
-        :style="{ width: col.width + 'px' }">
-        <div class="resizer" v-if="index !== 0 && true" @mousedown="startResizing($event, index)"></div>
+    <div class="table-header">
+      <div
+        v-for="(col, index) in normalizedColumns"
+        :key="col.key"
+        class="table-cell header-cell"
+        :style="{ width: col.width ? `${col.width}px` : 'auto' }"
+      >
         <div>{{ col.title }}</div>
-        <!-- 宽度调整拖拽 -->
+        <div class="resizer" v-if="index !== normalizedColumns.length - 1" @mousedown="startResizing($event, index)"></div>
       </div>
     </div>
     <div class="table-body">
       <div v-for="(item, index) in data" :key="index" class="row">
-        <div v-for="col in columns" :key="col.key" class="cont-cell" :style="{ width: col.width + 'px'}">
+        <div
+          v-for="col in normalizedColumns"
+          :key="col.key"
+          class="cont-cell"
+          :style="{ width: col.width ? `${col.width}px` : 'auto' }"
+        >
           <slot :name="col.key" :row="item">
             <div>{{ item[col.key] }}</div>
           </slot>
@@ -20,32 +28,35 @@
   </div>
 </template>
 
-<script setup lang='ts'>
-import type { tableColumns } from '@/types/resizableTable';
-import { ref } from 'vue';
+<script setup lang="ts">
+import type { tableColumns } from '@/types/resizableTable'
+import { computed } from 'vue'
+
 const props = defineProps<{
-  columns: tableColumns[],
-  data
+  columns: tableColumns[]
+  data: Record<string, unknown>[]
 }>()
 
-const emit = defineEmits(['updateColumn'])
+const emit = defineEmits<{
+  updateColumn: [index: number, width: number]
+}>()
 
-//表格拖拽动态显示
-const isShowResizer = ref(false)
-function showResizer() {
-  isShowResizer.value = true;
-}
-function hideResizer() {
-  isShowResizer.value = false;
-}
+const normalizedColumns = computed(() =>
+  props.columns.map((column) => ({
+    ...column,
+    minwidth: column.minwidth ?? 120,
+    width: column.width ?? 200,
+  })),
+)
 
-//处理表格拖拽逻辑
-let startX = 0;
-let startWidth = 0;
-let resizingIndex = 0;
+let startX = 0
+let startWidth = 0
+let resizingIndex = 0
+
 function startResizing(event: MouseEvent, index: number) {
+  event.preventDefault()
   startX = event.clientX
-  startWidth = props.columns[index].width
+  startWidth = normalizedColumns.value[index].width
   resizingIndex = index
 
   document.addEventListener('mousemove', onResizing)
@@ -54,7 +65,7 @@ function startResizing(event: MouseEvent, index: number) {
 
 function onResizing(event: MouseEvent) {
   const delta = event.clientX - startX
-  emit('updateColumn', resizingIndex, Math.max(props.columns[resizingIndex].minwidth, startWidth + delta))
+  emit('updateColumn', resizingIndex, Math.max(normalizedColumns.value[resizingIndex].minwidth, startWidth + delta))
 }
 
 function stopResizing() {
@@ -65,38 +76,56 @@ function stopResizing() {
 
 <style lang="scss" scoped>
 .table {
-  font-size: 18px;
-  .table-header {
-    display: flex;
-    margin-bottom: 5px;
-  }
+  width: 100%;
+  font-size: 14px;
+}
 
-  .resizer{
+.table-header {
+  display: flex;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
 
-  }
+.table-cell,
+.cont-cell {
+  box-sizing: border-box;
+  padding: 12px 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .table-body{
-    .row{
-      display: flex;
-      align-items: center;
-      height: 50px;
-      border-bottom: 2px solid #dededf;
-      border-top: 2px solid #dededf;
+.header-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #475569;
+}
 
-      &:hover{
-        background-color:#edeeee;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
+.resizer {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  width: 6px;
+  height: calc(100% - 16px);
+  cursor: col-resize;
+}
 
-      }
+.row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #edf2f7;
+}
 
-      .cont-cell{
-        display: flex;
-      }
-    }
-  }
+.row:hover {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
-
+.cont-cell {
+  display: flex;
+  align-items: center;
 }
 </style>
