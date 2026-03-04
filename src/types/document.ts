@@ -9,6 +9,7 @@ export interface DocumentSummary {
   lastModifiedAt: string
   preview: string
   visibility: DocumentVisibility
+  roomName: string
 }
 
 export interface DocumentDetail extends DocumentSummary {
@@ -17,19 +18,21 @@ export interface DocumentDetail extends DocumentSummary {
 
 export interface CreateDocumentPayload {
   title?: string
-  author: string
+  author?: string
   content?: string
   visibility?: DocumentVisibility
 }
 
 export interface UpdateDocumentPayload {
   title?: string
+  author?: string
   content?: string
   visibility?: DocumentVisibility
 }
 
 export interface DuplicateDocumentPayload {
   title?: string
+  author?: string
 }
 
 export interface RecentDocumentItem {

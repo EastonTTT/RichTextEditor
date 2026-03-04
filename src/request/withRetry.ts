@@ -8,7 +8,7 @@ export interface RetryOptions {
   signal?: AbortSignal
 }
 
-export async function requestWithRetry(config: AxiosRequestConfig, options: RetryOptions = {}) {
+export async function requestWithRetry<T = unknown>(config: AxiosRequestConfig, options: RetryOptions = {}) {
   const { timeout = 15000, maxRetries = 3, retryDelay = 1000, signal } = options
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -19,7 +19,7 @@ export async function requestWithRetry(config: AxiosRequestConfig, options: Retr
       : AbortSignal.any([timeoutSignal, controller.signal])
 
     try {
-      return await request({ ...config, signal: combinedSignal })
+      return await request<T>({ ...config, signal: combinedSignal })
     } catch (error) {
       if (combinedSignal.aborted) {
         console.warn('Request aborted.')

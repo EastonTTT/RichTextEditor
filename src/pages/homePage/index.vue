@@ -2,11 +2,16 @@
   <div class="wrapper">
     <div class="side-bar">
       <sideBar
+        active-tab="documents"
         :user-name="user.name"
         :document-count="documents.length"
+        :knowledge-base-count="knowledgeBases.length"
         :recent-documents="recentDocuments"
+        :recent-knowledge-bases="recentKnowledgeBases"
         @logout="handleLogout"
-        @open-recent="handleOpenDocument"
+        @navigate="router.push($event)"
+        @open-recent-document="handleOpenDocument"
+        @open-recent-knowledge-base="handleOpenKnowledgeBase"
       />
     </div>
     <div class="main-page">
@@ -41,8 +46,10 @@ import {
   removeDocument,
   saveDocument,
 } from '@/api/document'
+import { getKnowledgeBaseList, getRecentKnowledgeBases } from '@/api/knowledgeBase'
 import { getCurrentUser, logout } from '@/api/user'
 import type { DocumentSummary, RecentDocumentItem } from '@/types/document'
+import type { KnowledgeBaseSummary, RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
 import type { UserProfile } from '@/types/user'
 
 defineOptions({
@@ -51,7 +58,9 @@ defineOptions({
 
 const router = useRouter()
 const documents = ref<DocumentSummary[]>([])
+const knowledgeBases = ref<KnowledgeBaseSummary[]>([])
 const recentDocuments = ref<RecentDocumentItem[]>([])
+const recentKnowledgeBases = ref<RecentKnowledgeBaseItem[]>([])
 const user = ref<UserProfile>({
   id: '',
   name: 'Guest',
@@ -74,14 +83,19 @@ const filteredDocuments = computed(() =>
 )
 
 async function loadData() {
-  const [currentUser, currentDocuments, currentRecentDocuments] = await Promise.all([
+  const [currentUser, currentDocuments, currentRecentDocuments, currentKnowledgeBases, currentRecentKnowledgeBases] =
+    await Promise.all([
     getCurrentUser(),
     getDocumentList(),
     getRecentDocuments(),
+    getKnowledgeBaseList(),
+    getRecentKnowledgeBases(),
   ])
   user.value = currentUser
   documents.value = currentDocuments
   recentDocuments.value = currentRecentDocuments
+  knowledgeBases.value = currentKnowledgeBases
+  recentKnowledgeBases.value = currentRecentKnowledgeBases
 }
 
 async function handleCreateDocument() {
@@ -100,6 +114,10 @@ async function handleOpenDocument(id: string) {
   await recordDocumentOpen(id)
   await loadData()
   router.push(`/documents/${id}`)
+}
+
+async function handleOpenKnowledgeBase(id: string) {
+  router.push(`/knowledge/${id}`)
 }
 
 async function handleRenameDocument(id: string) {

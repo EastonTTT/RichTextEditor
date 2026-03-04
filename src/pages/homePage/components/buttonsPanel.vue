@@ -5,8 +5,8 @@
         <DocumentAdd />
       </div>
       <div class="text">
-        <div class="title">New Document</div>
-        <div class="desc">Create a blank document and open it immediately.</div>
+        <div class="title">{{ primaryTitle }}</div>
+        <div class="desc">{{ primaryDescription }}</div>
       </div>
     </button>
     <div class="button" v-for="(action, index) in secondaryActions" :key="index">
@@ -22,6 +22,17 @@
 </template>
 
 <script setup lang="ts">
+withDefaults(
+  defineProps<{
+    primaryTitle?: string
+    primaryDescription?: string
+  }>(),
+  {
+    primaryTitle: 'New Document',
+    primaryDescription: 'Create a blank document and open it immediately.',
+  },
+)
+
 const emit = defineEmits<{
   create: []
 }>()

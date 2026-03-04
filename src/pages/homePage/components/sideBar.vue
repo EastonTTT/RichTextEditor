@@ -9,20 +9,28 @@
     </div>
     <div class="search-card">
       <div class="search-title">Overview</div>
-      <div class="search-desc">{{ documentCount }} documents stored locally</div>
+      <div class="search-desc">{{ documentCount }} documents</div>
+      <div class="search-desc">{{ knowledgeBaseCount }} knowledge notes</div>
     </div>
-    <div v-for="tab in menuTabs" :key="tab.val" class="tab">
+    <button
+      v-for="tab in menuTabs"
+      :key="tab.val"
+      class="tab"
+      :class="{ active: tab.val === activeTab }"
+      type="button"
+      @click="emit('navigate', tab.route)"
+    >
       <component :is="tab.icon" class="icon"></component>
       <p class="name">{{ tab.name }}</p>
-    </div>
+    </button>
     <div class="section">
-      <div class="header">Recent</div>
+      <div class="header">Recent Documents</div>
       <button
         v-for="document in recentDocuments"
         :key="document.id"
         class="recent-item"
         type="button"
-        @click="emit('openRecent', document.id)"
+        @click="emit('openRecentDocument', document.id)"
       >
         <Document class="icon" />
         <div class="recent-content">
@@ -35,22 +43,48 @@
         <div>No recent documents yet.</div>
       </div>
     </div>
+    <div class="section">
+      <div class="header">Recent Knowledge Notes</div>
+      <button
+        v-for="knowledgeBase in recentKnowledgeBases"
+        :key="knowledgeBase.id"
+        class="recent-item"
+        type="button"
+        @click="emit('openRecentKnowledgeBase', knowledgeBase.id)"
+      >
+        <Collection class="icon" />
+        <div class="recent-content">
+          <div class="recent-title">{{ knowledgeBase.title }}</div>
+          <div class="recent-desc">Open recent knowledge note</div>
+        </div>
+      </button>
+      <div v-if="recentKnowledgeBases.length === 0" class="list empty-state">
+        <Collection class="icon" />
+        <div>No recent knowledge notes yet.</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { menuTabs } from '@/constants/homePage'
 import type { RecentDocumentItem } from '@/types/document'
+import type { RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
 
 defineProps<{
+  activeTab: string
   userName: string
   documentCount: number
+  knowledgeBaseCount: number
   recentDocuments: RecentDocumentItem[]
+  recentKnowledgeBases: RecentKnowledgeBaseItem[]
 }>()
 
 const emit = defineEmits<{
   logout: []
-  openRecent: [id: string]
+  navigate: [path: string]
+  openRecentDocument: [id: string]
+  openRecentKnowledgeBase: [id: string]
 }>()
 </script>
 
@@ -131,8 +165,21 @@ const emit = defineEmits<{
   border-radius: 8px;
 }
 
+.tab {
+  appearance: none;
+  border: none;
+  width: 100%;
+  background: transparent;
+  text-align: left;
+}
+
 .tab:hover {
   background-color: #e9eef5;
+}
+
+.tab.active {
+  background: #dce9ff;
+  color: #0f3f91;
 }
 
 .section {

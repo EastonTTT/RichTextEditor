@@ -6,4 +6,4 @@ export interface requestResponse<T = unknown> {
 
 export type Params = Record<string, unknown> | undefined
 
-export type Data = Record<string, unknown> | FormData | undefined
+export type Data = object | FormData | undefined

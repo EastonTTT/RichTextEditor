@@ -5,6 +5,7 @@ interface CollaborationOptions {
   wsUrl: string
   roomName: string
   doc: Y.Doc
+  token?: string
   user?: {
     name: string
     color: string
@@ -13,8 +14,11 @@ interface CollaborationOptions {
 }
 
 export function useCollaborationProvider(options: CollaborationOptions) {
-  const { wsUrl, roomName, doc, user, autoConnect = false } = options
-  const provider = new WebsocketProvider(wsUrl, roomName, doc, { connect: autoConnect })
+  const { wsUrl, roomName, doc, token, user, autoConnect = false } = options
+  const provider = new WebsocketProvider(wsUrl, roomName, doc, {
+    connect: autoConnect,
+    params: token ? { token } : undefined,
+  })
   const awareness = provider.awareness
 
   if (user) {

@@ -21,8 +21,8 @@
         @search-prev="focusPreviousSearchMatch"
         @search-next="focusNextSearchMatch"
         @toggle-settings="isSettingsOpen = true"
-        @save="saveCurrentDocument(true)"
-        @back="router.push('/home')"
+        @save="saveCurrentKnowledgeBase(true)"
+        @back="router.push('/knowledge')"
       />
     </div>
     <div class="wrapper">
@@ -46,11 +46,48 @@
       </div>
     </div>
 
-    <el-drawer v-model="isSettingsOpen" title="Document Settings" size="360px">
+    <el-drawer v-model="isSettingsOpen" title="Knowledge Note Settings" size="420px">
       <div class="settings-panel">
         <el-form label-position="top">
           <el-form-item label="Title">
             <el-input :model-value="title" @input="handleTitleChange" />
+          </el-form-item>
+          <el-form-item label="Description">
+            <el-input type="textarea" :rows="4" :model-value="description" @input="handleDescriptionChange" />
+          </el-form-item>
+          <el-form-item label="Tags">
+            <el-input :model-value="tagsInput" @input="handleTagsInput" placeholder="crdt, editor, reference" />
+          </el-form-item>
+          <el-form-item label="Related Documents">
+            <el-select
+              class="settings-field"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :model-value="relatedDocumentIds"
+              @update:model-value="handleRelatedDocumentsChange"
+            >
+              <el-option v-for="document in documentOptions" :key="document.id" :label="document.title" :value="document.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Related Knowledge Notes">
+            <el-select
+              class="settings-field"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :model-value="relatedKnowledgeBaseIds"
+              @update:model-value="handleRelatedKnowledgeBasesChange"
+            >
+              <el-option
+                v-for="knowledgeBase in relatedKnowledgeOptions"
+                :key="knowledgeBase.id"
+                :label="knowledgeBase.title"
+                :value="knowledgeBase.id"
+              />
+            </el-select>
           </el-form-item>
           <el-form-item label="Visibility">
             <el-select class="settings-field" :model-value="visibility" @update:model-value="handleVisibilityChange">
@@ -58,8 +95,8 @@
               <el-option label="Shared" value="shared" />
             </el-select>
           </el-form-item>
-          <el-form-item label="Document ID">
-            <el-input :model-value="documentId" readonly />
+          <el-form-item label="Knowledge Note ID">
+            <el-input :model-value="knowledgeBaseId" readonly />
           </el-form-item>
           <el-form-item label="Room">
             <el-input :model-value="roomName" readonly />
@@ -68,6 +105,13 @@
             <el-input :model-value="lastSavedAt ? new Date(lastSavedAt).toLocaleString() : 'Not saved yet'" readonly />
           </el-form-item>
         </el-form>
+
+        <div class="settings-card">
+          <div class="settings-card-title">Knowledge Graph</div>
+          <div class="settings-stat">Document links: {{ relatedDocumentIds.length }}</div>
+          <div class="settings-stat">Knowledge links: {{ relatedKnowledgeBaseIds.length }}</div>
+          <div class="settings-stat">Tags: {{ tags.length }}</div>
+        </div>
 
         <div class="settings-card">
           <div class="settings-card-title">Statistics</div>
@@ -88,14 +132,16 @@ import { useEditor } from '@tiptap/vue-3'
 import type { Editor as CoreEditor } from '@tiptap/core'
 import RichTextEditor from '@/pages/editor/components/RichTextEditor.vue'
 import TableOfContents from '@/pages/editor/components/TableOfContents.vue'
-import EditorHeader from './components/EditorHeader.vue'
+import EditorHeader from '@/pages/editor/components/EditorHeader.vue'
+import { getDocumentList } from '@/api/document'
+import { getKnowledgeBaseDetail, getKnowledgeBaseList, recordKnowledgeBaseOpen, saveKnowledgeBase } from '@/api/knowledgeBase'
+import type { DocumentVisibility, DocumentSummary } from '@/types/document'
+import type { KnowledgeBaseSummary } from '@/types/knowledgeBase'
 import { createEditorExtensions } from '@/utils/editorExtensions'
-import { normalizeVisibility, setMetaValueIfChanged } from '@/utils/collaborationMeta'
+import { arraysEqual, normalizeVisibility, readStringArray, setMetaValueIfChanged } from '@/utils/collaborationMeta'
 import { getStoredToken, getStoredUser } from '@/utils/localStore'
 import { useCollaborationProvider } from '@/utils/useCollaborationProvider'
 import '@/styles/editor.scss'
-import { getDocumentDetail, recordDocumentOpen, saveDocument } from '@/api/document'
-import type { DocumentVisibility } from '@/types/document'
 
 type SearchMatch = {
   from: number
@@ -104,9 +150,9 @@ type SearchMatch = {
 
 const route = useRoute()
 const router = useRouter()
-const documentId = route.params.id as string
+const knowledgeBaseId = route.params.id as string
 const collabUrl = import.meta.env.VITE_COLLAB_WS_URL as string | undefined
-const roomName = `document:${documentId}`
+const roomName = `knowledge:${knowledgeBaseId}`
 const storedUser = getStoredUser()
 const storedToken = getStoredToken() || undefined
 
@@ -126,7 +172,13 @@ const collaboration = collabUrl && sharedDoc
     })
   : null
 
-const title = ref('Untitled Document')
+const title = ref('Untitled Knowledge Note')
+const description = ref('Reusable note for your local knowledge base.')
+const tags = ref<string[]>([])
+const relatedDocumentIds = ref<string[]>([])
+const relatedKnowledgeBaseIds = ref<string[]>([])
+const documentOptions = ref<DocumentSummary[]>([])
+const knowledgeBaseOptions = ref<KnowledgeBaseSummary[]>([])
 const visibility = ref<DocumentVisibility>('private')
 const isSaving = ref(false)
 const isDirty = ref(false)
@@ -147,6 +199,9 @@ const activeSearchIndex = ref(-1)
 const latestContentSnapshot = ref('<p></p>')
 let autoSaveTimer: number | null = null
 let suppressMetaObserver = false
+
+const tagsInput = computed(() => tags.value.join(', '))
+const relatedKnowledgeOptions = computed(() => knowledgeBaseOptions.value.filter((item) => item.id !== knowledgeBaseId))
 
 const editor = useEditor({
   extensions: createEditorExtensions({
@@ -275,10 +330,30 @@ function readMetaIntoState() {
   }
 
   const nextTitle = metaMap.get('title')
+  const nextDescription = metaMap.get('description')
   const nextVisibility = metaMap.get('visibility')
+  const nextTags = readStringArray(metaMap.get('tags'))
+  const nextRelatedDocumentIds = readStringArray(metaMap.get('relatedDocumentIds'))
+  const nextRelatedKnowledgeBaseIds = readStringArray(metaMap.get('relatedKnowledgeBaseIds')).filter((id) => id !== knowledgeBaseId)
 
   if (typeof nextTitle === 'string' && nextTitle.trim()) {
     title.value = nextTitle
+  }
+
+  if (typeof nextDescription === 'string') {
+    description.value = nextDescription
+  }
+
+  if (metaMap.has('tags')) {
+    tags.value = nextTags
+  }
+
+  if (metaMap.has('relatedDocumentIds')) {
+    relatedDocumentIds.value = nextRelatedDocumentIds
+  }
+
+  if (metaMap.has('relatedKnowledgeBaseIds')) {
+    relatedKnowledgeBaseIds.value = nextRelatedKnowledgeBaseIds
   }
 
   if (metaMap.has('visibility')) {
@@ -292,6 +367,10 @@ function syncStateIntoMeta() {
   }
 
   setMetaValueIfChanged(metaMap, 'title', title.value)
+  setMetaValueIfChanged(metaMap, 'description', description.value)
+  setMetaValueIfChanged(metaMap, 'tags', tags.value)
+  setMetaValueIfChanged(metaMap, 'relatedDocumentIds', relatedDocumentIds.value)
+  setMetaValueIfChanged(metaMap, 'relatedKnowledgeBaseIds', relatedKnowledgeBaseIds.value)
   setMetaValueIfChanged(metaMap, 'visibility', visibility.value)
 }
 
@@ -308,7 +387,7 @@ function sharedMetaHasValues() {
     return false
   }
 
-  return metaMap.has('title') || metaMap.has('visibility')
+  return metaMap.size > 0
 }
 
 function applyMetaObserver() {
@@ -355,23 +434,33 @@ async function seedSharedDocumentFromSnapshot() {
   hasSeededCollaborationState.value = true
 }
 
-async function hydrateDocument() {
-  const document = await getDocumentDetail(documentId)
+async function loadReferenceOptions() {
+  const [documents, knowledgeBases] = await Promise.all([getDocumentList(), getKnowledgeBaseList()])
+  documentOptions.value = documents
+  knowledgeBaseOptions.value = knowledgeBases
+}
 
-  if (!document) {
+async function hydrateKnowledgeBase() {
+  const knowledgeBase = await getKnowledgeBaseDetail(knowledgeBaseId)
+
+  if (!knowledgeBase) {
     router.replace('/notFound')
     return
   }
 
-  title.value = document.title
-  visibility.value = document.visibility
-  lastSavedAt.value = document.lastModifiedAt
-  latestContentSnapshot.value = document.content || '<p></p>'
+  title.value = knowledgeBase.title
+  description.value = knowledgeBase.description
+  tags.value = knowledgeBase.tags
+  relatedDocumentIds.value = knowledgeBase.relatedDocumentIds
+  relatedKnowledgeBaseIds.value = knowledgeBase.relatedKnowledgeBaseIds.filter((id) => id !== knowledgeBaseId)
+  visibility.value = knowledgeBase.visibility
+  lastSavedAt.value = knowledgeBase.lastModifiedAt
+  latestContentSnapshot.value = knowledgeBase.content || '<p></p>'
   saveError.value = ''
 
   if (editor.value && !isCollaborationAvailable) {
     isHydrating.value = true
-    editor.value.commands.setContent(document.content, false)
+    editor.value.commands.setContent(knowledgeBase.content, false)
     window.setTimeout(() => {
       isHydrating.value = false
       isDirty.value = false
@@ -394,7 +483,7 @@ function clearAutoSaveTimer() {
 function scheduleAutoSave() {
   clearAutoSaveTimer()
   autoSaveTimer = window.setTimeout(() => {
-    void saveCurrentDocument()
+    void saveCurrentKnowledgeBase()
   }, 1000)
 }
 
@@ -410,7 +499,7 @@ function markDirty() {
   scheduleAutoSave()
 }
 
-async function saveCurrentDocument(force = false) {
+async function saveCurrentKnowledgeBase(force = false) {
   if (!editor.value) {
     return
   }
@@ -433,16 +522,24 @@ async function saveCurrentDocument(force = false) {
   saveError.value = ''
 
   try {
-    const document = await saveDocument(documentId, {
+    const knowledgeBase = await saveKnowledgeBase(knowledgeBaseId, {
       title: title.value,
+      description: description.value,
+      tags: tags.value,
+      relatedDocumentIds: relatedDocumentIds.value,
+      relatedKnowledgeBaseIds: relatedKnowledgeBaseIds.value,
       content: editor.value.getHTML(),
       visibility: visibility.value,
     })
 
-    title.value = document.title
-    visibility.value = document.visibility
-    lastSavedAt.value = document.lastModifiedAt
-    latestContentSnapshot.value = document.content
+    title.value = knowledgeBase.title
+    description.value = knowledgeBase.description
+    tags.value = knowledgeBase.tags
+    relatedDocumentIds.value = knowledgeBase.relatedDocumentIds
+    relatedKnowledgeBaseIds.value = knowledgeBase.relatedKnowledgeBaseIds.filter((id) => id !== knowledgeBaseId)
+    visibility.value = knowledgeBase.visibility
+    lastSavedAt.value = knowledgeBase.lastModifiedAt
+    latestContentSnapshot.value = knowledgeBase.content
     isDirty.value = false
   } catch {
     saveError.value = 'Save failed. Changes are kept locally until retry.'
@@ -465,6 +562,58 @@ function handleTitleChange(value: string) {
 
   if (metaMap && hasReceivedInitialSync.value) {
     setMetaValueIfChanged(metaMap, 'title', value)
+  }
+
+  markDirty()
+}
+
+function handleDescriptionChange(value: string) {
+  description.value = value
+
+  if (metaMap && hasReceivedInitialSync.value) {
+    setMetaValueIfChanged(metaMap, 'description', value)
+  }
+
+  markDirty()
+}
+
+function handleTagsInput(value: string) {
+  const nextTags = value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 12)
+
+  if (arraysEqual(tags.value, nextTags)) {
+    return
+  }
+
+  tags.value = nextTags
+
+  if (metaMap && hasReceivedInitialSync.value) {
+    setMetaValueIfChanged(metaMap, 'tags', nextTags)
+  }
+
+  markDirty()
+}
+
+function handleRelatedDocumentsChange(value: string[]) {
+  const nextValue = value.filter(Boolean)
+  relatedDocumentIds.value = nextValue
+
+  if (metaMap && hasReceivedInitialSync.value) {
+    setMetaValueIfChanged(metaMap, 'relatedDocumentIds', nextValue)
+  }
+
+  markDirty()
+}
+
+function handleRelatedKnowledgeBasesChange(value: string[]) {
+  const nextValue = value.filter((id) => id && id !== knowledgeBaseId)
+  relatedKnowledgeBaseIds.value = nextValue
+
+  if (metaMap && hasReceivedInitialSync.value) {
+    setMetaValueIfChanged(metaMap, 'relatedKnowledgeBaseIds', nextValue)
   }
 
   markDirty()
@@ -532,8 +681,8 @@ onMounted(async () => {
 
   metaMap?.observe(applyMetaObserver)
 
-  await recordDocumentOpen(documentId)
-  await hydrateDocument()
+  await Promise.all([recordKnowledgeBaseOpen(knowledgeBaseId), loadReferenceOptions()])
+  await hydrateKnowledgeBase()
 })
 
 onBeforeUnmount(() => {

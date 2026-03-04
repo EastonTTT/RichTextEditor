@@ -1,4 +1,5 @@
 // tiptap extensions configurations:
+import type { Doc as YDoc } from 'yjs'
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
@@ -36,6 +37,21 @@ import ListItem from '@tiptap/extension-list-item'
 import Highlight from '@tiptap/extension-highlight'
 import TextAlign from '@tiptap/extension-text-align'
 import { Color } from '@tiptap/extension-color'
+import Collaboration from '@tiptap/extension-collaboration'
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+
+interface EditorExtensionsOptions {
+  ydoc?: YDoc
+  collaborationProvider?: {
+    awareness: {
+      states: Map<number, unknown>
+    }
+  }
+  collaborationUser?: {
+    name: string
+    color: string
+  }
+}
 
 lowlight.registerLanguage('javascript', javascript)
 lowlight.registerLanguage('typescript', typescript)
@@ -49,36 +65,55 @@ lowlight.registerLanguage('bash', bash)
 lowlight.registerLanguage('markdown', markdown)
 lowlight.registerLanguage('yaml', yaml)
 
-export const basicExtensions = [
-  Document,
-  Paragraph,
-  Text,
-  Bold,
-  Italic,
-  Heading.configure({
-    levels: [1, 2, 3],
-  }),
-  History,
-  CodeBlock,
-  CodeBlockLowlight.configure({
-    lowlight,
-  }),
-  Image,
-  Link,
-  TaskList,
-  TaskItem,
-  CharacterCount,
-  Strike,
-  Underline,
-  TextStyle,
-  FontSize,
-  HorizontalRule,
-  OrderedList,
-  BulletList,
-  ListItem,
-  Highlight.configure({ multicolor: true }),
-  TextAlign.configure({
-    types: ['heading', 'paragraph'],
-  }),
-  Color,
-]
+export function createEditorExtensions(options: EditorExtensionsOptions = {}) {
+  const baseExtensions = [
+    Document,
+    Paragraph,
+    Text,
+    Bold,
+    Italic,
+    Heading.configure({
+      levels: [1, 2, 3],
+    }),
+    CodeBlock,
+    CodeBlockLowlight.configure({
+      lowlight,
+    }),
+    Image,
+    Link,
+    TaskList,
+    TaskItem,
+    CharacterCount,
+    Strike,
+    Underline,
+    TextStyle,
+    FontSize,
+    HorizontalRule,
+    OrderedList,
+    BulletList,
+    ListItem,
+    Highlight.configure({ multicolor: true }),
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+    }),
+    Color,
+  ]
+
+  if (options.ydoc && options.collaborationProvider) {
+    return [
+      ...baseExtensions,
+      Collaboration.configure({
+        document: options.ydoc,
+        field: 'content',
+      }),
+      CollaborationCursor.configure({
+        provider: options.collaborationProvider,
+        user: options.collaborationUser,
+      }),
+    ]
+  }
+
+  return [...baseExtensions, History]
+}
+
+export const basicExtensions = createEditorExtensions()

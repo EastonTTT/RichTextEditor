@@ -17,6 +17,22 @@ export function addPendingRequest(config: AxiosRequestConfig) {
   }
 
   const controller = new AbortController()
+  const upstreamSignal = config.signal as AbortSignal | undefined
+
+  if (upstreamSignal) {
+    if (upstreamSignal.aborted) {
+      controller.abort(upstreamSignal.reason)
+    } else {
+      upstreamSignal.addEventListener(
+        'abort',
+        () => {
+          controller.abort(upstreamSignal.reason)
+        },
+        { once: true },
+      )
+    }
+  }
+
   config.signal = controller.signal
   pendingMap.set(key, controller)
 }

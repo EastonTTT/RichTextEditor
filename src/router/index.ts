@@ -19,6 +19,16 @@ const router = createRouter({
       component: () => import('@/pages/editor/EditorIndex.vue'),
     },
     {
+      path: '/knowledge',
+      name: 'knowledgeHome',
+      component: () => import('@/pages/knowledge/index.vue'),
+    },
+    {
+      path: '/knowledge/:id',
+      name: 'knowledgeEditor',
+      component: () => import('@/pages/knowledge/KnowledgeEditor.vue'),
+    },
+    {
       path: '/home',
       name: 'homePage',
       component: () => import('@/pages/homePage/index.vue'),

@@ -29,14 +29,16 @@ function getDefaultUser(): UserProfile {
 
 function getDefaultDocument(author: string): DocumentDetail {
   const createdAt = now()
+  const id = createId('doc')
 
   return {
-    id: createId('doc'),
+    id,
     title: 'Untitled Document',
     author,
     lastModifiedAt: createdAt,
     preview: 'Start writing here...',
     visibility: 'private',
+    roomName: `document:${id}`,
     content: '<h1>Welcome</h1><p>Start writing here...</p>',
   }
 }
@@ -54,7 +56,10 @@ function safeParse<T>(value: string | null, fallback: T): T {
 }
 
 function readDocuments(): DocumentDetail[] {
-  const documents = safeParse<DocumentDetail[]>(localStorage.getItem(DOCUMENTS_KEY), [])
+  const documents = safeParse<DocumentDetail[]>(localStorage.getItem(DOCUMENTS_KEY), []).map((document) => ({
+    ...document,
+    roomName: document.roomName || `document:${document.id}`,
+  }))
 
   if (documents.length > 0) {
     return documents
@@ -110,6 +115,7 @@ export function listDocuments(): DocumentSummary[] {
       lastModifiedAt: document.lastModifiedAt,
       preview: document.preview,
       visibility: document.visibility,
+      roomName: document.roomName,
     }))
 }
 
@@ -146,14 +152,16 @@ export function recordDocumentOpen(id: string) {
 export function createDocument(payload: CreateDocumentPayload): DocumentDetail {
   const documents = readDocuments()
   const createdAt = now()
+  const id = createId('doc')
 
   const document: DocumentDetail = {
-    id: createId('doc'),
+    id,
     title: payload.title?.trim() || 'Untitled Document',
-    author: payload.author,
+    author: payload.author || getStoredUser().name,
     lastModifiedAt: createdAt,
     preview: 'New document',
     visibility: payload.visibility ?? 'private',
+    roomName: `document:${id}`,
     content: payload.content || '<p></p>',
   }
 

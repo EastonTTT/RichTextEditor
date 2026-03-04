@@ -1,13 +1,15 @@
 export const menuTabs = [
   {
-    name: 'Home',
-    val: 'home',
-    icon: 'House',
-  },
-  {
     name: 'Documents',
     val: 'documents',
     icon: 'Document',
+    route: '/home',
+  },
+  {
+    name: 'Knowledge Base',
+    val: 'knowledgeBases',
+    icon: 'Collection',
+    route: '/knowledge',
   },
 ]
 

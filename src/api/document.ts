@@ -6,45 +6,40 @@ import type {
   RecentDocumentItem,
   UpdateDocumentPayload,
 } from '@/types/document'
-import {
-  createDocument as createLocalDocument,
-  deleteDocument as deleteLocalDocument,
-  duplicateDocument as duplicateLocalDocument,
-  getDocumentById as getLocalDocumentById,
-  listDocuments,
-  listRecentDocuments as listLocalRecentDocuments,
-  recordDocumentOpen as recordLocalDocumentOpen,
-  updateDocument as updateLocalDocument,
-} from '@/utils/localStore'
+import { del, get, patch, post } from '@/request'
 
 export async function getDocumentList(): Promise<DocumentSummary[]> {
-  return listDocuments()
+  return get<DocumentSummary[]>('/documents')
 }
 
 export async function getDocumentDetail(id: string): Promise<DocumentDetail | null> {
-  return getLocalDocumentById(id)
+  try {
+    return await get<DocumentDetail>(`/documents/${id}`)
+  } catch {
+    return null
+  }
 }
 
 export async function createDocument(payload: CreateDocumentPayload): Promise<DocumentDetail> {
-  return createLocalDocument(payload)
+  return post<DocumentDetail>('/documents', payload)
 }
 
 export async function saveDocument(id: string, payload: UpdateDocumentPayload): Promise<DocumentDetail> {
-  return updateLocalDocument(id, payload)
+  return patch<DocumentDetail>(`/documents/${id}`, payload)
 }
 
 export async function removeDocument(id: string): Promise<void> {
-  deleteLocalDocument(id)
+  await del(`/documents/${id}`)
 }
 
 export async function duplicateDocument(id: string, payload: DuplicateDocumentPayload = {}): Promise<DocumentDetail> {
-  return duplicateLocalDocument(id, payload)
+  return post<DocumentDetail>(`/documents/${id}/duplicate`, payload)
 }
 
 export async function getRecentDocuments(limit = 5): Promise<RecentDocumentItem[]> {
-  return listLocalRecentDocuments(limit)
+  return get<RecentDocumentItem[]>('/documents/recent', { limit })
 }
 
 export async function recordDocumentOpen(id: string): Promise<void> {
-  recordLocalDocumentOpen(id)
+  await post(`/documents/${id}/open`)
 }
