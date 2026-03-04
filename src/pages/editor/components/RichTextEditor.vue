@@ -9,7 +9,7 @@
         class="tool-bar"
         @toggle-collaboration="emit('toggle-collaboration')"
       />
-      <editor-content :editor="editor" class="editor-content" />
+      <editor-content :editor="editorForContent" class="editor-content" />
       <code-selector
         :editor="editor"
         :current-language="currentLanguage"
@@ -23,14 +23,14 @@
 
 <script setup lang="ts">
 import { EditorContent } from '@tiptap/vue-3'
-import { ref, watchEffect, nextTick } from 'vue'
+import { computed, ref, watchEffect, nextTick } from 'vue'
 import ToolBar from './ToolBar.vue'
 import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
 import { Editor } from '@tiptap/vue-3'
 
 const { editor, canCollaborate, isCollaborative } = defineProps<{
-  editor: Editor
+  editor: Editor | null
   canCollaborate: boolean
   isCollaborative: boolean
 }>()
@@ -46,8 +46,14 @@ const codeSelectorStyle = ref({
   top: '0px',
   left: '0px',
 })
+const editorForContent = computed(() => editor ?? undefined)
 
 watchEffect(async () => {
+  if (!editor) {
+    showCodeSelector.value = false
+    return
+  }
+
   showCodeSelector.value = editor.isActive('codeBlock')
   if (!showCodeSelector.value) {
     return

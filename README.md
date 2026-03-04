@@ -1,39 +1,31 @@
-### 目录代码结构
+# RichTextEditor
 
-src
-├── App.vue
-├── apis # 请求层
-├── assets # 资源层
-├── components # 公共组件层
-├── constants # 常量层
-│ └── index.ts
-├── pages # 业务模块层
-├── router # 路由层
-├── store # Pinia 数据层
-│ ├── index.ts
-│ └── modules
-│ ├── setting.ts
-│ └── user.ts
-├── style # 样式目录
-│ ├── reset.less # 对默认样式的重置
-├── types # 类型文件目录
-└── utils # 工具层
-│ ├── route # 路由工具封装
-│ └── request # 请求工具封装
-└── main.ts # 入口逻辑文件
+Local-first rich text editor MVP built with Vue 3, Element Plus and Tiptap.
 
-### 项目命名规则
+## Scripts
 
-1、目录名全部使用小写， kebab-case形式命名
+- `npm run dev`: start the Vite dev server
+- `npm run build`: run type-check and production build
+- `npm run lint`: run ESLint with autofix
 
-2、文件的命名规范
+## Current scope
 
-如果该文件是单文件组件/类，采用PascalCase形式命名，方便导入和使用。
+- Local login session stored in `localStorage`
+- Document list, create, open, delete and auto-save
+- Rich text editing with headings, lists, code blocks, colors and PDF export
+- Optional collaboration banner driven by `VITE_COLLAB_WS_URL`
 
-如果该文件是目录下的主文件，采用 index 名称命名，方便导入。如 index.ts, index.vue
+## Project structure
 
-如果该文件是接口定义文件，采用camelCase形式命名，方便区分文件关联性。
-
-如果该文件是资源/样式文件，采用kebab-case形式命名。
-
-3、类及接口的命名规范， 采用PascalCase形式命名
+```text
+src/
+  api/          local-first data access
+  components/   shared Vue components
+  constants/    static config and UI options
+  pages/        route-level pages
+  request/      axios wrapper utilities
+  router/       router and guards
+  styles/       global styles
+  types/        shared TypeScript types
+  utils/        editor and local storage helpers
+```

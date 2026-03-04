@@ -16,20 +16,26 @@
     <resizableTable :columns="columns" :data="rows" @update-column="updateColumn">
       <template #docName="{ row }">
         <div class="doc-cell">
-          <div class="doc-title">{{ row.title }}</div>
-          <div class="doc-preview">{{ row.preview }}</div>
+          <div class="doc-title">{{ toDocumentRow(row).title }}</div>
+          <div class="doc-preview">{{ toDocumentRow(row).preview }}</div>
         </div>
       </template>
       <template #lastModify="{ row }">
-        {{ formatDate(row.lastModifiedAt) }}
+        {{ formatDate(toDocumentRow(row).lastModifiedAt) }}
       </template>
       <template #visibility="{ row }">
-        <el-tag :type="row.visibility === 'shared' ? 'success' : 'info'">
-          {{ row.visibility }}
+        <el-tag :type="toDocumentRow(row).visibility === 'shared' ? 'success' : 'info'">
+          {{ toDocumentRow(row).visibility }}
         </el-tag>
       </template>
       <template #action="{ row }">
-        <actionMenu :row="row" @open="emit('open', $event)" @delete="emit('delete', $event)" />
+        <actionMenu
+          :row="{ id: toDocumentRow(row).id }"
+          @open="emit('open', $event)"
+          @rename="emit('rename', $event)"
+          @duplicate="emit('duplicate', $event)"
+          @delete="emit('delete', $event)"
+        />
       </template>
     </resizableTable>
 
@@ -55,6 +61,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   create: []
   open: [id: string]
+  rename: [id: string]
+  duplicate: [id: string]
   delete: [id: string]
   'update:filter': [value: string]
   'update:keyword': [value: string]
@@ -65,10 +73,12 @@ const columns = ref<tableColumns[]>([
   { title: 'Owner', key: 'author', minwidth: 120, width: 180 },
   { title: 'Visibility', key: 'visibility', minwidth: 120, width: 140 },
   { title: 'Updated', key: 'lastModify', minwidth: 180, width: 220 },
-  { title: 'Actions', key: 'action', minwidth: 180, width: 220 },
+  { title: 'Actions', key: 'action', minwidth: 160, width: 180 },
 ])
 
-const rows = computed(() => props.documents as unknown as Record<string, unknown>[])
+const rows = computed<Record<string, unknown>[]>(() =>
+  props.documents.map((document) => ({ ...document })) as Record<string, unknown>[],
+)
 
 function updateColumn(index: number, width: number) {
   columns.value[index].width = width
@@ -76,6 +86,10 @@ function updateColumn(index: number, width: number) {
 
 function onKeywordChange(value: string) {
   emit('update:keyword', value)
+}
+
+function toDocumentRow(row: unknown): DocumentSummary {
+  return row as DocumentSummary
 }
 
 function formatDate(value: string) {

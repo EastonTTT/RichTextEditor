@@ -1,68 +1,118 @@
 <template>
   <div class="toc">
-    <p style="text-align: center;">TOC placeholder</p>
-    <div v-for="heading in headings" :key="heading.id" @click="scrollToHeading(heading.pos)"
-      :class="[`toc-item`, `level-${heading.level}`]">
+    <p class="toc-title">Contents</p>
+    <div v-if="headings.length === 0" class="toc-empty">Add headings to generate a table of contents.</div>
+    <div
+      v-for="heading in headings"
+      :key="heading.id"
+      @click="scrollToHeading(heading.pos)"
+      :class="[`toc-item`, `level-${heading.level}`]"
+    >
       {{ heading.text }}
     </div>
-    <!-- <TocItem v-for="item in headings" :key="item.id" :item="item" :editor="editor" /> -->
   </div>
 </template>
+
 <script lang="ts" setup>
-import { watchEffect, ref } from 'vue'
-import { Editor } from '@tiptap/vue-3';
+import { onBeforeUnmount, ref, watch } from 'vue'
+import { Editor } from '@tiptap/vue-3'
 import type { HeadingItem } from '@/types/extensionTypes'
 
 const { editor } = defineProps<{ editor: Editor | null }>()
 const headings = ref<HeadingItem[]>([])
+let cleanup: (() => void) | null = null
 
-watchEffect(() => {
-  if (!editor) return
+function collectHeadings(currentEditor: Editor | null) {
+  if (!currentEditor) {
+    headings.value = []
+    return
+  }
+
   const result: HeadingItem[] = []
 
-  editor.state.doc.descendants((node, pos) => {
+  currentEditor.state.doc.descendants((node, pos) => {
     if (node.type.name === 'heading') {
-      const level = node.attrs.level
-      const text = node.textContent
-      const id = `heading-${pos}`
-
-      result.push({ level, text, id, pos })
+      result.push({
+        level: node.attrs.level,
+        text: node.textContent,
+        id: `heading-${pos}`,
+        pos,
+      })
     }
   })
 
   headings.value = result
-  // headings.value = buildTOCTree(result)
-})
+}
 
-const scrollToHeading = (pos: number) => {
-  const dom = editor?.view.nodeDOM(pos) as HTMLElement
-  if (dom) {
-    dom.scrollIntoView({ behavior: 'smooth' })
+watch(
+  () => editor,
+  (currentEditor) => {
+    cleanup?.()
+    collectHeadings(currentEditor)
+
+    if (!currentEditor) {
+      return
+    }
+
+    const syncHeadings = () => collectHeadings(currentEditor)
+    currentEditor.on('update', syncHeadings)
+    currentEditor.on('selectionUpdate', syncHeadings)
+    cleanup = () => {
+      currentEditor.off('update', syncHeadings)
+      currentEditor.off('selectionUpdate', syncHeadings)
+    }
+  },
+  { immediate: true },
+)
+
+function scrollToHeading(pos: number) {
+  const dom = editor?.view.nodeDOM(pos)
+  if (dom instanceof HTMLElement) {
+    dom.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
-// function buildTOCTree(flat: HeadingItem[]) {
-//   const tree: HeadingItem[] = []
-//   let lastH1: HeadingItem | null = null
-//   let lastH2: HeadingItem | null = null
-
-//   for (const item of flat) {
-//     if (item.level === 1) {
-//       tree.push({ ...item, children: [] })
-//       lastH1 = tree[tree.length - 1]
-//       lastH2 = null
-//     } else if (item.level === 2 && lastH1) {
-//       lastH1.children!.push({ ...item, children: [] })
-//       lastH2 = lastH1.children![lastH1.children!.length - 1]
-//     } else if (item.level === 3 && lastH2) {
-//       lastH2.children!.push(item)
-//     }
-//   }
-
-//   return tree
-// }
-
-
+onBeforeUnmount(() => {
+  cleanup?.()
+})
 </script>
 
-<style lang="scss"></style>
+<style lang="scss" scoped>
+.toc {
+  padding: 16px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.toc-title {
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #667085;
+  text-transform: uppercase;
+}
+
+.toc-empty {
+  color: #98a2b3;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.toc-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #344054;
+}
+
+.toc-item:hover {
+  background: #f2f4f7;
+}
+
+.level-2 {
+  padding-left: 16px;
+}
+
+.level-3 {
+  padding-left: 24px;
+}
+</style>

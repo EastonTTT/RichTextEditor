@@ -1,152 +1,162 @@
 @import 'highlight.js/styles/atom-one-dark.css';
 
-.wrapper {
-  min-height: calc(100vh - 78px);
-  width: 100%;
-  display: flex;
-  background: #f8fafc;
-}
+.editor-page {
+  .wrapper {
+    min-height: calc(100vh - 78px);
+    width: 100%;
+    display: flex;
+    background: #f8fafc;
+  }
 
-.toc-container {
-  width: 220px;
-  background: #fff;
-  border-right: 1px solid #eee;
-  padding: 16px;
-  font-family: 'Segoe UI', Roboto, sans-serif;
-}
+  .toc-container {
+    width: 220px;
+    background: #fff;
+    border-right: 1px solid #eee;
+    padding: 16px;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+  }
 
-.toc-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  line-height: 25px;
-  font-size: 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    line-height: 25px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
 
-.toc-item::before {
-  content: '•';
-  font-size: 18px;
-  color: #667085;
-}
+  .toc-item::before {
+    content: '-';
+    font-size: 18px;
+    color: #667085;
+  }
 
-.toc-item.level-2 {
-  padding-left: 24px;
-}
+  .toc-item.level-2 {
+    padding-left: 24px;
+  }
 
-.toc-item.level-3 {
-  padding-left: 36px;
-}
+  .toc-item.level-3 {
+    padding-left: 36px;
+  }
 
-.toc-item:hover {
-  background-color: #f5f5f5;
-}
+  .toc-item:hover {
+    background-color: #f5f5f5;
+  }
 
-.editor-container {
-  width: calc(100% - 220px);
-  padding: 16px 24px;
-}
+  .editor-container {
+    width: calc(100% - 220px);
+    padding: 16px 24px;
+  }
 
-.tool-bar {
-  width: 100%;
-  display: flex;
-  gap: 5px;
-  margin-bottom: 12px;
-}
+  .tool-bar {
+    width: 100%;
+    display: flex;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
 
-.editor-content {
-  padding: 24px;
-  background: #fff;
-  border-radius: 16px;
-  min-height: 70vh;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
-}
+  .editor-content {
+    padding: 24px;
+    background: #fff;
+    border-radius: 16px;
+    min-height: 70vh;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+  }
 
-.ProseMirror {
-  min-height: 500px;
-  outline: none;
-}
+  .ProseMirror {
+    min-height: 500px;
+    outline: none;
+  }
 
-.ProseMirror mark {
-  background-color: #faf594;
-  border-radius: 0.4rem;
-  box-decoration-break: clone;
-  padding: 0.1rem 0.3rem;
-}
+  .ProseMirror mark {
+    background-color: #faf594;
+    border-radius: 0.4rem;
+    box-decoration-break: clone;
+    padding: 0.1rem 0.3rem;
+  }
 
-.ProseMirror ul,
-.ProseMirror ol {
-  padding-left: 1.5em;
-  margin: 1em 0;
-}
+  .ProseMirror ul,
+  .ProseMirror ol {
+    padding-left: 1.5em;
+    margin: 1em 0;
+  }
 
-.ProseMirror ul {
-  list-style: disc;
-}
+  .ProseMirror ul {
+    list-style: disc;
+  }
 
-.ProseMirror ol {
-  list-style: decimal;
-}
+  .ProseMirror ol {
+    list-style: decimal;
+  }
 
-.ProseMirror li {
-  line-height: 1.5;
-}
+  .ProseMirror li {
+    line-height: 1.5;
+  }
 
-.ProseMirror ul[data-type='taskList'] {
-  list-style: none;
-  padding-left: 1.5em;
-}
+  .ProseMirror ul[data-type='taskList'] {
+    list-style: none;
+    padding-left: 1.5em;
+  }
 
-.ProseMirror ul[data-type='taskList'] li {
-  display: flex;
-  align-items: center;
-}
+  .ProseMirror ul[data-type='taskList'] li {
+    display: flex;
+    align-items: center;
+  }
 
-.ProseMirror ul[data-type='taskList'] li > label {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  user-select: none;
-}
+  .ProseMirror ul[data-type='taskList'] li > label {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    user-select: none;
+  }
 
-.ProseMirror img {
-  display: block;
-  height: auto;
-  margin: 1.5rem 0;
-  max-width: 100%;
-}
+  .ProseMirror img {
+    display: block;
+    height: auto;
+    margin: 1.5rem 0;
+    max-width: 100%;
+  }
 
-.ProseMirror img.ProseMirror-selectednode {
-  outline: 3px solid gray;
-}
+  .ProseMirror img.ProseMirror-selectednode {
+    outline: 3px solid gray;
+  }
 
-.ProseMirror pre {
-  background: #1e1e1e;
-  color: #ffffff;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 1em 0;
-  overflow-x: auto;
-  font-size: 14px;
-  line-height: 1.5;
-  max-width: 100%;
-  white-space: pre-wrap;
-}
+  .ProseMirror pre {
+    background: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 1em 0;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 100%;
+    white-space: pre-wrap;
+  }
 
-.collab-banner {
-  margin-bottom: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #ecfdf3;
-  color: #027a48;
-  font-size: 14px;
-}
+  .ProseMirror blockquote {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid #98a2b3;
+    background: #f8fafc;
+    color: #344054;
+  }
 
-.collab-banner.muted {
-  background: #f2f4f7;
-  color: #344054;
+  .collab-banner {
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #ecfdf3;
+    color: #027a48;
+    font-size: 14px;
+  }
+
+  .collab-banner.muted {
+    background: #f2f4f7;
+    color: #344054;
+  }
 }

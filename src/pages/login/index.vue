@@ -16,9 +16,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import { login } from '@/api/user'
+import { getCurrentUser, hasToken, login } from '@/api/user'
 
 defineOptions({
   name: 'loginPage',
@@ -31,13 +32,26 @@ const name = ref('')
 async function handleLogin() {
   const trimmedName = name.value.trim()
   if (!trimmedName) {
+    ElMessage.warning('Please enter a display name.')
     return
   }
 
   await login(trimmedName)
+  ElMessage.success(`Welcome back, ${trimmedName}.`)
   const redirect = typeof route.query.redirect === 'string' ? decodeURIComponent(route.query.redirect) : '/home'
   router.replace(redirect)
 }
+
+onMounted(async () => {
+  if (!hasToken()) {
+    return
+  }
+
+  const user = await getCurrentUser()
+  name.value = user.name
+  const redirect = typeof route.query.redirect === 'string' ? decodeURIComponent(route.query.redirect) : '/home'
+  router.replace(redirect)
+})
 </script>
 
 <style lang="scss" scoped>

@@ -27,3 +27,12 @@ export interface UpdateDocumentPayload {
   content?: string
   visibility?: DocumentVisibility
 }
+
+export interface DuplicateDocumentPayload {
+  title?: string
+}
+
+export interface RecentDocumentItem {
+  id: string
+  title: string
+}

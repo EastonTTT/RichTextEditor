@@ -2,11 +2,14 @@ import type {
   CreateDocumentPayload,
   DocumentDetail,
   DocumentSummary,
+  DuplicateDocumentPayload,
+  RecentDocumentItem,
   UpdateDocumentPayload,
 } from '@/types/document'
 import type { UserProfile } from '@/types/user'
 
 const DOCUMENTS_KEY = 'rich-text-editor.documents'
+const RECENT_DOCUMENTS_KEY = 'rich-text-editor.recent-documents'
 const USER_KEY = 'rich-text-editor.user'
 const TOKEN_KEY = 'token'
 
@@ -67,6 +70,10 @@ function writeDocuments(documents: DocumentDetail[]) {
   localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents))
 }
 
+function writeRecentDocuments(items: RecentDocumentItem[]) {
+  localStorage.setItem(RECENT_DOCUMENTS_KEY, JSON.stringify(items))
+}
+
 export function getStoredUser(): UserProfile {
   return safeParse<UserProfile>(localStorage.getItem(USER_KEY), getDefaultUser())
 }
@@ -96,11 +103,44 @@ export function listDocuments(): DocumentSummary[] {
   return readDocuments()
     .slice()
     .sort((a, b) => new Date(b.lastModifiedAt).getTime() - new Date(a.lastModifiedAt).getTime())
-    .map(({ content, ...summary }) => summary)
+    .map((document) => ({
+      id: document.id,
+      title: document.title,
+      author: document.author,
+      lastModifiedAt: document.lastModifiedAt,
+      preview: document.preview,
+      visibility: document.visibility,
+    }))
 }
 
 export function getDocumentById(id: string): DocumentDetail | null {
   return readDocuments().find((document) => document.id === id) ?? null
+}
+
+export function listRecentDocuments(limit = 5): RecentDocumentItem[] {
+  const items = safeParse<RecentDocumentItem[]>(localStorage.getItem(RECENT_DOCUMENTS_KEY), [])
+  const validIds = new Set(readDocuments().map((document) => document.id))
+  const filtered = items.filter((item) => validIds.has(item.id)).slice(0, limit)
+
+  if (filtered.length !== items.length) {
+    writeRecentDocuments(filtered)
+  }
+
+  return filtered
+}
+
+export function recordDocumentOpen(id: string) {
+  const target = getDocumentById(id)
+  if (!target) {
+    return
+  }
+
+  const current = listRecentDocuments(20).filter((item) => item.id !== id)
+  current.unshift({
+    id: target.id,
+    title: target.title,
+  })
+  writeRecentDocuments(current.slice(0, 10))
 }
 
 export function createDocument(payload: CreateDocumentPayload): DocumentDetail {
@@ -146,10 +186,38 @@ export function updateDocument(id: string, payload: UpdateDocumentPayload): Docu
 
   target.lastModifiedAt = now()
   writeDocuments(documents)
+  writeRecentDocuments(
+    listRecentDocuments(20).map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            title: target.title,
+          }
+        : item,
+    ),
+  )
   return target
 }
 
 export function deleteDocument(id: string) {
   const documents = readDocuments().filter((document) => document.id !== id)
   writeDocuments(documents)
+  writeRecentDocuments(listRecentDocuments(20).filter((item) => item.id !== id))
+}
+
+export function duplicateDocument(id: string, payload: DuplicateDocumentPayload = {}): DocumentDetail {
+  const source = getDocumentById(id)
+
+  if (!source) {
+    throw new Error('Document not found')
+  }
+
+  const duplicateTitle = payload.title?.trim() || `${source.title} Copy`
+
+  return createDocument({
+    author: source.author,
+    title: duplicateTitle,
+    content: source.content,
+    visibility: source.visibility,
+  })
 }

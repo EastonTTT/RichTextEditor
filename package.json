@@ -5,14 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "run-p type-check build-only",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-    "collab": "node --loader ts-node/esm ./collab-server/server.ts",
-    "start": "concurrently \"npm run collab\" \"npm run dev\""
+    "start": "vite"
   },
   "dependencies": {
     "@hocuspocus/provider": "^2.15.2",
@@ -83,7 +82,7 @@
     "ws": "^8.18.2",
     "y-websocket": "^3.0.0"
   },
-  "description": "src ├── App.vue ├── apis # 请求�? ├── assets # 资源�? ├── components # 公共组件�? ├── constants # 常量�? �? └── index.ts ├── pages # 业务模块�? ├── router # 路由�? ├── store # Pinia 数据�? �? ├── index.ts �? └── modules �? ├── setting.ts �? └── user.ts ├── style # 样式目录 �? ├── reset.less # 对默认样式的重置 ├── types # 类型文件目录 └── utils # 工具�? �? ├── route # 路由工具封装 �? └── request # 请求工具封装 └── main.ts # 入口逻辑文件",
+  "description": "Local-first rich text editor MVP built with Vue 3 and Tiptap.",
   "main": "index.js",
   "author": "",
   "license": "ISC",
