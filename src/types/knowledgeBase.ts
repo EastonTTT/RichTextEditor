@@ -4,6 +4,8 @@ export interface KnowledgeBaseSummary {
   id: string
   title: string
   author: string
+  ownerId: string
+  ownerName: string
   description: string
   tags: string[]
   relatedDocumentIds: string[]
@@ -12,6 +14,7 @@ export interface KnowledgeBaseSummary {
   preview: string
   visibility: DocumentVisibility
   roomName: string
+  content?: string
 }
 
 export interface KnowledgeBaseDetail extends KnowledgeBaseSummary {
@@ -52,4 +55,7 @@ export interface DuplicateKnowledgeBasePayload {
 export interface RecentKnowledgeBaseItem {
   id: string
   title: string
+  ownerId: string
+  ownerName: string
+  visibility: DocumentVisibility
 }

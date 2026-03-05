@@ -1,130 +1,121 @@
 <template>
   <div class="toolbar">
-    <el-tooltip content="Add Link" placement="bottom">
-      <button type="button" @click="openLinkDialog">
-        Link
+    <el-tooltip content="插入链接" placement="bottom">
+      <button type="button" aria-label="插入链接" @click="openLinkDialog">
         <Link1Icon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Unset Link" placement="bottom">
-      <button type="button" @click="unsetLink">
-        Unlink
+    <el-tooltip content="取消链接" placement="bottom">
+      <button type="button" aria-label="取消链接" @click="unsetLink">
         <LinkUnlinkIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Add Image" placement="bottom">
-      <button type="button" @click="openImageDialog">
-        Image
+    <el-tooltip content="插入图片" placement="bottom">
+      <button type="button" aria-label="插入图片" @click="openImageDialog">
         <ImageAddIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Task List" placement="bottom">
-      <button type="button" @click="addTask" :class="{ 'is-active': editor.isActive('taskList') }">
-        Task
+    <el-tooltip content="任务列表" placement="bottom">
+      <button type="button" aria-label="任务列表" @click="addTask" :class="{ 'is-active': editor.isActive('taskList') }">
         <TaskChecked1Icon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Ordered List" placement="bottom">
-      <button type="button" @click="addOrderedList" :class="{ 'is-active': editor.isActive('orderedList') }">
-        Ordered
+    <el-tooltip content="有序列表" placement="bottom">
+      <button type="button" aria-label="有序列表" @click="addOrderedList" :class="{ 'is-active': editor.isActive('orderedList') }">
         <OrderDescendingIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Unordered List" placement="bottom">
-      <button type="button" @click="addBulletList" :class="{ 'is-active': editor.isActive('bulletList') }">
-        Bullet
+    <el-tooltip content="无序列表" placement="bottom">
+      <button type="button" aria-label="无序列表" @click="addBulletList" :class="{ 'is-active': editor.isActive('bulletList') }">
         <ListIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Horizontal Rule" placement="bottom">
-      <button type="button" @click="addDivider">
-        Divider
+    <el-tooltip content="分割线" placement="bottom">
+      <button type="button" aria-label="分割线" @click="addDivider">
         <ComponentDividerVerticalIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Paragraph" placement="bottom">
-      <button type="button" @click="setParagraph" :class="{ 'is-active': editor.isActive('paragraph') }">
-        Text
+    <el-tooltip content="正文段落" placement="bottom">
+      <button type="button" aria-label="正文段落" @click="setParagraph" :class="{ 'is-active': editor.isActive('paragraph') }">
+        <TextboxIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Heading 1" placement="bottom">
-      <button type="button" @click="addHead(1)" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">H1</button>
+    <el-tooltip content="一级标题" placement="bottom">
+      <button type="button" class="label-button" @click="addHead(1)" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">H1</button>
     </el-tooltip>
-    <el-tooltip content="Heading 2" placement="bottom">
-      <button type="button" @click="addHead(2)" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">H2</button>
+    <el-tooltip content="二级标题" placement="bottom">
+      <button type="button" class="label-button" @click="addHead(2)" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">H2</button>
     </el-tooltip>
-    <el-tooltip content="Heading 3" placement="bottom">
-      <button type="button" @click="addHead(3)" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">H3</button>
+    <el-tooltip content="三级标题" placement="bottom">
+      <button type="button" class="label-button" @click="addHead(3)" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">H3</button>
     </el-tooltip>
 
-    <el-tooltip content="Code Block" placement="bottom">
-      <button type="button" @click="toggleCode" :class="{ 'is-active': editor.isActive('codeBlock') }">
-        Code
+    <el-tooltip content="代码块" placement="bottom">
+      <button type="button" aria-label="代码块" @click="toggleCode" :class="{ 'is-active': editor.isActive('codeBlock') }">
         <CodeIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Clear Formatting" placement="bottom">
-      <button type="button" @click="clearFormatting">
-        Clear
+    <el-tooltip content="清除格式" placement="bottom">
+      <button type="button" aria-label="清除格式" @click="clearFormatting">
+        <ClearFormatting1Icon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Undo" placement="bottom">
-      <button type="button" @click="undo" :disabled="!editor.can().undo()">
-        Undo
+    <el-tooltip content="撤销" placement="bottom">
+      <button type="button" aria-label="撤销" @click="undo" :disabled="!editor.can().undo()">
         <BackwardIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Redo" placement="bottom">
-      <button type="button" @click="redo" :disabled="!editor.can().redo()">
-        Redo
+    <el-tooltip content="重做" placement="bottom">
+      <button type="button" aria-label="重做" @click="redo" :disabled="!editor.can().redo()">
         <ForwardIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="Toggle collaboration placeholder" placement="bottom">
+    <el-tooltip content="共享文档才可启用协作" placement="bottom">
       <button
         type="button"
         @click="emit('toggle-collaboration')"
         :class="{ 'is-active': isCollaborative }"
         :disabled="!canCollaborate"
+        aria-label="协同编辑"
       >
-        Collab
+        <UsergroupIcon class="icon" />
       </button>
     </el-tooltip>
   </div>
 
-  <el-dialog v-model="linkDialogVisible" title="Insert link" width="420px">
+  <el-dialog v-model="linkDialogVisible" title="插入链接" width="420px">
     <el-form label-position="top">
-      <el-form-item label="URL">
+      <el-form-item label="链接地址">
         <el-input v-model="linkValue" placeholder="https://example.com" />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="closeLinkDialog">Cancel</el-button>
-      <el-button type="primary" @click="confirmLink">Apply</el-button>
+      <el-button @click="closeLinkDialog">取消</el-button>
+      <el-button type="primary" @click="confirmLink">应用</el-button>
     </template>
   </el-dialog>
 
-  <el-dialog v-model="imageDialogVisible" title="Insert image" width="420px">
+  <el-dialog v-model="imageDialogVisible" title="插入图片" width="420px">
     <el-form label-position="top">
-      <el-form-item label="Image URL">
+      <el-form-item label="图片地址">
         <el-input v-model="imageValue" placeholder="https://example.com/image.png" />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="closeImageDialog">Cancel</el-button>
-      <el-button type="primary" @click="confirmImage">Insert</el-button>
+      <el-button @click="closeImageDialog">取消</el-button>
+      <el-button type="primary" @click="confirmImage">插入</el-button>
     </template>
   </el-dialog>
 </template>
@@ -135,6 +126,7 @@ import { ElMessage } from 'element-plus'
 import type { Editor } from '@tiptap/vue-3'
 import {
   BackwardIcon,
+  ClearFormatting1Icon,
   CodeIcon,
   ComponentDividerVerticalIcon,
   ForwardIcon,
@@ -144,6 +136,8 @@ import {
   ListIcon,
   OrderDescendingIcon,
   TaskChecked1Icon,
+  TextboxIcon,
+  UsergroupIcon,
 } from 'tdesign-icons-vue-next'
 
 const { editor, canCollaborate, isCollaborative } = defineProps<{
@@ -192,7 +186,7 @@ function confirmLink() {
   }
 
   if (!/^https?:\/\//i.test(url)) {
-    ElMessage.warning('Please enter a valid URL that starts with http:// or https://')
+    ElMessage.warning('请输入以 http:// 或 https:// 开头的有效链接。')
     return
   }
 
@@ -213,7 +207,7 @@ function closeImageDialog() {
 function confirmImage() {
   const url = imageValue.value.trim()
   if (!/^https?:\/\//i.test(url)) {
-    ElMessage.warning('Please enter a valid image URL that starts with http:// or https://')
+    ElMessage.warning('请输入以 http:// 或 https:// 开头的图片地址。')
     return
   }
 
@@ -227,32 +221,56 @@ function confirmImage() {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 button {
-  background-color: white;
-  padding: 6px 10px;
+  min-width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 14px;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
   border: 1px solid #d0d5dd;
-  white-space: nowrap;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #b7c4d6;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
 }
 
 button.is-active {
-  background-color: #1677ff;
+  background: linear-gradient(135deg, #175ce6, #2f7bff);
   color: white;
   font-weight: bold;
-  border-color: #1677ff;
+  border-color: #175ce6;
+  box-shadow: 0 12px 22px rgba(23, 92, 230, 0.22);
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.42;
+  box-shadow: none;
+}
+
+.label-button {
+  min-width: 56px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .icon {
-  margin-left: 4px;
+  font-size: 20px;
 }
 </style>

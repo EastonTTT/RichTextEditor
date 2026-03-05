@@ -1,12 +1,12 @@
 <template>
   <el-dropdown trigger="click" @command="handleCommand">
-    <button class="action-button" type="button">Actions</button>
+    <button class="action-button" type="button">更多操作</button>
     <template #dropdown>
       <el-dropdown-menu>
-        <el-dropdown-item command="open">Open</el-dropdown-item>
-        <el-dropdown-item command="rename">Rename</el-dropdown-item>
-        <el-dropdown-item command="duplicate">Duplicate</el-dropdown-item>
-        <el-dropdown-item command="delete" class="danger">Delete</el-dropdown-item>
+        <el-dropdown-item command="open">打开</el-dropdown-item>
+        <el-dropdown-item command="rename">重命名</el-dropdown-item>
+        <el-dropdown-item command="duplicate">复制</el-dropdown-item>
+        <el-dropdown-item command="delete" class="danger">删除</el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -54,8 +54,9 @@ function handleCommand(command: ActionCommand) {
   border: 1px solid #d0d7de;
   border-radius: 999px;
   background: #fff;
-  padding: 6px 12px;
+  padding: 8px 14px;
   cursor: pointer;
+  color: #344054;
 }
 
 .action-button:hover {

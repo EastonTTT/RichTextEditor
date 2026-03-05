@@ -1,12 +1,12 @@
 export const menuTabs = [
   {
-    name: 'Documents',
+    name: '文档中心',
     val: 'documents',
     icon: 'Document',
     route: '/home',
   },
   {
-    name: 'Knowledge Base',
+    name: '知识库',
     val: 'knowledgeBases',
     icon: 'Collection',
     route: '/knowledge',
@@ -15,15 +15,15 @@ export const menuTabs = [
 
 export const homeFilters = [
   {
-    label: 'All',
+    label: '全部',
     value: 'all',
   },
   {
-    label: 'Private',
+    label: '私有',
     value: 'private',
   },
   {
-    label: 'Shared',
+    label: '共享',
     value: 'shared',
   },
 ]

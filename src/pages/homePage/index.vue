@@ -1,5 +1,12 @@
-<template>
+﻿<template>
   <div class="wrapper">
+    <input
+      ref="importInput"
+      type="file"
+      accept=".doc,.docx,.pdf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      class="hidden-input"
+      @change="handleImportChange"
+    />
     <div class="side-bar">
       <sideBar
         active-tab="documents"
@@ -17,9 +24,12 @@
     <div class="main-page">
       <mainPage
         :documents="filteredDocuments"
+        :shared-documents="sharedDocuments"
         :filter="filter"
         :keyword="keyword"
         @create="handleCreateDocument"
+        @import="handleImportEntry"
+        @template="handleTemplateEntry"
         @open="handleOpenDocument"
         @rename="handleRenameDocument"
         @duplicate="handleDuplicateDocument"
@@ -28,6 +38,24 @@
         @update:keyword="keyword = $event"
       />
     </div>
+
+    <el-dialog v-model="isTemplateDialogOpen" title="选择模板" width="760px">
+      <div class="template-dialog">
+        <div v-if="templates.length > 0" class="template-grid">
+          <article v-for="template in templates" :key="template.id" class="template-card">
+            <div class="template-title">{{ template.title }}</div>
+            <div class="template-desc">{{ template.description }}</div>
+            <div class="template-preview">{{ template.preview }}</div>
+            <div class="template-meta">来源文档：{{ template.sourceDocumentId || '未记录' }}</div>
+            <div class="template-actions">
+              <el-button type="primary" @click="handleCreateFromTemplate(template.id)">使用模板</el-button>
+              <el-button @click="handleDeleteTemplate(template.id)">删除模板</el-button>
+            </div>
+          </article>
+        </div>
+        <el-empty v-else description="当前还没有文档模板" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -38,17 +66,21 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import sideBar from './components/sideBar.vue'
 import mainPage from './components/mainPage.vue'
 import {
+  createDocumentFromTemplate,
   createDocument,
   duplicateDocument,
+  getDocumentTemplates,
   getDocumentList,
+  importDocument,
   getRecentDocuments,
   recordDocumentOpen,
   removeDocument,
+  removeDocumentTemplate,
   saveDocument,
 } from '@/api/document'
-import { getKnowledgeBaseList, getRecentKnowledgeBases } from '@/api/knowledgeBase'
+import { getKnowledgeBaseList, getRecentKnowledgeBases, recordKnowledgeBaseOpen } from '@/api/knowledgeBase'
 import { getCurrentUser, logout } from '@/api/user'
-import type { DocumentSummary, RecentDocumentItem } from '@/types/document'
+import type { DocumentSummary, DocumentTemplateSummary, RecentDocumentItem } from '@/types/document'
 import type { KnowledgeBaseSummary, RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
 import type { UserProfile } from '@/types/user'
 
@@ -61,36 +93,98 @@ const documents = ref<DocumentSummary[]>([])
 const knowledgeBases = ref<KnowledgeBaseSummary[]>([])
 const recentDocuments = ref<RecentDocumentItem[]>([])
 const recentKnowledgeBases = ref<RecentKnowledgeBaseItem[]>([])
+const templates = ref<DocumentTemplateSummary[]>([])
+const isTemplateDialogOpen = ref(false)
+const importInput = ref<HTMLInputElement | null>(null)
 const user = ref<UserProfile>({
   id: '',
-  name: 'Guest',
+  name: '访客',
   color: '#1677ff',
 })
 const filter = ref('all')
 const keyword = ref('')
 
+function normalizeSearchText(value: string | undefined | null) {
+  return `${value || ''}`
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+const normalizedKeyword = computed(() => normalizeSearchText(keyword.value))
+
 const filteredDocuments = computed(() =>
   documents.value.filter((document) => {
     const matchFilter = filter.value === 'all' || document.visibility === filter.value
-    const normalizedKeyword = keyword.value.trim().toLowerCase()
-    const matchKeyword =
-      normalizedKeyword.length === 0 ||
-      document.title.toLowerCase().includes(normalizedKeyword) ||
-      document.preview.toLowerCase().includes(normalizedKeyword)
+    if (!matchFilter) {
+      return false
+    }
 
-    return matchFilter && matchKeyword
+    if (normalizedKeyword.value.length === 0) {
+      return true
+    }
+
+    const searchableTitle = normalizeSearchText(document.title)
+    if (searchableTitle.includes(normalizedKeyword.value)) {
+      return true
+    }
+
+    const searchablePreview = normalizeSearchText(document.preview)
+    if (searchablePreview.includes(normalizedKeyword.value)) {
+      return true
+    }
+
+    const searchableOwner = normalizeSearchText(document.ownerName || document.author)
+    if (searchableOwner.includes(normalizedKeyword.value)) {
+      return true
+    }
+
+    const searchableContent = normalizeSearchText(document.content)
+    return searchableContent.includes(normalizedKeyword.value)
+  }),
+)
+
+const sharedDocuments = computed(() =>
+  documents.value.filter((document) => {
+    if (document.visibility !== 'shared') {
+      return false
+    }
+
+    if (normalizedKeyword.value.length === 0) {
+      return true
+    }
+
+    const searchableTitle = normalizeSearchText(document.title)
+    if (searchableTitle.includes(normalizedKeyword.value)) {
+      return true
+    }
+
+    const searchablePreview = normalizeSearchText(document.preview)
+    if (searchablePreview.includes(normalizedKeyword.value)) {
+      return true
+    }
+
+    const searchableOwner = normalizeSearchText(document.ownerName || document.author)
+    if (searchableOwner.includes(normalizedKeyword.value)) {
+      return true
+    }
+
+    const searchableContent = normalizeSearchText(document.content)
+    return searchableContent.includes(normalizedKeyword.value)
   }),
 )
 
 async function loadData() {
   const [currentUser, currentDocuments, currentRecentDocuments, currentKnowledgeBases, currentRecentKnowledgeBases] =
     await Promise.all([
-    getCurrentUser(),
-    getDocumentList(),
-    getRecentDocuments(),
-    getKnowledgeBaseList(),
-    getRecentKnowledgeBases(),
-  ])
+      getCurrentUser(),
+      getDocumentList(),
+      getRecentDocuments(),
+      getKnowledgeBaseList(),
+      getRecentKnowledgeBases(),
+    ])
   user.value = currentUser
   documents.value = currentDocuments
   recentDocuments.value = currentRecentDocuments
@@ -101,13 +195,22 @@ async function loadData() {
 async function handleCreateDocument() {
   const document = await createDocument({
     author: user.value.name,
-    title: 'Untitled Document',
-    content: '<h1>Untitled Document</h1><p></p>',
+    title: '未命名文档',
+    content: '<h1>未命名文档</h1><p></p>',
   })
 
   await recordDocumentOpen(document.id)
   await loadData()
   router.push(`/documents/${document.id}`)
+}
+
+function handleImportEntry() {
+  importInput.value?.click()
+}
+
+async function handleTemplateEntry() {
+  templates.value = await getDocumentTemplates()
+  isTemplateDialogOpen.value = true
 }
 
 async function handleOpenDocument(id: string) {
@@ -117,6 +220,8 @@ async function handleOpenDocument(id: string) {
 }
 
 async function handleOpenKnowledgeBase(id: string) {
+  await recordKnowledgeBaseOpen(id)
+  await loadData()
   router.push(`/knowledge/${id}`)
 }
 
@@ -127,19 +232,19 @@ async function handleRenameDocument(id: string) {
   }
 
   try {
-    const { value } = await ElMessageBox.prompt('Enter a new title for this document.', 'Rename Document', {
+    const { value } = await ElMessageBox.prompt('请输入新的文档标题。', '重命名文档', {
       inputValue: target.title,
       inputPattern: /\S+/,
-      inputErrorMessage: 'Title cannot be empty.',
-      confirmButtonText: 'Rename',
+      inputErrorMessage: '标题不能为空。',
+      confirmButtonText: '保存',
     })
 
     await saveDocument(id, { title: value.trim() })
     await loadData()
-    ElMessage.success('Document renamed.')
+    ElMessage.success('文档已重命名。')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('Rename cancelled due to an unexpected error.')
+      ElMessage.error('重命名失败。')
     }
   }
 }
@@ -152,15 +257,15 @@ async function handleDuplicateDocument(id: string) {
 
   try {
     const duplicated = await duplicateDocument(id, {
-      title: `${target.title} Copy`,
+      title: `${target.title} 副本`,
     })
 
     await recordDocumentOpen(duplicated.id)
     await loadData()
-    ElMessage.success('Document duplicated.')
+    ElMessage.success('文档已复制。')
     router.push(`/documents/${duplicated.id}`)
   } catch {
-    ElMessage.error('Unable to duplicate the document.')
+    ElMessage.error('复制文档失败。')
   }
 }
 
@@ -171,38 +276,82 @@ async function handleDeleteDocument(id: string) {
   }
 
   try {
-    await ElMessageBox.confirm(`Delete "${target.title}"? This action cannot be undone.`, 'Delete Document', {
+    await ElMessageBox.confirm(`确认删除“${target.title}”？该操作不可恢复。`, '删除文档', {
       type: 'warning',
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
     })
 
     await removeDocument(id)
     await loadData()
-    ElMessage.success('Document deleted.')
+    ElMessage.success('文档已删除。')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('Unable to delete the document.')
+      ElMessage.error('删除文档失败。')
     }
+  }
+}
+
+async function handleImportChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+
+  if (!file) {
+    return
+  }
+
+  try {
+    const document = await importDocument(file)
+    await recordDocumentOpen(document.id)
+    await loadData()
+    ElMessage.success('文档导入成功。')
+    router.push(`/documents/${document.id}`)
+  } catch {
+    ElMessage.error('文档导入失败。')
+  }
+}
+
+async function handleCreateFromTemplate(templateId: string) {
+  try {
+    const document = await createDocumentFromTemplate(templateId, {
+      author: user.value.name,
+    })
+    isTemplateDialogOpen.value = false
+    await recordDocumentOpen(document.id)
+    await loadData()
+    router.push(`/documents/${document.id}`)
+  } catch {
+    ElMessage.error('根据模板创建文档失败。')
+  }
+}
+
+async function handleDeleteTemplate(templateId: string) {
+  try {
+    await removeDocumentTemplate(templateId)
+    templates.value = templates.value.filter((template) => template.id !== templateId)
+    ElMessage.success('模板已删除。')
+  } catch {
+    ElMessage.error('删除模板失败。')
   }
 }
 
 async function handleLogout() {
   try {
-    await ElMessageBox.confirm('Log out of the current local session?', 'Log Out', {
-      confirmButtonText: 'Log out',
-      cancelButtonText: 'Cancel',
+    await ElMessageBox.confirm('确定退出当前账号吗？', '退出登录', {
+      confirmButtonText: '退出',
+      cancelButtonText: '取消',
       type: 'warning',
     })
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('Unable to complete logout.')
+      ElMessage.error('退出失败。')
     }
     return
   }
 
   await logout()
-  ElMessage.success('Logged out.')
+  ElMessage.success('已退出登录。')
   router.replace('/login')
 }
 
@@ -213,10 +362,58 @@ onMounted(loadData)
 .wrapper {
   display: flex;
   min-height: 100vh;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef2f8 100%);
+}
 
-  .main-page {
-    padding: 10px;
-    flex: 1;
-  }
+.hidden-input {
+  display: none;
+}
+
+.main-page {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 24px 28px;
+}
+
+.template-dialog {
+  min-height: 220px;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.template-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid #dbe4f3;
+  background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
+}
+
+.template-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #101828;
+}
+
+.template-desc,
+.template-meta,
+.template-preview {
+  margin-top: 8px;
+  color: #667085;
+  line-height: 1.7;
+}
+
+.template-preview {
+  min-height: 68px;
+  font-size: 12px;
+}
+
+.template-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
 }
 </style>

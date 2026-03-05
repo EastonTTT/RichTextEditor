@@ -66,12 +66,21 @@ const knowledgeBases = ref<KnowledgeBaseSummary[]>([])
 const recentKnowledgeBases = ref<RecentKnowledgeBaseItem[]>([])
 const user = ref<UserProfile>({
   id: '',
-  name: 'Guest',
+  name: '访客',
   color: '#1677ff',
 })
 const filter = ref('all')
 const keyword = ref('')
 const selectedTag = ref('')
+
+function normalizeSearchText(value: string | undefined | null) {
+  return `${value || ''}`
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
 
 const availableTags = computed(() =>
   Array.from(
@@ -84,19 +93,36 @@ const availableTags = computed(() =>
   ).sort((left, right) => left.localeCompare(right)),
 )
 
+const documentMap = computed(() =>
+  new Map(documents.value.map((document) => [document.id, document])),
+)
+
 const filteredKnowledgeBases = computed(() =>
   knowledgeBases.value.filter((knowledgeBase) => {
     const matchFilter = filter.value === 'all' || knowledgeBase.visibility === filter.value
-    const normalizedKeyword = keyword.value.trim().toLowerCase()
-    const normalizedTag = selectedTag.value.trim().toLowerCase()
+    const normalizedKeyword = normalizeSearchText(keyword.value)
+    const normalizedTag = normalizeSearchText(selectedTag.value)
+    const relatedContent = knowledgeBase.relatedDocumentIds
+      .map((documentId) => documentMap.value.get(documentId))
+      .filter((document): document is DocumentSummary => Boolean(document))
+      .map((document) => `${document.title} ${document.preview} ${document.ownerName} ${document.content || ''}`)
+      .join(' ')
+    const searchableTitle = normalizeSearchText(knowledgeBase.title)
+    const searchableDescription = normalizeSearchText(knowledgeBase.description)
+    const searchableOwner = normalizeSearchText(knowledgeBase.ownerName)
+    const searchableContent = normalizeSearchText(knowledgeBase.content)
+    const searchableTags = knowledgeBase.tags.map((tag) => normalizeSearchText(tag))
+    const searchableRelatedContent = normalizeSearchText(relatedContent)
     const matchKeyword =
       normalizedKeyword.length === 0 ||
-      knowledgeBase.title.toLowerCase().includes(normalizedKeyword) ||
-      knowledgeBase.description.toLowerCase().includes(normalizedKeyword) ||
-      knowledgeBase.preview.toLowerCase().includes(normalizedKeyword) ||
-      knowledgeBase.tags.some((tag) => tag.toLowerCase().includes(normalizedKeyword))
+      searchableTitle.includes(normalizedKeyword) ||
+      searchableDescription.includes(normalizedKeyword) ||
+      searchableTags.some((tag) => tag.includes(normalizedKeyword)) ||
+      searchableOwner.includes(normalizedKeyword) ||
+      searchableContent.includes(normalizedKeyword) ||
+      searchableRelatedContent.includes(normalizedKeyword)
     const matchTag =
-      normalizedTag.length === 0 || knowledgeBase.tags.some((tag) => tag.toLowerCase() === normalizedTag)
+      normalizedTag.length === 0 || searchableTags.some((tag) => tag === normalizedTag)
 
     return matchFilter && matchKeyword && matchTag
   }),
@@ -127,10 +153,11 @@ async function loadData() {
 async function handleCreateKnowledgeBase() {
   const knowledgeBase = await createKnowledgeBase({
     author: user.value.name,
-    title: 'Untitled Knowledge Note',
-    description: 'Reusable note for your knowledge base.',
-    content: '<h1>Untitled Knowledge Note</h1><p></p>',
-    tags: ['note'],
+    title: '未命名知识库',
+    description: '用于归档同一主题下的多篇文档。',
+    tags: ['专题'],
+    relatedDocumentIds: [],
+    relatedKnowledgeBaseIds: [],
   })
 
   await recordKnowledgeBaseOpen(knowledgeBase.id)
@@ -157,19 +184,19 @@ async function handleRenameKnowledgeBase(id: string) {
   }
 
   try {
-    const { value } = await ElMessageBox.prompt('Enter a new title for this knowledge note.', 'Rename Knowledge Note', {
+    const { value } = await ElMessageBox.prompt('请输入新的知识库名称。', '重命名知识库', {
       inputValue: target.title,
       inputPattern: /\S+/,
-      inputErrorMessage: 'Title cannot be empty.',
-      confirmButtonText: 'Rename',
+      inputErrorMessage: '标题不能为空。',
+      confirmButtonText: '保存',
     })
 
-    await saveKnowledgeBase(id, { title: value.trim() })
+    await saveKnowledgeBase(id, { title: value.trim(), relatedKnowledgeBaseIds: [] })
     await loadData()
-    ElMessage.success('Knowledge note renamed.')
+    ElMessage.success('知识库已重命名。')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('Rename cancelled due to an unexpected error.')
+      ElMessage.error('重命名失败。')
     }
   }
 }
@@ -182,19 +209,19 @@ async function handleDuplicateKnowledgeBase(id: string) {
 
   try {
     const duplicated = await duplicateKnowledgeBase(id, {
-      title: `${target.title} Copy`,
+      title: `${target.title} 副本`,
       description: target.description,
       tags: target.tags,
       relatedDocumentIds: target.relatedDocumentIds,
-      relatedKnowledgeBaseIds: target.relatedKnowledgeBaseIds,
+      relatedKnowledgeBaseIds: [],
     })
 
     await recordKnowledgeBaseOpen(duplicated.id)
     await loadData()
-    ElMessage.success('Knowledge note duplicated.')
+    ElMessage.success('知识库已复制。')
     router.push(`/knowledge/${duplicated.id}`)
   } catch {
-    ElMessage.error('Unable to duplicate the knowledge note.')
+    ElMessage.error('复制知识库失败。')
   }
 }
 
@@ -205,38 +232,38 @@ async function handleDeleteKnowledgeBase(id: string) {
   }
 
   try {
-    await ElMessageBox.confirm(`Delete "${target.title}"? This action cannot be undone.`, 'Delete Knowledge Note', {
+    await ElMessageBox.confirm(`确认删除“${target.title}”？该操作不可恢复。`, '删除知识库', {
       type: 'warning',
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
     })
 
     await removeKnowledgeBase(id)
     await loadData()
-    ElMessage.success('Knowledge note deleted.')
+    ElMessage.success('知识库已删除。')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('Unable to delete the knowledge note.')
+      ElMessage.error('删除知识库失败。')
     }
   }
 }
 
 async function handleLogout() {
   try {
-    await ElMessageBox.confirm('Log out of the current local session?', 'Log Out', {
-      confirmButtonText: 'Log out',
-      cancelButtonText: 'Cancel',
+    await ElMessageBox.confirm('确定退出当前账号吗？', '退出登录', {
+      confirmButtonText: '退出',
+      cancelButtonText: '取消',
       type: 'warning',
     })
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('Unable to complete logout.')
+      ElMessage.error('退出失败。')
     }
     return
   }
 
   await logout()
-  ElMessage.success('Logged out.')
+  ElMessage.success('已退出登录。')
   router.replace('/login')
 }
 
@@ -247,10 +274,12 @@ onMounted(loadData)
 .wrapper {
   display: flex;
   min-height: 100vh;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef2f8 100%);
+}
 
-  .main-page {
-    padding: 10px;
-    flex: 1;
-  }
+.main-page {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 24px 28px;
 }
 </style>

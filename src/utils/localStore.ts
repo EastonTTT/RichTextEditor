@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CreateDocumentPayload,
   DocumentDetail,
   DocumentSummary,
@@ -35,6 +35,10 @@ function getDefaultDocument(author: string): DocumentDetail {
     id,
     title: 'Untitled Document',
     author,
+    ownerId: 'guest',
+    ownerName: author,
+    sharedWithUserIds: [],
+    sharedWithUsers: [],
     lastModifiedAt: createdAt,
     preview: 'Start writing here...',
     visibility: 'private',
@@ -58,6 +62,10 @@ function safeParse<T>(value: string | null, fallback: T): T {
 function readDocuments(): DocumentDetail[] {
   const documents = safeParse<DocumentDetail[]>(localStorage.getItem(DOCUMENTS_KEY), []).map((document) => ({
     ...document,
+    ownerId: document.ownerId || 'guest',
+    ownerName: document.ownerName || document.author || getStoredUser().name,
+    sharedWithUserIds: Array.isArray(document.sharedWithUserIds) ? document.sharedWithUserIds : [],
+    sharedWithUsers: Array.isArray(document.sharedWithUsers) ? document.sharedWithUsers : [],
     roomName: document.roomName || `document:${document.id}`,
   }))
 
@@ -83,15 +91,9 @@ export function getStoredUser(): UserProfile {
   return safeParse<UserProfile>(localStorage.getItem(USER_KEY), getDefaultUser())
 }
 
-export function setStoredUser(name: string): UserProfile {
-  const user: UserProfile = {
-    id: createId('user'),
-    name: name.trim(),
-    color: '#1677ff',
-  }
-
+export function setStoredSession(user: UserProfile, token: string): UserProfile {
   localStorage.setItem(USER_KEY, JSON.stringify(user))
-  localStorage.setItem(TOKEN_KEY, `local-${user.id}`)
+  localStorage.setItem(TOKEN_KEY, token)
   return user
 }
 
@@ -112,10 +114,15 @@ export function listDocuments(): DocumentSummary[] {
       id: document.id,
       title: document.title,
       author: document.author,
+      ownerId: document.ownerId,
+      ownerName: document.ownerName,
+      sharedWithUserIds: document.sharedWithUserIds,
+      sharedWithUsers: document.sharedWithUsers,
       lastModifiedAt: document.lastModifiedAt,
       preview: document.preview,
       visibility: document.visibility,
       roomName: document.roomName,
+      content: document.content,
     }))
 }
 
@@ -125,8 +132,25 @@ export function getDocumentById(id: string): DocumentDetail | null {
 
 export function listRecentDocuments(limit = 5): RecentDocumentItem[] {
   const items = safeParse<RecentDocumentItem[]>(localStorage.getItem(RECENT_DOCUMENTS_KEY), [])
-  const validIds = new Set(readDocuments().map((document) => document.id))
-  const filtered = items.filter((item) => validIds.has(item.id)).slice(0, limit)
+  const documents = readDocuments()
+  const documentMap = new Map(documents.map((document) => [document.id, document]))
+  const filtered = items
+    .map((item) => {
+      const target = documentMap.get(item.id)
+      if (!target) {
+        return null
+      }
+
+      return {
+        id: target.id,
+        title: target.title,
+        ownerId: target.ownerId,
+        ownerName: target.ownerName,
+        visibility: target.visibility,
+      }
+    })
+    .filter((item): item is RecentDocumentItem => Boolean(item))
+    .slice(0, limit)
 
   if (filtered.length !== items.length) {
     writeRecentDocuments(filtered)
@@ -145,6 +169,9 @@ export function recordDocumentOpen(id: string) {
   current.unshift({
     id: target.id,
     title: target.title,
+    ownerId: target.ownerId,
+    ownerName: target.ownerName,
+    visibility: target.visibility,
   })
   writeRecentDocuments(current.slice(0, 10))
 }
@@ -158,6 +185,10 @@ export function createDocument(payload: CreateDocumentPayload): DocumentDetail {
     id,
     title: payload.title?.trim() || 'Untitled Document',
     author: payload.author || getStoredUser().name,
+    ownerId: getStoredUser().id,
+    ownerName: getStoredUser().name,
+    sharedWithUserIds: payload.sharedWithUserIds || [],
+    sharedWithUsers: [],
     lastModifiedAt: createdAt,
     preview: 'New document',
     visibility: payload.visibility ?? 'private',
@@ -190,6 +221,10 @@ export function updateDocument(id: string, payload: UpdateDocumentPayload): Docu
 
   if (payload.visibility) {
     target.visibility = payload.visibility
+  }
+
+  if (Array.isArray(payload.sharedWithUserIds)) {
+    target.sharedWithUserIds = payload.sharedWithUserIds
   }
 
   target.lastModifiedAt = now()
@@ -227,5 +262,6 @@ export function duplicateDocument(id: string, payload: DuplicateDocumentPayload 
     title: duplicateTitle,
     content: source.content,
     visibility: source.visibility,
+    sharedWithUserIds: source.sharedWithUserIds,
   })
 }

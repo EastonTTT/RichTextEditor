@@ -1,18 +1,25 @@
-<template>
+﻿<template>
   <div class="editor-header">
     <div class="left-side">
       <button class="nav-button" type="button" @click="emit('back')">
         <HomeIcon size="large" />
       </button>
       <div class="title-block">
-        <el-input :model-value="title" size="large" @input="emit('update:title', $event)" />
+        <el-input
+          :model-value="title"
+          size="large"
+          placeholder="请输入文档标题"
+          @update:model-value="emit('update:title', `${$event ?? ''}`)"
+        />
         <div class="meta">
           <span>{{ saveStatusLabel }}</span>
           <span class="dot">|</span>
-          <span>{{ isCollaborative ? 'Collaboration ready' : 'Solo mode' }}</span>
+          <span>所有者：{{ ownerName }}</span>
           <span class="dot">|</span>
-          <span>{{ wordCount }} words</span>
-          <span>{{ characterCount }} chars</span>
+          <span>{{ isCollaborative ? '协同已连接' : canCollaborate ? '共享文档' : '本地编辑' }}</span>
+          <span class="dot">|</span>
+          <span>{{ wordCount }} 字</span>
+          <span>{{ characterCount }} 字符</span>
         </div>
       </div>
     </div>
@@ -22,32 +29,47 @@
           class="search-input"
           size="small"
           :model-value="searchQuery"
-          placeholder="Search in document"
-          @input="emit('update:search', $event)"
+          placeholder="搜索当前文档"
+          @update:model-value="emit('update:search', `${$event ?? ''}`)"
         />
         <span class="search-status">{{ searchStatusLabel }}</span>
         <button class="mini-button" type="button" :disabled="searchMatchCount === 0" @click="emit('search-prev')">
-          Prev
+          上一个
         </button>
         <button class="mini-button" type="button" :disabled="searchMatchCount === 0" @click="emit('search-next')">
-          Next
+          下一个
         </button>
+      </div>
+
+      <div v-if="collaborators.length > 0" class="collaborators-panel">
+        <span class="collaborators-label">在线 {{ collaborators.length }} 人</span>
+        <div class="collaborators-list">
+          <span
+            v-for="collaborator in collaborators"
+            :key="`${collaborator.name}-${collaborator.color}`"
+            class="collaborator-chip"
+            :style="{ '--chip-color': collaborator.color, borderColor: collaborator.color }"
+          >
+            {{ collaborator.name }}
+          </span>
+        </div>
       </div>
 
       <el-select
         class="visibility-select"
         size="small"
         :model-value="visibility"
-        @update:model-value="emit('update:visibility', $event)"
+        :disabled="!canManageSharing"
+        @update:model-value="emit('update:visibility', $event as DocumentVisibility)"
       >
-        <el-option label="Private" value="private" />
-        <el-option label="Shared" value="shared" />
+        <el-option label="私有" value="private" />
+        <el-option label="共享" value="shared" />
       </el-select>
 
-      <button class="mini-button" type="button" @click="emit('toggle-settings')">Settings</button>
+      <button class="mini-button settings-button" type="button" @click="emit('toggle-settings')">共享/设置</button>
 
       <div class="status-tag" :class="{ active: isCollaborative, dirty: isDirty }">
-        {{ isDirty ? 'Unsaved' : isCollaborative ? 'Collab On' : 'Saved' }}
+        {{ isDirty ? '待保存' : isCollaborative ? '协同中' : '已保存' }}
       </div>
 
       <button class="action-button" type="button" :disabled="isSaving" @click="emit('save')">
@@ -68,6 +90,11 @@ import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { DocumentVisibility } from '@/types/document'
 
+interface CollaboratorPresence {
+  name: string
+  color: string
+}
+
 const {
   editor,
   title,
@@ -76,12 +103,16 @@ const {
   isCollaborative,
   isDirty,
   saveError,
+  ownerName,
   visibility,
+  canCollaborate,
+  canManageSharing,
   wordCount,
   characterCount,
   searchQuery,
   searchMatchCount,
   activeSearchIndex,
+  collaborators,
 } = defineProps<{
   editor: Editor | null
   title: string
@@ -90,12 +121,16 @@ const {
   isCollaborative: boolean
   isDirty: boolean
   saveError: string
+  ownerName: string
   visibility: DocumentVisibility
+  canCollaborate: boolean
+  canManageSharing: boolean
   wordCount: number
   characterCount: number
   searchQuery: string
   searchMatchCount: number
   activeSearchIndex: number
+  collaborators: CollaboratorPresence[]
 }>()
 
 const emit = defineEmits<{
@@ -115,23 +150,23 @@ const saveStatusLabel = computed(() => {
   }
 
   if (isSaving) {
-    return 'Saving changes...'
+    return '正在保存...'
   }
 
   if (isDirty) {
-    return 'Unsaved changes'
+    return '内容已修改，尚未保存'
   }
 
   if (!lastSavedAt) {
-    return 'Not saved yet'
+    return '尚未保存'
   }
 
-  return `Last saved: ${new Date(lastSavedAt).toLocaleString()}`
+  return `上次保存：${new Date(lastSavedAt).toLocaleString()}`
 })
 
 const searchStatusLabel = computed(() => {
   if (!searchQuery.trim()) {
-    return 'Search'
+    return '搜索'
   }
 
   if (searchMatchCount === 0) {
@@ -142,7 +177,7 @@ const searchStatusLabel = computed(() => {
 })
 
 function sanitizeFileName(value: string) {
-  return value.trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-').slice(0, 60) || 'document'
+  return value.trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-').slice(0, 60) || '文档'
 }
 
 function exportAsPDF() {
@@ -195,31 +230,41 @@ function exportAsPDF() {
 <style lang="scss" scoped>
 .editor-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 20px;
-  min-height: 78px;
+  padding: 14px 22px;
+  min-height: 84px;
   border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
   z-index: 10;
 }
 
 .left-side,
 .right-side {
   display: flex;
-  align-items: center;
+}
+
+.left-side {
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .right-side {
+  align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .title-block {
-  margin-left: 12px;
-  min-width: 420px;
+  min-width: 0;
+  flex: 1;
 }
 
 .meta {
@@ -227,7 +272,8 @@ function exportAsPDF() {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 6px;
+  min-height: 24px;
+  margin-top: 8px;
   color: #667085;
   font-size: 12px;
 }
@@ -240,10 +286,59 @@ function exportAsPDF() {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 40px;
+}
+
+.collaborators-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.collaborators-label {
+  font-size: 12px;
+  color: #475467;
+  white-space: nowrap;
+}
+
+.collaborators-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.collaborator-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  color: #344054;
+  border: 1px solid #d0d5dd;
+}
+
+.collaborator-chip::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--chip-color);
 }
 
 .search-input {
   width: 220px;
+}
+
+:deep(.search-input .el-input__wrapper) {
+  min-height: 40px;
+  border-radius: 10px;
 }
 
 .search-status {
@@ -254,19 +349,43 @@ function exportAsPDF() {
 }
 
 .visibility-select {
-  width: 110px;
+  width: 112px;
+}
+
+:deep(.title-block .el-input) {
+  width: 100%;
+}
+
+:deep(.title-block .el-input__wrapper) {
+  min-height: 40px;
+  border-radius: 12px;
+}
+
+.settings-button,
+.visibility-select,
+.status-tag,
+.action-button {
+  height: 40px;
+}
+
+:deep(.visibility-select .el-select__wrapper) {
+  min-height: 40px;
+  border-radius: 10px;
 }
 
 .status-tag {
-  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
   border-radius: 999px;
   background: #ecfdf3;
   color: #027a48;
 }
 
 .status-tag.active {
-  background: #f2f4f7;
-  color: #344054;
+  background: #eef4ff;
+  color: #175ce6;
 }
 
 .status-tag.dirty {
@@ -281,12 +400,24 @@ function exportAsPDF() {
   border: 1px solid #d0d5dd;
   background: #fff;
   border-radius: 10px;
-  padding: 8px;
+  padding: 8px 10px;
   cursor: pointer;
 }
 
+.nav-button,
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-button {
+  height: 40px;
+  flex-shrink: 0;
+}
+
 .mini-button {
-  padding: 6px 10px;
+  height: 40px;
   font-size: 12px;
 }
 

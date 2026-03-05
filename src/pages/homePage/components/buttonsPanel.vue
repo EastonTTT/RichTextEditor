@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="wrapper">
     <button class="button primary" @click="emit('create')">
       <div class="icon">
@@ -9,15 +9,26 @@
         <div class="desc">{{ primaryDescription }}</div>
       </div>
     </button>
-    <div class="button" v-for="(action, index) in secondaryActions" :key="index">
+
+    <button class="button secondary" type="button" @click="emit('import')">
       <div class="icon">
-        <component :is="action.icon" />
+        <UploadFilled />
       </div>
       <div class="text">
-        <div class="title">{{ action.title }}</div>
-        <div class="desc">{{ action.desc }}</div>
+        <div class="title">导入文档</div>
+        <div class="desc">保留入口，后续可接入本地文件导入。</div>
       </div>
-    </div>
+    </button>
+
+    <button class="button secondary" type="button" @click="emit('template')">
+      <div class="icon">
+        <MessageBox />
+      </div>
+      <div class="text">
+        <div class="title">从模板新建文档</div>
+        <div class="desc">保留入口，后续可接入模板中心。</div>
+      </div>
+    </button>
   </div>
 </template>
 
@@ -28,74 +39,81 @@ withDefaults(
     primaryDescription?: string
   }>(),
   {
-    primaryTitle: 'New Document',
-    primaryDescription: 'Create a blank document and open it immediately.',
+    primaryTitle: '新建文档',
+    primaryDescription: '创建一篇空白文档并立即进入编辑页。',
   },
 )
 
 const emit = defineEmits<{
   create: []
+  import: []
+  template: []
 }>()
-
-const secondaryActions = [
-  {
-    icon: 'UploadFilled',
-    title: 'Import',
-    desc: 'Reserved for importing local files in the next iteration.',
-  },
-  {
-    icon: 'MessageBox',
-    title: 'Templates',
-    desc: 'Reserved for document templates in the next iteration.',
-  },
-]
 </script>
 
 <style lang="scss" scoped>
 .wrapper {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .button {
   appearance: none;
   background: #fff;
-  padding: 5px;
-  border-radius: 10px;
-  border: 1px solid #dee0e3;
-  flex: 1;
-  min-width: 200px;
-  max-width: 400px;
-  height: 60px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid #e4e7ec;
+  min-height: 96px;
   display: flex;
   align-items: center;
   text-align: left;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
 .button:hover {
   cursor: pointer;
-  background-color: #edeeee;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08);
 }
 
 .button.primary {
-  border-color: #1677ff;
-  background: #f4f8ff;
+  border-color: #bfd3ff;
+  background: linear-gradient(135deg, #f3f8ff 0%, #eef6ff 100%);
+}
+
+.button.secondary {
+  background: #fff;
 }
 
 .icon {
-  width: 30px;
-  height: 30px;
-  margin-right: 10px;
+  width: 38px;
+  height: 38px;
+  margin-right: 14px;
+  color: #175ce6;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .title {
-  font-size: 14px;
-  margin-bottom: 5px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #101828;
 }
 
 .desc {
   font-size: 12px;
-  color: #646f7c;
+  color: #667085;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .wrapper {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

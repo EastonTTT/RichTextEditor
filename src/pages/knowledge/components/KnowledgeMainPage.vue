@@ -1,23 +1,23 @@
-<template>
+﻿<template>
   <div class="container">
     <div class="heading-row">
       <div>
-        <div class="title">Knowledge Base</div>
-        <div class="subtitle">Create living notes backed by CRDT synchronization.</div>
+        <div class="title">知识库</div>
+        <div class="subtitle">将多篇文档归档为专题资料，便于集中整理与共享。</div>
       </div>
       <div class="toolbar">
         <div class="search-box">
           <el-input
             :model-value="keyword"
-            placeholder="Search by title, description, preview or tags"
-            @input="onKeywordChange"
+            placeholder="按标题、标签、所有者或归档内容搜索知识库"
+            @update:model-value="onKeywordChange"
             clearable
           />
         </div>
         <el-select
           class="tag-filter"
           clearable
-          placeholder="Filter by tag"
+          placeholder="按标签筛选"
           :model-value="selectedTag"
           @update:model-value="emit('update:selectedTag', $event || '')"
         >
@@ -26,64 +26,71 @@
       </div>
     </div>
 
-    <buttonsPanel
-      primary-title="New Knowledge Note"
-      primary-description="Create a reusable note and open it immediately."
-      @create="emit('create')"
-    />
+    <div class="action-row">
+      <buttonsPanel
+        primary-title="新建知识库"
+        primary-description="创建一个知识库，用来归档和管理多篇文档。"
+        @create="emit('create')"
+      />
+    </div>
     <tabBar :model-value="filter" @update:model-value="emit('update:filter', $event)" />
 
-    <resizableTable :columns="columns" :data="rows" @update-column="updateColumn">
-      <template #docName="{ row }">
-        <div class="doc-cell">
-          <div class="doc-title">{{ toKnowledgeBaseRow(row).title }}</div>
-          <div class="doc-preview">{{ toKnowledgeBaseRow(row).description }}</div>
+    <div v-if="knowledgeBases.length > 0" class="card-grid">
+      <article v-for="knowledgeBase in knowledgeBases" :key="knowledgeBase.id" class="archive-card">
+        <div class="archive-head">
+          <div>
+            <div class="archive-title">{{ knowledgeBase.title }}</div>
+            <div class="archive-desc">{{ knowledgeBase.description || '暂无简介' }}</div>
+            <div class="owner-line">所有者：{{ knowledgeBase.ownerName }}</div>
+          </div>
+          <el-tag :type="knowledgeBase.visibility === 'shared' ? 'success' : 'info'">
+            {{ knowledgeBase.visibility === 'shared' ? '鍏变韩' : '绉佹湁' }}
+          </el-tag>
         </div>
-      </template>
-      <template #tags="{ row }">
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-label">归档文档</div>
+            <div class="stat-value">{{ knowledgeBase.relatedDocumentIds.length }}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">标签数量</div>
+            <div class="stat-value">{{ knowledgeBase.tags.length }}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">最近更新</div>
+            <div class="stat-value small">{{ formatDate(knowledgeBase.lastModifiedAt) }}</div>
+          </div>
+        </div>
+
         <div class="tag-list">
-          <el-tag v-for="tag in toKnowledgeBaseRow(row).tags" :key="tag" size="small" type="warning">
+          <el-tag v-for="tag in knowledgeBase.tags" :key="tag" size="small" type="warning">
             {{ tag }}
           </el-tag>
-          <span v-if="toKnowledgeBaseRow(row).tags.length === 0" class="muted">No tags</span>
+          <span v-if="knowledgeBase.tags.length === 0" class="muted">暂无标签</span>
         </div>
-      </template>
-      <template #relations="{ row }">
-        <div class="relation-summary">
-          <span>{{ toKnowledgeBaseRow(row).relatedDocumentIds.length }} docs</span>
-          <span>{{ toKnowledgeBaseRow(row).relatedKnowledgeBaseIds.length }} notes</span>
-        </div>
-      </template>
-      <template #lastModify="{ row }">
-        {{ formatDate(toKnowledgeBaseRow(row).lastModifiedAt) }}
-      </template>
-      <template #visibility="{ row }">
-        <el-tag :type="toKnowledgeBaseRow(row).visibility === 'shared' ? 'success' : 'info'">
-          {{ toKnowledgeBaseRow(row).visibility }}
-        </el-tag>
-      </template>
-      <template #action="{ row }">
-        <actionMenu
-          :row="{ id: toKnowledgeBaseRow(row).id }"
-          @open="emit('open', $event)"
-          @rename="emit('rename', $event)"
-          @duplicate="emit('duplicate', $event)"
-          @delete="emit('delete', $event)"
-        />
-      </template>
-    </resizableTable>
 
-    <el-empty v-if="rows.length === 0" description="No knowledge notes found" />
+        <div class="card-actions">
+          <button class="open-button" type="button" @click="emit('open', knowledgeBase.id)">进入知识库</button>
+          <actionMenu
+            :row="{ id: knowledgeBase.id }"
+            @open="emit('open', $event)"
+            @rename="emit('rename', $event)"
+            @duplicate="emit('duplicate', $event)"
+            @delete="emit('delete', $event)"
+          />
+        </div>
+      </article>
+    </div>
+
+    <el-empty v-else description="娌℃湁鍖归厤鐨勭煡璇嗗簱" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import buttonsPanel from '@/pages/homePage/components/buttonsPanel.vue'
 import tabBar from '@/pages/homePage/components/tabBar.vue'
-import resizableTable from '@/components/resizableTable.vue'
 import actionMenu from '@/pages/homePage/components/actionMenu.vue'
-import type { tableColumns } from '@/types/resizableTable'
 import type { KnowledgeBaseSummary } from '@/types/knowledgeBase'
 
 const props = defineProps<{
@@ -105,29 +112,8 @@ const emit = defineEmits<{
   'update:selectedTag': [value: string]
 }>()
 
-const columns = ref<tableColumns[]>([
-  { title: 'Title', key: 'docName', minwidth: 240, width: 300 },
-  { title: 'Tags', key: 'tags', minwidth: 180, width: 220 },
-  { title: 'Relations', key: 'relations', minwidth: 160, width: 180 },
-  { title: 'Visibility', key: 'visibility', minwidth: 120, width: 140 },
-  { title: 'Updated', key: 'lastModify', minwidth: 180, width: 220 },
-  { title: 'Actions', key: 'action', minwidth: 160, width: 180 },
-])
-
-const rows = computed<Record<string, unknown>[]>(() =>
-  props.knowledgeBases.map((knowledgeBase) => ({ ...knowledgeBase })) as Record<string, unknown>[],
-)
-
-function updateColumn(index: number, width: number) {
-  columns.value[index].width = width
-}
-
 function onKeywordChange(value: string) {
   emit('update:keyword', value)
-}
-
-function toKnowledgeBaseRow(row: unknown): KnowledgeBaseSummary {
-  return row as KnowledgeBaseSummary
 }
 
 function formatDate(value: string) {
@@ -137,7 +123,9 @@ function formatDate(value: string) {
 
 <style lang="scss" scoped>
 .container {
-  padding: 10px;
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 18px;
 }
 
 .heading-row {
@@ -148,13 +136,14 @@ function formatDate(value: string) {
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 34px;
+  font-weight: 800;
+  color: #101828;
 }
 
 .subtitle {
   color: #667085;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .toolbar {
@@ -171,38 +160,127 @@ function formatDate(value: string) {
   width: 200px;
 }
 
-.doc-cell {
+.card-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.action-row {
+  margin-top: 22px;
+}
+
+.archive-card {
+  padding: 18px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(23, 92, 230, 0.09), transparent 32%),
+    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #dde6f6;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+}
+
+.archive-head {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.doc-title {
-  font-weight: 600;
+.archive-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #101828;
 }
 
-.doc-preview {
+.archive-desc {
+  margin-top: 8px;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.owner-line {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #175cd3;
+  font-weight: 700;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.stat-box {
+  padding: 12px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.stat-label {
   color: #667085;
   font-size: 12px;
 }
 
-.tag-list {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
+.stat-value {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #101828;
 }
 
-.relation-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: #475467;
+.stat-value.small {
   font-size: 12px;
+  line-height: 1.6;
+}
+
+.tag-list {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-actions {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.open-button {
+  appearance: none;
+  border: none;
+  background: linear-gradient(135deg, #175ce6, #2f7bff);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 12px 20px rgba(23, 92, 230, 0.18);
 }
 
 .muted {
   color: #98a2b3;
   font-size: 12px;
 }
+
+@media (max-width: 960px) {
+  .heading-row,
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box,
+  .tag-filter {
+    width: 100%;
+  }
+}
 </style>
+

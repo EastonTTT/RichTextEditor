@@ -65,6 +65,22 @@ lowlight.registerLanguage('bash', bash)
 lowlight.registerLanguage('markdown', markdown)
 lowlight.registerLanguage('yaml', yaml)
 
+function renderCollaborationCursor(user: { name?: string; color?: string }) {
+  const caret = document.createElement('span')
+  caret.classList.add('collaboration-caret')
+  caret.style.setProperty('--cursor-color', user.color || '#175ce6')
+
+  const label = document.createElement('span')
+  label.classList.add('collaboration-caret__label')
+  label.textContent = user.name?.trim() || '协作者'
+
+  const dot = document.createElement('span')
+  dot.classList.add('collaboration-caret__dot')
+
+  caret.append(dot, label)
+  return caret
+}
+
 export function createEditorExtensions(options: EditorExtensionsOptions = {}) {
   const baseExtensions = [
     Document,
@@ -109,6 +125,7 @@ export function createEditorExtensions(options: EditorExtensionsOptions = {}) {
       CollaborationCursor.configure({
         provider: options.collaborationProvider,
         user: options.collaborationUser,
+        render: renderCollaborationCursor,
       }),
     ]
   }
