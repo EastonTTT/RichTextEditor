@@ -24,6 +24,8 @@ function getDefaultUser(): UserProfile {
     id: 'guest',
     name: 'Guest',
     color: '#1677ff',
+    nickname: 'Guest',
+    avatar: '',
   }
 }
 

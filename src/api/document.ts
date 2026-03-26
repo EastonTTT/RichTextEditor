@@ -4,6 +4,7 @@ import type {
   DocumentDetail,
   DocumentSummary,
   DocumentTemplateSummary,
+  DocumentVersion,
   DuplicateDocumentPayload,
   RecentDocumentItem,
   UpdateDocumentPayload,
@@ -17,8 +18,16 @@ export async function getDocumentList(): Promise<DocumentSummary[]> {
 export async function getDocumentDetail(id: string): Promise<DocumentDetail | null> {
   try {
     return await get<DocumentDetail>(`/documents/${id}`)
-  } catch {
-    return null
+  } catch (error: any) {
+    const status = error?.response?.status
+    const code = error?.code
+    const message = typeof error?.msg === 'string' ? error.msg.toLowerCase() : ''
+
+    if (status === 404 || code === 404 || message.includes('not found')) {
+      return null
+    }
+
+    throw error
   }
 }
 
@@ -85,4 +94,26 @@ export async function createDocumentFromTemplate(
 
 export async function removeDocumentTemplate(templateId: string): Promise<void> {
   await del(`/document-templates/${templateId}`)
+}
+
+export async function listDocumentVersions(id: string): Promise<DocumentVersion[]> {
+  return get<DocumentVersion[]>(`/documents/${id}/versions`)
+}
+
+export async function createDocumentVersion(
+  id: string,
+  payload: {
+    reason?: string
+    summary?: string
+  } = {},
+): Promise<DocumentVersion> {
+  return post<DocumentVersion>(`/documents/${id}/versions`, payload)
+}
+
+export async function getDocumentVersion(versionId: string): Promise<DocumentVersion> {
+  return get<DocumentVersion>(`/document-versions/${versionId}`)
+}
+
+export async function restoreDocumentVersion(versionId: string): Promise<DocumentDetail> {
+  return post<DocumentDetail>(`/document-versions/${versionId}/restore`)
 }

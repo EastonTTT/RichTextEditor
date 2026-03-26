@@ -1,4 +1,3 @@
-// tiptap extensions configurations:
 import type { Doc as YDoc } from 'yjs'
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'

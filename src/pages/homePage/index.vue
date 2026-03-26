@@ -10,11 +10,13 @@
     <div class="side-bar">
       <sideBar
         active-tab="documents"
-        :user-name="user.name"
+        :user-name="getUserDisplayName(user)"
+        :user-avatar="user.avatar || ''"
         :document-count="documents.length"
         :knowledge-base-count="knowledgeBases.length"
         :recent-documents="recentDocuments"
         :recent-knowledge-bases="recentKnowledgeBases"
+        @edit-profile="isProfileDialogOpen = true"
         @logout="handleLogout"
         @navigate="router.push($event)"
         @open-recent-document="handleOpenDocument"
@@ -56,6 +58,15 @@
         <el-empty v-else description="当前还没有文档模板" />
       </div>
     </el-dialog>
+
+    <user-profile-dialog
+      v-model:visible="isProfileDialogOpen"
+      :user-name="user.name"
+      :nickname="user.nickname"
+      :avatar="user.avatar"
+      :loading="isProfileSaving"
+      @save="handleSaveProfile"
+    />
   </div>
 </template>
 
@@ -65,6 +76,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import sideBar from './components/sideBar.vue'
 import mainPage from './components/mainPage.vue'
+import UserProfileDialog from './components/UserProfileDialog.vue'
 import {
   createDocumentFromTemplate,
   createDocument,
@@ -79,10 +91,10 @@ import {
   saveDocument,
 } from '@/api/document'
 import { getKnowledgeBaseList, getRecentKnowledgeBases, recordKnowledgeBaseOpen } from '@/api/knowledgeBase'
-import { getCurrentUser, logout } from '@/api/user'
+import { getCurrentUser, logout, updateCurrentUserProfile } from '@/api/user'
 import type { DocumentSummary, DocumentTemplateSummary, RecentDocumentItem } from '@/types/document'
 import type { KnowledgeBaseSummary, RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
-import type { UserProfile } from '@/types/user'
+import { getUserDisplayName, type UserProfile } from '@/types/user'
 
 defineOptions({
   name: 'homePage',
@@ -95,11 +107,15 @@ const recentDocuments = ref<RecentDocumentItem[]>([])
 const recentKnowledgeBases = ref<RecentKnowledgeBaseItem[]>([])
 const templates = ref<DocumentTemplateSummary[]>([])
 const isTemplateDialogOpen = ref(false)
+const isProfileDialogOpen = ref(false)
+const isProfileSaving = ref(false)
 const importInput = ref<HTMLInputElement | null>(null)
 const user = ref<UserProfile>({
   id: '',
   name: '访客',
   color: '#1677ff',
+  nickname: '访客',
+  avatar: '',
 })
 const filter = ref('all')
 const keyword = ref('')
@@ -194,7 +210,7 @@ async function loadData() {
 
 async function handleCreateDocument() {
   const document = await createDocument({
-    author: user.value.name,
+    author: getUserDisplayName(user.value),
     title: '未命名文档',
     content: '<h1>未命名文档</h1><p></p>',
   })
@@ -315,7 +331,7 @@ async function handleImportChange(event: Event) {
 async function handleCreateFromTemplate(templateId: string) {
   try {
     const document = await createDocumentFromTemplate(templateId, {
-      author: user.value.name,
+      author: getUserDisplayName(user.value),
     })
     isTemplateDialogOpen.value = false
     await recordDocumentOpen(document.id)
@@ -353,6 +369,19 @@ async function handleLogout() {
   await logout()
   ElMessage.success('已退出登录。')
   router.replace('/login')
+}
+
+async function handleSaveProfile(payload: { nickname: string; avatar: string }) {
+  isProfileSaving.value = true
+  try {
+    user.value = await updateCurrentUserProfile(payload)
+    isProfileDialogOpen.value = false
+    ElMessage.success('个人资料已更新。')
+  } catch {
+    ElMessage.error('个人资料更新失败。')
+  } finally {
+    isProfileSaving.value = false
+  }
 }
 
 onMounted(loadData)

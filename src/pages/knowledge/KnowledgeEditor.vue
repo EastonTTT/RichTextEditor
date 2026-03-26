@@ -156,12 +156,13 @@
 
 <script lang="ts" setup>
 import * as Y from 'yjs'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
-import { getDocumentList } from '@/api/document'
-import { getKnowledgeBaseDetail, recordKnowledgeBaseOpen, saveKnowledgeBase } from '@/api/knowledgeBase'
-import type { DocumentSummary, DocumentVisibility } from '@/types/document'
-import { arraysEqual, normalizeVisibility, readStringArray, setMetaValueIfChanged } from '@/utils/collaborationMeta'
+import { recordKnowledgeBaseOpen } from '@/api/knowledgeBase'
+import { useKnowledgeBaseDocuments } from '@/pages/knowledge/composables/useKnowledgeBaseDocuments'
+import { useKnowledgeBaseEditor } from '@/pages/knowledge/composables/useKnowledgeBaseEditor'
+import { getUserDisplayName } from '@/types/user'
+import { normalizeVisibility, readStringArray, setMetaValueIfChanged } from '@/utils/collaborationMeta'
 import { getStoredToken, getStoredUser } from '@/utils/localStore'
 import { useCollaborationProvider } from '@/utils/useCollaborationProvider'
 
@@ -180,6 +181,7 @@ const storedToken = getStoredToken() || undefined
 
 const sharedDoc = collabUrl ? new Y.Doc() : null
 const metaMap = sharedDoc?.getMap<unknown>('meta') ?? null
+const metaMapRef = shallowRef<Y.Map<unknown> | null>(metaMap)
 const collaboration = collabUrl && sharedDoc
   ? useCollaborationProvider({
       wsUrl: collabUrl,
@@ -187,83 +189,97 @@ const collaboration = collabUrl && sharedDoc
       doc: sharedDoc,
       token: storedToken,
       user: {
-        name: storedUser.name,
+        name: getUserDisplayName(storedUser),
         color: storedUser.color,
       },
       autoConnect: false,
     })
   : null
 
-const title = ref('未命名知识库')
-const titleDraft = ref('未命名知识库')
-const isTitleFocused = ref(false)
-const ownerName = ref(storedUser.name)
-const description = ref('用于归档同一主题下的多篇文档。')
-const tags = ref<string[]>([])
-const relatedDocumentIds = ref<string[]>([])
-const documentOptions = ref<DocumentSummary[]>([])
-const visibility = ref<DocumentVisibility>('private')
-const persistedVisibility = ref<DocumentVisibility>('private')
-const isSaving = ref(false)
-const isDirty = ref(false)
-const lastSavedAt = ref('')
-const saveError = ref('')
 const isCollaborative = ref(false)
 const hasReceivedInitialSync = ref(false)
 const hasSeededCollaborationState = ref(false)
-const queuedSave = ref(false)
-const documentSearch = ref('')
 const collaborators = ref<CollaboratorPresence[]>([])
-let autoSaveTimer: number | null = null
 let suppressMetaObserver = false
 
-const tagsInput = computed(() => tags.value.join('，'))
-const canCollaborate = computed(() => Boolean(collaboration) && visibility.value === 'shared' && persistedVisibility.value === 'shared')
-const saveStatusLabel = computed(() => {
-  if (saveError.value) {
-    return saveError.value
-  }
-
-  if (isSaving.value) {
-    return '正在保存...'
-  }
-
-  if (isDirty.value) {
-    return '有变更待保存'
-  }
-
-  if (!lastSavedAt.value) {
-    return '尚未保存'
-  }
-
-  return `上次保存：${new Date(lastSavedAt.value).toLocaleString()}`
-})
-
-const selectedDocuments = computed(() =>
-  documentOptions.value.filter((document) => relatedDocumentIds.value.includes(document.id)),
-)
-
-const availableDocuments = computed(() => {
-  const normalizedKeyword = documentSearch.value.trim().toLowerCase()
-  return documentOptions.value.filter((document) => {
-    if (normalizedKeyword.length === 0) {
-      return true
+const {
+  title,
+  titleDraft,
+  isTitleFocused,
+  ownerName,
+  description,
+  tags,
+  relatedDocumentIds,
+  visibility,
+  persistedVisibility,
+  isSaving,
+  isDirty,
+  lastSavedAt,
+  saveStatusLabel,
+  syncTitleDraft,
+  hydrateKnowledgeBase,
+  clearAutoSaveTimer,
+  markDirty,
+  saveCurrentKnowledgeBase,
+  handleTitleInput,
+  handleTitleBlur,
+  handleDescriptionChange,
+  handleTagsInput,
+  handleVisibilityChange,
+  tagsInput,
+} = useKnowledgeBaseEditor({
+  knowledgeBaseId,
+  onSyncTitle(value) {
+    if (metaMap && hasReceivedInitialSync.value) {
+      setMetaValueIfChanged(metaMap, 'title', value)
     }
-
-    return (
-      document.title.toLowerCase().includes(normalizedKeyword) ||
-      document.preview.toLowerCase().includes(normalizedKeyword) ||
-      document.ownerName.toLowerCase().includes(normalizedKeyword) ||
-      (document.content || '').toLowerCase().includes(normalizedKeyword)
-    )
-  })
+  },
+  onSyncDescription(value) {
+    if (metaMap && hasReceivedInitialSync.value) {
+      setMetaValueIfChanged(metaMap, 'description', value)
+    }
+  },
+  onSyncTags(value) {
+    if (metaMap && hasReceivedInitialSync.value) {
+      setMetaValueIfChanged(metaMap, 'tags', value)
+    }
+  },
+  onSyncVisibility(value) {
+    if (metaMap && hasReceivedInitialSync.value) {
+      setMetaValueIfChanged(metaMap, 'visibility', value)
+    }
+  },
+  onAfterHydrate() {
+    syncCollaborationMode()
+  },
+  onAfterSave() {
+    syncCollaborationMode()
+  },
+  onAfterVisibilityChange() {
+    syncCollaborationMode()
+  },
+  onNotFound() {
+    router.replace('/notFound')
+  },
 })
 
-function syncTitleDraft(force = false) {
-  if (force || !isTitleFocused.value || titleDraft.value === title.value) {
-    titleDraft.value = title.value
-  }
-}
+ownerName.value = getUserDisplayName(storedUser)
+
+const {
+  documentSearch,
+  selectedDocuments,
+  availableDocuments,
+  loadReferenceOptions,
+  toggleArchivedDocument,
+  removeArchivedDocument,
+} = useKnowledgeBaseDocuments({
+  relatedDocumentIds,
+  markDirty,
+  metaMap: metaMapRef,
+  hasReceivedInitialSync,
+})
+
+const canCollaborate = computed(() => Boolean(collaboration) && visibility.value === 'shared' && persistedVisibility.value === 'shared')
 
 function readMetaIntoState() {
   if (!metaMap) {
@@ -352,193 +368,6 @@ function syncCollaborationMode() {
   }
 
   collaboration.connect()
-}
-
-async function loadReferenceOptions() {
-  documentOptions.value = await getDocumentList()
-}
-
-async function hydrateKnowledgeBase() {
-  const knowledgeBase = await getKnowledgeBaseDetail(knowledgeBaseId)
-
-  if (!knowledgeBase) {
-    router.replace('/notFound')
-    return
-  }
-
-  title.value = knowledgeBase.title
-  ownerName.value = knowledgeBase.ownerName
-  description.value = knowledgeBase.description
-  tags.value = knowledgeBase.tags
-  relatedDocumentIds.value = knowledgeBase.relatedDocumentIds
-  visibility.value = knowledgeBase.visibility
-  persistedVisibility.value = knowledgeBase.visibility
-  lastSavedAt.value = knowledgeBase.lastModifiedAt
-  saveError.value = ''
-  syncTitleDraft(true)
-
-  syncCollaborationMode()
-}
-
-function clearAutoSaveTimer() {
-  if (autoSaveTimer) {
-    window.clearTimeout(autoSaveTimer)
-    autoSaveTimer = null
-  }
-}
-
-function scheduleAutoSave() {
-  clearAutoSaveTimer()
-  autoSaveTimer = window.setTimeout(() => {
-    void saveCurrentKnowledgeBase()
-  }, 900)
-}
-
-function markDirty() {
-  isDirty.value = true
-  saveError.value = ''
-
-  if (isSaving.value) {
-    queuedSave.value = true
-    return
-  }
-
-  scheduleAutoSave()
-}
-
-async function saveCurrentKnowledgeBase(force = false) {
-  if (isSaving.value) {
-    queuedSave.value = true
-    return
-  }
-
-  if (!force && !isDirty.value) {
-    return
-  }
-
-  clearAutoSaveTimer()
-  isSaving.value = true
-  saveError.value = ''
-
-  try {
-    const knowledgeBase = await saveKnowledgeBase(knowledgeBaseId, {
-      title: title.value,
-      description: description.value,
-      tags: tags.value,
-      relatedDocumentIds: relatedDocumentIds.value,
-      relatedKnowledgeBaseIds: [],
-      visibility: visibility.value,
-    })
-
-    title.value = knowledgeBase.title
-    ownerName.value = knowledgeBase.ownerName
-    description.value = knowledgeBase.description
-    tags.value = knowledgeBase.tags
-    relatedDocumentIds.value = knowledgeBase.relatedDocumentIds
-    visibility.value = knowledgeBase.visibility
-    persistedVisibility.value = knowledgeBase.visibility
-    lastSavedAt.value = knowledgeBase.lastModifiedAt
-    isDirty.value = false
-    syncTitleDraft()
-    syncCollaborationMode()
-  } catch {
-    saveError.value = '保存失败，当前修改仍保留在本地。'
-    isDirty.value = true
-  } finally {
-    isSaving.value = false
-
-    if (queuedSave.value) {
-      queuedSave.value = false
-      if (isDirty.value) {
-        scheduleAutoSave()
-      }
-    }
-  }
-}
-
-function handleTitleInput(value: string) {
-  titleDraft.value = value
-  title.value = value
-
-  if (metaMap && hasReceivedInitialSync.value) {
-    setMetaValueIfChanged(metaMap, 'title', value)
-  }
-
-  markDirty()
-}
-
-function handleTitleBlur() {
-  isTitleFocused.value = false
-  syncTitleDraft(true)
-}
-
-function handleDescriptionChange(value: string) {
-  description.value = value
-
-  if (metaMap && hasReceivedInitialSync.value) {
-    setMetaValueIfChanged(metaMap, 'description', value)
-  }
-
-  markDirty()
-}
-
-function handleTagsInput(value: string) {
-  const nextTags = value
-    .split(/[，,]/)
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-    .slice(0, 12)
-
-  if (arraysEqual(tags.value, nextTags)) {
-    return
-  }
-
-  tags.value = nextTags
-
-  if (metaMap && hasReceivedInitialSync.value) {
-    setMetaValueIfChanged(metaMap, 'tags', nextTags)
-  }
-
-  markDirty()
-}
-
-function handleVisibilityChange(value: DocumentVisibility) {
-  visibility.value = value
-
-  if (metaMap && hasReceivedInitialSync.value) {
-    setMetaValueIfChanged(metaMap, 'visibility', value)
-  }
-
-  syncCollaborationMode()
-  markDirty()
-}
-
-function toggleArchivedDocument(id: string) {
-  const nextValue = relatedDocumentIds.value.includes(id)
-    ? relatedDocumentIds.value.filter((documentId) => documentId !== id)
-    : [...relatedDocumentIds.value, id]
-
-  relatedDocumentIds.value = nextValue
-
-  if (metaMap && hasReceivedInitialSync.value) {
-    setMetaValueIfChanged(metaMap, 'relatedDocumentIds', nextValue)
-  }
-
-  markDirty()
-}
-
-function removeArchivedDocument(id: string) {
-  if (!relatedDocumentIds.value.includes(id)) {
-    return
-  }
-
-  relatedDocumentIds.value = relatedDocumentIds.value.filter((documentId) => documentId !== id)
-
-  if (metaMap && hasReceivedInitialSync.value) {
-    setMetaValueIfChanged(metaMap, 'relatedDocumentIds', relatedDocumentIds.value)
-  }
-
-  markDirty()
 }
 
 function handleCollaborationStatus(event: { status: 'connected' | 'disconnected' | 'connecting' }) {

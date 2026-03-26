@@ -37,6 +37,9 @@ export interface UpdateDocumentPayload {
   content?: string
   visibility?: DocumentVisibility
   sharedWithUserIds?: string[]
+  createVersion?: boolean
+  versionReason?: string
+  versionSummary?: string
 }
 
 export interface DuplicateDocumentPayload {
@@ -68,4 +71,17 @@ export interface RecentDocumentItem {
   ownerId: string
   ownerName: string
   visibility: DocumentVisibility
+}
+
+export interface DocumentVersion {
+  id: string
+  documentId: string
+  versionNo: number
+  title: string
+  content: string
+  reason: string
+  summary: string
+  createdById: string
+  createdByName: string
+  createdAt: string
 }

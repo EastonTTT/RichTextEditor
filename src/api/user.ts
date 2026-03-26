@@ -1,4 +1,4 @@
-import { post, get } from '@/request'
+import { get, patch, post } from '@/request'
 import { clearStoredUser, getStoredToken, getStoredUser, setStoredSession } from '@/utils/localStore'
 import type { UserProfile } from '@/types/user'
 
@@ -55,4 +55,15 @@ export function hasToken(): boolean {
 
 export async function getUserList(): Promise<UserProfile[]> {
   return get<UserProfile[]>('/users')
+}
+
+export async function updateCurrentUserProfile(payload: { nickname: string; avatar: string }): Promise<UserProfile> {
+  const user = await patch<UserProfile>('/auth/user/profile', payload)
+  const token = getStoredToken()
+
+  if (token) {
+    setStoredSession(user, token)
+  }
+
+  return user
 }

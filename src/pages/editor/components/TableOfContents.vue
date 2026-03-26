@@ -1,7 +1,7 @@
 <template>
   <div class="toc">
-    <p class="toc-title">Contents</p>
-    <div v-if="headings.length === 0" class="toc-empty">Add headings to generate a table of contents.</div>
+    <p class="toc-title">目录</p>
+    <div v-if="headings.length === 0" class="toc-empty">添加标题后会在这里自动生成目录。</div>
     <div
       v-for="heading in headings"
       :key="heading.id"

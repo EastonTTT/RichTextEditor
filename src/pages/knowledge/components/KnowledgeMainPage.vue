@@ -44,7 +44,7 @@
             <div class="owner-line">所有者：{{ knowledgeBase.ownerName }}</div>
           </div>
           <el-tag :type="knowledgeBase.visibility === 'shared' ? 'success' : 'info'">
-            {{ knowledgeBase.visibility === 'shared' ? '鍏变韩' : '绉佹湁' }}
+            {{ knowledgeBase.visibility === 'shared' ? '共享' : '私有' }}
           </el-tag>
         </div>
 
@@ -83,7 +83,7 @@
       </article>
     </div>
 
-    <el-empty v-else description="娌℃湁鍖归厤鐨勭煡璇嗗簱" />
+    <el-empty v-else description="没有匹配的知识库" />
   </div>
 </template>
 
@@ -283,4 +283,3 @@ function formatDate(value: string) {
   }
 }
 </style>
-

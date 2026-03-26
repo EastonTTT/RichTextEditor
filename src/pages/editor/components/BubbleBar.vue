@@ -3,44 +3,44 @@
     <bubble-menu :editor="editor" v-if="editor" class="bubble-menu" :tippy-options="{ maxWidth: 'none' }">
       <div class="bubble-menu-container">
         <button @click="toggleBold" :class="{ 'is-active': editor.isActive('bold') }">
-          Bold
+          加粗
           <TextformatBoldIcon class="icon" />
         </button>
         <button @click="toggleItalic" :class="{ 'is-active': editor.isActive('italic') }">
-          Italic
+          斜体
           <TextformatItalicIcon class="icon" />
         </button>
         <button @click="toggleStrike" :class="{ 'is-active': editor.isActive('strike') }">
-          Strike
+          删除线
           <TextformatStrikethroughIcon class="icon" />
         </button>
         <button @click="toggleUnderline" :class="{ 'is-active': editor.isActive('underline') }">
-          Underline
+          下划线
           <TextformatUnderlineIcon class="icon" />
         </button>
         <button @click="toggleHighlight" :class="{ 'is-active': editor.isActive('highlight') }">
-          Highlight
+          高亮
           <Highlight1Icon class="icon" />
         </button>
         <button
           @click="editor.chain().focus().setTextAlign('left').run()"
           :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }"
         >
-          Left
+          左对齐
           <FormatVerticalAlignLeftIcon class="icon" />
         </button>
         <button
           @click="editor.chain().focus().setTextAlign('center').run()"
           :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }"
         >
-          Center
+          居中
           <FormatVerticalAlignCenterIcon class="icon" />
         </button>
         <button
           @click="editor.chain().focus().setTextAlign('right').run()"
           :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }"
         >
-          Right
+          右对齐
           <FormatVerticalAlignRightIcon class="icon" />
         </button>
 
@@ -52,7 +52,7 @@
         </div>
 
         <select class="font-size-select" v-model="fontSize" @change="onFontSizeChange">
-          <option disabled value="">Font size</option>
+          <option disabled value="">字号</option>
           <option v-for="size in sizes" :key="size" :value="size">{{ size }}</option>
         </select>
       </div>
@@ -210,6 +210,7 @@ button {
 
 .bubble-menu-container {
   display: flex;
+  flex-wrap: wrap;
   background-color: #fff;
   padding: 8px 12px;
   gap: 6px;

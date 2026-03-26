@@ -3,11 +3,13 @@
     <div class="side-bar">
       <sideBar
         active-tab="knowledgeBases"
-        :user-name="user.name"
+        :user-name="getUserDisplayName(user)"
+        :user-avatar="user.avatar || ''"
         :document-count="documents.length"
         :knowledge-base-count="knowledgeBases.length"
         :recent-documents="recentDocuments"
         :recent-knowledge-bases="recentKnowledgeBases"
+        @edit-profile="isProfileDialogOpen = true"
         @logout="handleLogout"
         @navigate="router.push($event)"
         @open-recent-document="handleOpenDocument"
@@ -31,6 +33,15 @@
         @update:selected-tag="selectedTag = $event"
       />
     </div>
+
+    <user-profile-dialog
+      v-model:visible="isProfileDialogOpen"
+      :user-name="user.name"
+      :nickname="user.nickname"
+      :avatar="user.avatar"
+      :loading="isProfileSaving"
+      @save="handleSaveProfile"
+    />
   </div>
 </template>
 
@@ -39,8 +50,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import sideBar from '@/pages/homePage/components/sideBar.vue'
+import UserProfileDialog from '@/pages/homePage/components/UserProfileDialog.vue'
 import KnowledgeMainPage from './components/KnowledgeMainPage.vue'
-import { getCurrentUser, logout } from '@/api/user'
+import { getCurrentUser, logout, updateCurrentUserProfile } from '@/api/user'
 import { getDocumentList, getRecentDocuments, recordDocumentOpen } from '@/api/document'
 import {
   createKnowledgeBase,
@@ -53,7 +65,7 @@ import {
 } from '@/api/knowledgeBase'
 import type { DocumentSummary, RecentDocumentItem } from '@/types/document'
 import type { KnowledgeBaseSummary, RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
-import type { UserProfile } from '@/types/user'
+import { getUserDisplayName, type UserProfile } from '@/types/user'
 
 defineOptions({
   name: 'knowledgeHomePage',
@@ -64,10 +76,14 @@ const documents = ref<DocumentSummary[]>([])
 const recentDocuments = ref<RecentDocumentItem[]>([])
 const knowledgeBases = ref<KnowledgeBaseSummary[]>([])
 const recentKnowledgeBases = ref<RecentKnowledgeBaseItem[]>([])
+const isProfileDialogOpen = ref(false)
+const isProfileSaving = ref(false)
 const user = ref<UserProfile>({
   id: '',
   name: '访客',
   color: '#1677ff',
+  nickname: '访客',
+  avatar: '',
 })
 const filter = ref('all')
 const keyword = ref('')
@@ -93,9 +109,7 @@ const availableTags = computed(() =>
   ).sort((left, right) => left.localeCompare(right)),
 )
 
-const documentMap = computed(() =>
-  new Map(documents.value.map((document) => [document.id, document])),
-)
+const documentMap = computed(() => new Map(documents.value.map((document) => [document.id, document])))
 
 const filteredKnowledgeBases = computed(() =>
   knowledgeBases.value.filter((knowledgeBase) => {
@@ -121,27 +135,21 @@ const filteredKnowledgeBases = computed(() =>
       searchableOwner.includes(normalizedKeyword) ||
       searchableContent.includes(normalizedKeyword) ||
       searchableRelatedContent.includes(normalizedKeyword)
-    const matchTag =
-      normalizedTag.length === 0 || searchableTags.some((tag) => tag === normalizedTag)
+    const matchTag = normalizedTag.length === 0 || searchableTags.some((tag) => tag === normalizedTag)
 
     return matchFilter && matchKeyword && matchTag
   }),
 )
 
 async function loadData() {
-  const [
-    currentUser,
-    currentDocuments,
-    currentRecentDocuments,
-    currentKnowledgeBases,
-    currentRecentKnowledgeBases,
-  ] = await Promise.all([
-    getCurrentUser(),
-    getDocumentList(),
-    getRecentDocuments(),
-    getKnowledgeBaseList(),
-    getRecentKnowledgeBases(),
-  ])
+  const [currentUser, currentDocuments, currentRecentDocuments, currentKnowledgeBases, currentRecentKnowledgeBases] =
+    await Promise.all([
+      getCurrentUser(),
+      getDocumentList(),
+      getRecentDocuments(),
+      getKnowledgeBaseList(),
+      getRecentKnowledgeBases(),
+    ])
 
   user.value = currentUser
   documents.value = currentDocuments
@@ -152,7 +160,7 @@ async function loadData() {
 
 async function handleCreateKnowledgeBase() {
   const knowledgeBase = await createKnowledgeBase({
-    author: user.value.name,
+    author: getUserDisplayName(user.value),
     title: '未命名知识库',
     description: '用于归档同一主题下的多篇文档。',
     tags: ['专题'],
@@ -184,7 +192,7 @@ async function handleRenameKnowledgeBase(id: string) {
   }
 
   try {
-    const { value } = await ElMessageBox.prompt('请输入新的知识库名称。', '重命名知识库', {
+    const { value } = await ElMessageBox.prompt('请输入新的知识库标题。', '重命名知识库', {
       inputValue: target.title,
       inputPattern: /\S+/,
       inputErrorMessage: '标题不能为空。',
@@ -196,7 +204,7 @@ async function handleRenameKnowledgeBase(id: string) {
     ElMessage.success('知识库已重命名。')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('重命名失败。')
+      ElMessage.error('重命名知识库失败。')
     }
   }
 }
@@ -214,6 +222,7 @@ async function handleDuplicateKnowledgeBase(id: string) {
       tags: target.tags,
       relatedDocumentIds: target.relatedDocumentIds,
       relatedKnowledgeBaseIds: [],
+      author: getUserDisplayName(user.value),
     })
 
     await recordKnowledgeBaseOpen(duplicated.id)
@@ -232,7 +241,7 @@ async function handleDeleteKnowledgeBase(id: string) {
   }
 
   try {
-    await ElMessageBox.confirm(`确认删除“${target.title}”？该操作不可恢复。`, '删除知识库', {
+    await ElMessageBox.confirm(`确认删除“${target.title}”吗？该操作不可恢复。`, '删除知识库', {
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消',
@@ -265,6 +274,19 @@ async function handleLogout() {
   await logout()
   ElMessage.success('已退出登录。')
   router.replace('/login')
+}
+
+async function handleSaveProfile(payload: { nickname: string; avatar: string }) {
+  isProfileSaving.value = true
+  try {
+    user.value = await updateCurrentUserProfile(payload)
+    isProfileDialogOpen.value = false
+    ElMessage.success('个人资料已更新。')
+  } catch {
+    ElMessage.error('个人资料更新失败。')
+  } finally {
+    isProfileSaving.value = false
+  }
 }
 
 onMounted(loadData)

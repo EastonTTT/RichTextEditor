@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "collab": "cmd /c \"set WORKSPACE_DATA_DIR=..\\CollabServer\\data&& node ..\\CollabServer\\server.js\"",
     "dev": "vite",
     "build": "run-p type-check build-only",
     "preview": "vite preview",
@@ -11,7 +12,7 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-    "start": "vite"
+    "start": "run-p collab dev"
   },
   "dependencies": {
     "@hocuspocus/provider": "^2.15.2",

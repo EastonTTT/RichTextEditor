@@ -25,19 +25,29 @@
     </el-tooltip>
 
     <el-tooltip content="有序列表" placement="bottom">
-      <button type="button" aria-label="有序列表" @click="addOrderedList" :class="{ 'is-active': editor.isActive('orderedList') }">
+      <button
+        type="button"
+        aria-label="有序列表"
+        @click="addOrderedList"
+        :class="{ 'is-active': editor.isActive('orderedList') }"
+      >
         <OrderDescendingIcon class="icon" />
       </button>
     </el-tooltip>
 
     <el-tooltip content="无序列表" placement="bottom">
-      <button type="button" aria-label="无序列表" @click="addBulletList" :class="{ 'is-active': editor.isActive('bulletList') }">
+      <button
+        type="button"
+        aria-label="无序列表"
+        @click="addBulletList"
+        :class="{ 'is-active': editor.isActive('bulletList') }"
+      >
         <ListIcon class="icon" />
       </button>
     </el-tooltip>
 
-    <el-tooltip content="分割线" placement="bottom">
-      <button type="button" aria-label="分割线" @click="addDivider">
+    <el-tooltip content="分隔线" placement="bottom">
+      <button type="button" aria-label="分隔线" @click="addDivider">
         <ComponentDividerVerticalIcon class="icon" />
       </button>
     </el-tooltip>
@@ -49,13 +59,19 @@
     </el-tooltip>
 
     <el-tooltip content="一级标题" placement="bottom">
-      <button type="button" class="label-button" @click="addHead(1)" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">H1</button>
+      <button type="button" class="label-button" @click="addHead(1)" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
+        H1
+      </button>
     </el-tooltip>
     <el-tooltip content="二级标题" placement="bottom">
-      <button type="button" class="label-button" @click="addHead(2)" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">H2</button>
+      <button type="button" class="label-button" @click="addHead(2)" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
+        H2
+      </button>
     </el-tooltip>
     <el-tooltip content="三级标题" placement="bottom">
-      <button type="button" class="label-button" @click="addHead(3)" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">H3</button>
+      <button type="button" class="label-button" @click="addHead(3)" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">
+        H3
+      </button>
     </el-tooltip>
 
     <el-tooltip content="代码块" placement="bottom">
@@ -82,7 +98,7 @@
       </button>
     </el-tooltip>
 
-    <el-tooltip content="共享文档才可启用协作" placement="bottom">
+    <el-tooltip content="共享文档才可启用协同" placement="bottom">
       <button
         type="button"
         @click="emit('toggle-collaboration')"

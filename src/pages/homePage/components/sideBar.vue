@@ -2,9 +2,17 @@
   <div class="wrapper">
     <div class="brand-card">
       <div class="brand-mark">工作台</div>
+      <div class="brand-profile">
+        <el-avatar :src="userAvatar || undefined" :size="52">
+          {{ userName.slice(0, 1).toUpperCase() }}
+        </el-avatar>
+      </div>
       <div class="brand-title">{{ userName }}</div>
-      <div class="brand-meta">{{ documentCount }} 篇文档 · {{ knowledgeBaseCount }} 个知识库</div>
-      <button class="logout-button" type="button" @click="emit('logout')">退出登录</button>
+      <div class="brand-meta">共 {{ documentCount }} 篇文档 · {{ knowledgeBaseCount }} 个知识库</div>
+      <div class="brand-actions">
+        <button class="profile-button" type="button" @click="emit('edit-profile')">编辑资料</button>
+        <button class="logout-button" type="button" @click="emit('logout')">退出登录</button>
+      </div>
     </div>
 
     <div class="nav-card">
@@ -39,9 +47,7 @@
           <div class="recent-desc">所有者：{{ document.ownerName }}</div>
         </div>
       </button>
-      <div v-if="recentDocuments.length === 0" class="empty-state">
-        暂无最近文档
-      </div>
+      <div v-if="recentDocuments.length === 0" class="empty-state">暂无最近文档</div>
     </div>
 
     <div class="section-card">
@@ -59,9 +65,7 @@
           <div class="recent-desc">所有者：{{ knowledgeBase.ownerName }}</div>
         </div>
       </button>
-      <div v-if="recentKnowledgeBases.length === 0" class="empty-state">
-        暂无最近知识库
-      </div>
+      <div v-if="recentKnowledgeBases.length === 0" class="empty-state">暂无最近知识库</div>
     </div>
   </div>
 </template>
@@ -74,6 +78,7 @@ import type { RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
 defineProps<{
   activeTab: string
   userName: string
+  userAvatar?: string
   documentCount: number
   knowledgeBaseCount: number
   recentDocuments: RecentDocumentItem[]
@@ -82,6 +87,7 @@ defineProps<{
 
 const emit = defineEmits<{
   logout: []
+  'edit-profile': []
   navigate: [path: string]
   openRecentDocument: [id: string]
   openRecentKnowledgeBase: [id: string]
@@ -124,8 +130,12 @@ const emit = defineEmits<{
   font-weight: 700;
 }
 
-.brand-title {
+.brand-profile {
   margin-top: 14px;
+}
+
+.brand-title {
+  margin-top: 12px;
   font-size: 24px;
   font-weight: 700;
 }
@@ -136,8 +146,14 @@ const emit = defineEmits<{
   font-size: 13px;
 }
 
-.logout-button {
+.brand-actions {
+  display: flex;
+  gap: 10px;
   margin-top: 16px;
+}
+
+.profile-button,
+.logout-button {
   appearance: none;
   border: 1px solid #d0d5dd;
   background: #fff;
@@ -145,6 +161,12 @@ const emit = defineEmits<{
   padding: 10px 14px;
   cursor: pointer;
   color: #344054;
+}
+
+.profile-button {
+  background: #eef4ff;
+  color: #175ce6;
+  border-color: #c8d7ff;
 }
 
 .nav-card,

@@ -18,6 +18,8 @@
           <span class="dot">|</span>
           <span>{{ isCollaborative ? '协同已连接' : canCollaborate ? '共享文档' : '本地编辑' }}</span>
           <span class="dot">|</span>
+          <span>{{ networkStatusLabel }}</span>
+          <span class="dot">|</span>
           <span>{{ wordCount }} 字</span>
           <span>{{ characterCount }} 字符</span>
         </div>
@@ -66,10 +68,22 @@
         <el-option label="共享" value="shared" />
       </el-select>
 
+      <button class="mini-button comments-button" type="button" @click="emit('toggle-comments')">
+        评论{{ commentCount > 0 ? ` (${commentCount})` : '' }}
+      </button>
+      <button
+        v-if="hasOfflineDraft || draftSyncState !== 'synced' || networkState === 'offline'"
+        class="mini-button sync-button"
+        type="button"
+        @click="emit('open-sync-center')"
+      >
+        草稿同步
+      </button>
       <button class="mini-button settings-button" type="button" @click="emit('toggle-settings')">共享/设置</button>
+      <button class="mini-button history-button" type="button" @click="emit('toggle-versions')">历史版本</button>
 
-      <div class="status-tag" :class="{ active: isCollaborative, dirty: isDirty }">
-        {{ isDirty ? '待保存' : isCollaborative ? '协同中' : '已保存' }}
+      <div class="status-tag" :class="statusTagClass">
+        {{ statusTagLabel }}
       </div>
 
       <button class="action-button" type="button" :disabled="isSaving" @click="emit('save')">
@@ -89,6 +103,7 @@ import { FileExportIcon, HomeIcon, SaveIcon } from 'tdesign-icons-vue-next'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { DocumentVisibility } from '@/types/document'
+import type { OfflineDraftSyncState } from '@/types/offline'
 
 interface CollaboratorPresence {
   name: string
@@ -107,12 +122,16 @@ const {
   visibility,
   canCollaborate,
   canManageSharing,
+  commentCount,
   wordCount,
   characterCount,
   searchQuery,
   searchMatchCount,
   activeSearchIndex,
   collaborators,
+  networkState,
+  draftSyncState,
+  hasOfflineDraft,
 } = defineProps<{
   editor: Editor | null
   title: string
@@ -125,12 +144,16 @@ const {
   visibility: DocumentVisibility
   canCollaborate: boolean
   canManageSharing: boolean
+  commentCount: number
   wordCount: number
   characterCount: number
   searchQuery: string
   searchMatchCount: number
   activeSearchIndex: number
   collaborators: CollaboratorPresence[]
+  networkState: 'online' | 'offline'
+  draftSyncState: OfflineDraftSyncState
+  hasOfflineDraft: boolean
 }>()
 
 const emit = defineEmits<{
@@ -141,7 +164,10 @@ const emit = defineEmits<{
   'update:search': [value: string]
   'search-prev': []
   'search-next': []
+  'toggle-comments': []
+  'open-sync-center': []
   'toggle-settings': []
+  'toggle-versions': []
 }>()
 
 const saveStatusLabel = computed(() => {
@@ -175,6 +201,39 @@ const searchStatusLabel = computed(() => {
 
   return `${activeSearchIndex + 1} / ${searchMatchCount}`
 })
+
+const networkStatusLabel = computed(() => (networkState === 'offline' ? '网络已断开' : '网络正常'))
+
+const statusTagLabel = computed(() => {
+  if (draftSyncState === 'conflict') {
+    return '同步冲突'
+  }
+
+  if (networkState === 'offline') {
+    return '离线编辑'
+  }
+
+  if (draftSyncState === 'syncing' || isSaving) {
+    return '同步中'
+  }
+
+  if (draftSyncState === 'pending' || isDirty) {
+    return '待同步'
+  }
+
+  if (isCollaborative) {
+    return '协同中'
+  }
+
+  return '已保存'
+})
+
+const statusTagClass = computed(() => ({
+  active: isCollaborative && draftSyncState === 'synced' && networkState === 'online' && !isDirty,
+  dirty: draftSyncState === 'pending' || isDirty,
+  warning: networkState === 'offline',
+  danger: draftSyncState === 'conflict',
+}))
 
 function sanitizeFileName(value: string) {
   return value.trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-').slice(0, 60) || '文档'
@@ -361,7 +420,10 @@ function exportAsPDF() {
   border-radius: 12px;
 }
 
+.comments-button,
+.sync-button,
 .settings-button,
+.history-button,
 .visibility-select,
 .status-tag,
 .action-button {
@@ -391,6 +453,16 @@ function exportAsPDF() {
 .status-tag.dirty {
   background: #fff7ed;
   color: #c4320a;
+}
+
+.status-tag.warning {
+  background: #fff4e5;
+  color: #b54708;
+}
+
+.status-tag.danger {
+  background: #fff1f3;
+  color: #c01048;
 }
 
 .nav-button,
