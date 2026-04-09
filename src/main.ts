@@ -13,12 +13,14 @@ import App from './App.vue'
 import router from './router'
 import './router/guards.ts'
 
+// 应用入口只负责装配全局依赖，业务初始化尽量下沉到各自模块。
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
+// 批量注册图标，避免在页面里逐个手动引入。
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }

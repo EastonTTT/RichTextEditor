@@ -12,6 +12,7 @@ import type {
 } from '@/types/document'
 import { del, get, patch, post } from '@/request'
 
+// 文档相关接口比知识库更复杂，这里额外承接模板、版本和 AI 能力。
 export async function getDocumentList(): Promise<DocumentSummary[]> {
   return get<DocumentSummary[]>('/documents')
 }
@@ -20,6 +21,7 @@ export async function getDocumentDetail(id: string): Promise<DocumentDetail | nu
   try {
     return await get<DocumentDetail>(`/documents/${id}`)
   } catch (error: any) {
+    // 404 在编辑页里是一个明确分支，所以这里转成 null 交给页面层判断。
     const status = error?.response?.status
     const code = error?.code
     const message = typeof error?.msg === 'string' ? error.msg.toLowerCase() : ''
@@ -57,6 +59,7 @@ export async function recordDocumentOpen(id: string): Promise<void> {
 }
 
 export async function importDocument(file: File, title?: string): Promise<DocumentDetail> {
+  // 导入文件走 FormData，兼容 doc/docx/pdf 等二进制内容上传。
   const formData = new FormData()
   formData.append('file', file)
   if (title?.trim()) {
@@ -72,6 +75,7 @@ export async function askDocumentAi(
     prompt?: string
   },
 ): Promise<{ answer: string }> {
+  // AI 接口由服务端代理真实模型，前端只提交模式和问题即可。
   return post<{ answer: string }>(`/documents/${id}/ai`, payload)
 }
 
@@ -108,6 +112,7 @@ export async function createDocumentVersion(
     summary?: string
   } = {},
 ): Promise<DocumentVersion> {
+  // 快照与恢复都基于独立版本实体，便于后续扩展更多版本来源。
   return post<DocumentVersion>(`/documents/${id}/versions`, payload)
 }
 

@@ -2,6 +2,7 @@
 import { get, patch } from '@/request'
 import type { DocumentCommentThread } from '@/types/comment'
 
+// 评论目前以 thread 数组整体存取，方便实现简单的文档讨论区。
 export async function getDocumentCommentThreads(documentId: string): Promise<DocumentCommentThread[]> {
   return get<DocumentCommentThread[]>(`/documents/${documentId}/comment-threads`)
 }

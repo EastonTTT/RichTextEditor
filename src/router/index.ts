@@ -1,6 +1,7 @@
 // 声明登录、文档和知识库等页面路由。
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 路由表集中维护页面入口，页面组件继续按需懒加载。
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

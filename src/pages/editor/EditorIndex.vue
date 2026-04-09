@@ -509,6 +509,7 @@ interface RequestErrorLike {
   message?: string
 }
 
+// 这个页面是编辑器总控层：聚合文档、协同、离线、评论、版本和 AI 助手等能力。
 const route = useRoute()
 const router = useRouter()
 const documentId = route.params.id as string
@@ -524,6 +525,7 @@ const draftSyncState = ref<OfflineDraftSyncState>('synced')
 
 const roomName = computed(() => `document:${documentId}`)
 const isCollaborationAvailable = Boolean(collabUrl)
+// 文档基础信息、脏状态和自动保存节奏都由 useDocumentEditor 统一维护。
 const {
   title,
   ownerId,
@@ -567,7 +569,8 @@ const {
 })
 const canCollaborate = computed(() => Boolean(collabUrl) && persistedVisibility.value === 'shared')
 const isOwner = computed(() => ownerId.value === storedUser.id)
-const showAiAssistant = true
+const showAiAssistant = false
+// 搜索、字数统计和编辑器 update 生命周期共用一套基础回调。
 const {
   wordCount,
   characterCount,
@@ -586,6 +589,7 @@ const {
   getEditor: () => editorInstance.value ?? null,
   onMarkDirty: markDirty,
 })
+// 本地编辑器与协同编辑器的切换，都通过这个 composable 做统一封装。
 const {
   editorInstance,
   metaMap,
@@ -614,6 +618,7 @@ const {
   onRefreshSearchMatches: (editor, preserveIndex) => refreshSearchMatches(editor, preserveIndex),
   createBaseEditorOptions: () => createBaseEditorOptions(),
 })
+// 离线草稿模块负责 IndexedDB 持久化、恢复提示和冲突处理上下文。
 const {
   networkState,
   offlineDraft,
@@ -656,6 +661,7 @@ const { offlineSyncStateLabel, offlineStatusTitle, offlineStatusDescription } = 
 )
 
 function getErrorMessage(error: unknown, fallback: string) {
+  // 优先透传后端可读错误，再退回通用提示。
   if (error && typeof error === 'object') {
     const maybeError = error as RequestErrorLike
     if (typeof maybeError.msg === 'string' && maybeError.msg.trim()) {
@@ -670,6 +676,7 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
+// 评论和版本能力都按需初始化，避免页面首屏加载过重。
 const {
   commentThreads,
   isCommentsLoading,
@@ -692,6 +699,7 @@ const {
 })
 
 function isNetworkError(error: unknown) {
+  // 这里做一个宽松判断，兼容 axios/networkState 两类来源的离线信号。
   if (networkState.value === 'offline') {
     return true
   }
@@ -753,6 +761,7 @@ const {
 })
 
 async function hydrateDocument() {
+  // 页面初始化时优先读取本地草稿，再决定采用服务器版本还是离线兜底版本。
   const localDraft = await readOfflineDraftSnapshot()
 
   try {
@@ -837,6 +846,7 @@ async function saveCurrentDocument(
     versionSummary?: string
   } = {},
 ) {
+  // 保存逻辑同时承担自动保存、手动保存和“受保护动作前强制保存”三类场景。
   const currentEditor = editorInstance.value
   if (!currentEditor || isHydrating.value) {
     return
@@ -931,6 +941,7 @@ async function saveCurrentDocument(
   }
 }
 
+// 下面这组函数处理离线恢复分支：保留服务器、恢复本地，或另存冲突副本。
 async function discardPendingOfflineDraft() {
   const serverDocument = pendingServerDocument.value
   if (serverDocument) {
@@ -1003,6 +1014,7 @@ async function createConflictCopyFromDraft() {
 }
 
 async function syncPendingOfflineDraft() {
+  // 网络恢复后，先比对本地草稿基线与服务器时间，再决定直传还是进入冲突处理。
   if (isSyncingOfflineDraft.value || draftSyncState.value === 'synced') {
     return
   }
@@ -1099,6 +1111,7 @@ function handleNetworkOffline() {
 }
 
 async function ensureSavedBeforeAction() {
+  // 模板保存、AI 提问等动作都依赖一个最新的已保存版本。
   if (isDirty.value) {
     await saveCurrentDocument(true)
   }
@@ -1158,6 +1171,7 @@ onBeforeRouteLeave(() => {
 })
 
 onMounted(async () => {
+  // 首次进入页面时，先挂载浏览器级监听，再加载文档和辅助数据。
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('online', handleNetworkOnline)
   window.addEventListener('offline', handleNetworkOffline)
@@ -1184,6 +1198,7 @@ onMounted(async () => {
 })
 
 watch(isCommentsOpen, (open) => {
+  // 评论轮询只在抽屉打开时运行，关闭后立即停止。
   if (open) {
     startCommentsPolling(isCommentsOpen)
     return
@@ -1193,6 +1208,7 @@ watch(isCommentsOpen, (open) => {
 })
 
 onBeforeUnmount(() => {
+  // 页面销毁时要同时清理编辑器实例、轮询器和浏览器事件。
   clearAutoSaveTimer()
   stopCommentsPolling()
   clearDraftPersistTimer()

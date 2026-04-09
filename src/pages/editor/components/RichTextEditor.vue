@@ -40,6 +40,7 @@ const emit = defineEmits<{
   'toggle-collaboration': []
 }>()
 
+// 代码语言选择器是一个悬浮增强能力，只在 codeBlock 选区内出现。
 const showCodeSelector = ref(false)
 const currentLanguage = ref('')
 const codeSelectorStyle = ref({
@@ -50,6 +51,7 @@ const codeSelectorStyle = ref({
 const editorForContent = computed(() => editor ?? undefined)
 
 watchEffect(async () => {
+  // 每次选区变化后都重新定位语言选择器，保证它贴近当前代码块。
   if (!editor) {
     showCodeSelector.value = false
     return

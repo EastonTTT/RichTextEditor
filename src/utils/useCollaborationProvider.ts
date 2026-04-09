@@ -15,6 +15,7 @@ interface CollaborationOptions {
 }
 
 export function useCollaborationProvider(options: CollaborationOptions) {
+  // 对 y-websocket 做一层轻包装，业务层只关心连接、断开和 awareness。
   const { wsUrl, roomName, doc, token, user, autoConnect = false } = options
   const provider = new WebsocketProvider(wsUrl, roomName, doc, {
     connect: autoConnect,
@@ -26,7 +27,7 @@ export function useCollaborationProvider(options: CollaborationOptions) {
     awareness.setLocalStateField('user', user)
   }
 
-  //提供操作函数
+  // 暴露稳定的控制方法，避免外层直接触碰 provider 细节。
   const connect = () => provider.connect()
   const disconnect = () => provider.disconnect()
   const destroy = () => provider.destroy()

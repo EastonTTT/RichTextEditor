@@ -2,8 +2,10 @@
 import { hasToken } from '@/api/user'
 import router from '.'
 
+// 白名单页面不要求登录态。
 const whiteList = ['/login', '/notFound']
 
+// 路由守卫只处理最基础的鉴权分流，避免把业务判断塞进这里。
 router.beforeEach((to, from, next) => {
   const token = hasToken()
 

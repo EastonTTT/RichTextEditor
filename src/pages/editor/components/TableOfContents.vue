@@ -24,6 +24,7 @@ const headings = ref<HeadingItem[]>([])
 let cleanup: (() => void) | null = null
 
 function collectHeadings(currentEditor: Editor | null) {
+  // 目录数据直接从当前 ProseMirror 文档抽取，避免额外维护一份标题树。
   if (!currentEditor) {
     headings.value = []
     return
@@ -67,6 +68,7 @@ watch(
 )
 
 function scrollToHeading(pos: number) {
+  // 借助 nodeDOM 找到真实标题节点，再滚动到可视区域。
   const dom = editor?.view.nodeDOM(pos)
   if (dom instanceof HTMLElement) {
     dom.scrollIntoView({ behavior: 'smooth', block: 'start' })

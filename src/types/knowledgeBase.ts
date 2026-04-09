@@ -1,6 +1,7 @@
 // 声明归档页面和接口共享的知识库模型。
 import type { DocumentVisibility } from './document'
 
+// 知识库结构与文档类似，但会额外维护标签和关联文档。
 export interface KnowledgeBaseSummary {
   id: string
   title: string

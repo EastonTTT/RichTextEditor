@@ -29,6 +29,7 @@ interface UseOfflineDraftOptions {
 }
 
 export function useOfflineDraft(options: UseOfflineDraftOptions) {
+  // 离线草稿既服务于断网兜底，也负责在线恢复时的冲突判断。
   const networkState = ref<'online' | 'offline'>(options.initialOnlineState ? 'online' : 'offline')
   const offlineDraft = ref<OfflineDraftRecord | null>(null)
   const isOfflineRecoveryOpen = ref(false)
@@ -40,6 +41,7 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
   const isOfflineFallbackMode = ref(false)
 
   function buildOfflineDraftRecord(syncState: OfflineDraftSyncState): OfflineDraftRecord {
+    // 草稿记录保留标题、正文和共享信息，确保恢复后上下文尽量完整。
     const currentEditor = options.editorInstance.value
 
     return {
@@ -66,6 +68,7 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
   }
 
   async function persistOfflineBaseline(document: DocumentDetail, syncState: OfflineDraftSyncState = 'synced') {
+    // 每次成功保存后都更新一份“服务器基线”，后续可用它判断离线冲突。
     try {
       const record: OfflineDraftRecord = {
         documentId: document.id,
@@ -100,6 +103,7 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
   }
 
   async function applyLocalDraftToEditor(draft: OfflineDraftRecord) {
+    // 恢复本地草稿时，除了正文，还要把标题、权限等元信息一并回灌。
     options.title.value = draft.title
     options.visibility.value = draft.visibility
     options.shareTargetIds.value = [...draft.sharedWithUserIds]
@@ -141,6 +145,7 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
   }
 
   async function handleClearOfflineDraft() {
+    // 清理动作只影响本地 IndexedDB，不会删除服务器上的正式文档。
     if (!offlineDraft.value) {
       return
     }

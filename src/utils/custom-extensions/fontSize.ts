@@ -1,5 +1,4 @@
-// 为编辑器格式化流程补充字号标记支持。
-// 字号扩展实现。
+// 自定义字号扩展，基于 textStyle mark 给任意文本附加 font-size。
 import { Extension } from '@tiptap/core'
 
 declare module '@tiptap/core' {
@@ -10,10 +9,12 @@ declare module '@tiptap/core' {
   }
 }
 
+// 自定义字号扩展，基于 textStyle mark 给任意文本附加 font-size。
 export const FontSize = Extension.create({
   name: 'fontSize',
 
   addGlobalAttributes() {
+    // 挂到 textStyle 上，能与颜色、加粗等其它 mark 更自然地叠加。
     return [
       {
         types: ['textStyle'],
@@ -36,6 +37,7 @@ export const FontSize = Extension.create({
   },
 
   addCommands() {
+    // 对外暴露 setFontSize 命令，方便工具栏直接调用。
     return {
       setFontSize:
         (fontSize) =>

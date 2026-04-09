@@ -42,6 +42,7 @@ const emit = defineEmits<{
   updateColumn: [index: number, width: number]
 }>()
 
+// 为每列补默认宽度，避免调用方必须给全量尺寸配置。
 const normalizedColumns = computed(() =>
   props.columns.map((column) => ({
     ...column,
@@ -55,6 +56,7 @@ let startWidth = 0
 let resizingIndex = 0
 
 function startResizing(event: MouseEvent, index: number) {
+  // 拖拽时把初始鼠标位置和列宽记下来，后续移动只计算增量。
   event.preventDefault()
   startX = event.clientX
   startWidth = normalizedColumns.value[index].width
@@ -65,11 +67,13 @@ function startResizing(event: MouseEvent, index: number) {
 }
 
 function onResizing(event: MouseEvent) {
+  // 列宽不能小于最小宽度，避免内容完全被压缩不可读。
   const delta = event.clientX - startX
   emit('updateColumn', resizingIndex, Math.max(normalizedColumns.value[resizingIndex].minwidth, startWidth + delta))
 }
 
 function stopResizing() {
+  // 鼠标抬起后解除全局监听，防止后续移动继续触发拖拽。
   document.removeEventListener('mousemove', onResizing)
   document.removeEventListener('mouseup', stopResizing)
 }

@@ -76,6 +76,7 @@ import { menuTabs } from '@/constants/homePage'
 import type { RecentDocumentItem } from '@/types/document'
 import type { RecentKnowledgeBaseItem } from '@/types/knowledgeBase'
 
+// 侧边栏只负责导航和最近访问入口，不持有任何业务状态。
 defineProps<{
   activeTab: string
   userName: string

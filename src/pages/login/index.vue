@@ -67,6 +67,7 @@ defineOptions({
   name: 'loginPage',
 })
 
+// 登录页同时承接登录和注册，两种模式共用同一份表单。
 const route = useRoute()
 const router = useRouter()
 const mode = ref<'login' | 'register'>('login')
@@ -84,6 +85,7 @@ const modeOptions = [
 ]
 
 async function handleLogin() {
+  // 登录成功后优先回跳来源页面，没有 redirect 时再进入首页。
   const trimmedName = name.value.trim()
   if (!trimmedName) {
     ElMessage.warning('请输入账号名称。')
@@ -114,6 +116,7 @@ async function handleLogin() {
 }
 
 onMounted(async () => {
+  // 已登录用户访问登录页时直接重定向，避免重复登录。
   if (!hasToken()) {
     return
   }

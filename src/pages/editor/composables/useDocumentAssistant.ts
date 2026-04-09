@@ -10,6 +10,7 @@ interface UseDocumentAssistantOptions {
 }
 
 export function useDocumentAssistant(options: UseDocumentAssistantOptions) {
+  // AI 助手只负责编排请求与状态，不直接处理编辑器内容读取。
   const isAssistantOpen = ref(false)
   const assistantQuestion = ref('')
   const assistantAnswer = ref('')
@@ -20,6 +21,7 @@ export function useDocumentAssistant(options: UseDocumentAssistantOptions) {
     assistantAnswer.value = ''
 
     try {
+      // AI 请求前先确保正文已经落盘，避免模型基于旧版本回答。
       await options.ensureSavedBeforeAction()
       const result = await askDocumentAi(options.documentId, { mode: 'summary' })
       assistantAnswer.value = result.answer

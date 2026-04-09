@@ -12,6 +12,7 @@ interface UseDocumentCommentsOptions {
 }
 
 export function useDocumentComments(options: UseDocumentCommentsOptions) {
+  // 评论以整组 thread 为单位拉取和提交，保证楼层结构始终来自同一份后端数据。
   const commentThreads = ref<DocumentCommentThread[]>([])
   const isCommentsLoading = ref(false)
   const isCommentSubmitting = ref(false)
@@ -76,6 +77,7 @@ export function useDocumentComments(options: UseDocumentCommentsOptions) {
     updater: (threads: DocumentCommentThread[]) => DocumentCommentThread[],
     successMessage: string,
   ) {
+    // 提交前先拉最新线程，尽量减少多人同时评论时互相覆盖的概率。
     isCommentSubmitting.value = true
     try {
       const latestThreads = await getDocumentCommentThreads(options.documentId)
@@ -168,6 +170,7 @@ export function useDocumentComments(options: UseDocumentCommentsOptions) {
   }
 
   function startCommentsPolling(isCommentsOpen: Ref<boolean>) {
+    // 抽屉打开时才轮询，避免无意义请求持续占用网络。
     stopCommentsPolling()
     commentsPollTimer = window.setInterval(() => {
       if (!isCommentsOpen.value || isCommentSubmitting.value) {

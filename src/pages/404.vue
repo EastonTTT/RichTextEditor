@@ -14,6 +14,8 @@
 defineOptions({
   name: 'notFound',
 })
+
+// 独立 404 页面让路由兜底和主动跳转共用同一出口。
 </script>
 
 <style scoped>

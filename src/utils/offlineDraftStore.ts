@@ -5,6 +5,7 @@ const DB_NAME = 'rich-text-editor-offline'
 const STORE_NAME = 'document-drafts'
 const DB_VERSION = 1
 
+// 复用同一个打开中的数据库连接，避免频繁创建 IndexedDB 句柄。
 let openPromise: Promise<IDBDatabase> | null = null
 
 function openDatabase() {
@@ -43,6 +44,7 @@ function openDatabase() {
 }
 
 async function withStore<T>(mode: IDBTransactionMode, runner: (store: IDBObjectStore) => Promise<T> | T) {
+  // 统一封装事务生命周期，让上层只关注具体的 store 操作。
   const database = await openDatabase()
 
   return new Promise<T>((resolve, reject) => {
@@ -69,6 +71,7 @@ function requestToPromise<T>(request: IDBRequest<T>) {
 }
 
 export async function getOfflineDraft(documentId: string) {
+  // 每篇文档只保留一份草稿快照，主键直接使用 documentId。
   return withStore<OfflineDraftRecord | null>('readonly', async (store) => {
     const result = await requestToPromise(store.get(documentId) as IDBRequest<OfflineDraftRecord | undefined>)
     return result || null

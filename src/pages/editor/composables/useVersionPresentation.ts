@@ -7,6 +7,7 @@ interface BlockItem {
   text: string
 }
 
+// 历史版本预览不做精细文本 diff，而是先按块切分再做结构化比较。
 export interface DiffRow {
   type: DiffRowType
   blockType: BlockKind
@@ -88,6 +89,7 @@ function normalizeBlockText(text: string) {
 }
 
 function parseBlocks(html: string) {
+  // 把 HTML 近似映射成“标题 / 段落 / 列表 / 表格”等块，方便用户阅读差异。
   if (!html) {
     return [] as BlockItem[]
   }
@@ -173,6 +175,7 @@ function parseBlocks(html: string) {
 }
 
 export function buildBlockDiff(currentHtml: string, versionHtml: string) {
+  // 这里使用 LCS 思路比较块序列，足够支撑版本预览而且实现成本较低。
   const currentBlocks = parseBlocks(currentHtml)
   const versionBlocks = parseBlocks(versionHtml)
   const dp = Array.from({ length: currentBlocks.length + 1 }, () => Array(versionBlocks.length + 1).fill(0))

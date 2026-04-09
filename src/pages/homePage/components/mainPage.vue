@@ -111,6 +111,7 @@ const columns = ref<tableColumns[]>([
   { title: '操作', key: 'action', minwidth: 160, width: 180 },
 ])
 
+// 表格数据做一层浅映射，便于和可拖拽表格组件的通用 row 结构对齐。
 const rows = computed<Record<string, unknown>[]>(() =>
   props.documents.map((document) => ({ ...document })) as Record<string, unknown>[],
 )
@@ -118,6 +119,7 @@ const rows = computed<Record<string, unknown>[]>(() =>
 const sharedRows = computed(() => props.sharedDocuments)
 
 function updateColumn(index: number, width: number) {
+  // 列宽由父组件持有，拖拽后直接覆写对应列配置即可。
   columns.value[index].width = width
 }
 

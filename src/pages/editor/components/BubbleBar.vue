@@ -80,6 +80,7 @@ import {
 
 const { editor } = defineProps<{ editor: Editor | null }>()
 
+// 气泡菜单只处理选中文本后的内联格式，不跟顶部工具栏重复职责。
 const fontSize = ref('')
 let stopSelectionListener: (() => void) | null = null
 
@@ -90,6 +91,7 @@ const toggleUnderline = () => editor?.chain().focus().toggleUnderline().run()
 const toggleHighlight = () => editor?.chain().focus().toggleHighlight().run()
 
 function onFontSizeChange() {
+  // 字号挂在 textStyle mark 上，因此直接调用自定义命令即可。
   if (!fontSize.value) {
     return
   }
@@ -107,6 +109,7 @@ function onColorInput(event: Event) {
 }
 
 onMounted(() => {
+  // 跟随选区同步当前字号，确保下拉框反映当前位置的文本样式。
   if (!editor) {
     return
   }

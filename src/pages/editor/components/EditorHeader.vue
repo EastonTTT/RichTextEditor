@@ -171,6 +171,7 @@ const emit = defineEmits<{
   'toggle-versions': []
 }>()
 
+// 顶栏聚合的是文档级操作和状态展示，不直接改动正文结构。
 const saveStatusLabel = computed(() => {
   if (saveError) {
     return saveError
@@ -237,10 +238,12 @@ const statusTagClass = computed(() => ({
 }))
 
 function sanitizeFileName(value: string) {
+  // 导出文件名需要过滤系统非法字符，避免浏览器下载时报错。
   return value.trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-').slice(0, 60) || '文档'
 }
 
 function exportAsPDF() {
+  // 当前导出方案是把编辑区截图后分页写入 PDF，适合快速导出所见内容。
   const domElement = editor?.view.dom
   if (!domElement) {
     return

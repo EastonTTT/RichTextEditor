@@ -114,6 +114,7 @@ const emit = defineEmits<{
 }>()
 
 function onKeywordChange(value: string) {
+  // 保持输入框和父组件的筛选状态单向同步。
   emit('update:keyword', value)
 }
 

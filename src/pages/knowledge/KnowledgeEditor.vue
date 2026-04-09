@@ -172,6 +172,7 @@ type CollaboratorPresence = {
   color: string
 }
 
+// 知识库编辑页不编辑正文块结构，而是围绕元信息和归档文档组织协同状态。
 const route = useRoute()
 const router = useRouter()
 const knowledgeBaseId = route.params.id as string
@@ -283,6 +284,7 @@ const {
 const canCollaborate = computed(() => Boolean(collaboration) && visibility.value === 'shared' && persistedVisibility.value === 'shared')
 
 function readMetaIntoState() {
+  // 知识库协同同步的是标题、描述、标签和关联文档等元信息。
   if (!metaMap) {
     return
   }
@@ -317,6 +319,7 @@ function readMetaIntoState() {
 }
 
 function syncStateIntoMeta() {
+  // 页面本地状态需要主动回写到 Y.Map，供其他协作者实时看到变更。
   if (!metaMap) {
     return
   }
@@ -329,6 +332,7 @@ function syncStateIntoMeta() {
 }
 
 function applyMetaObserver() {
+  // 本地自己触发的回写会被 suppress 标记过滤，避免无意义脏状态抖动。
   readMetaIntoState()
 
   if (!suppressMetaObserver && hasSeededCollaborationState.value) {
@@ -337,6 +341,7 @@ function applyMetaObserver() {
 }
 
 async function seedSharedMetaFromSnapshot() {
+  // 首次同步时，如果房间里已经有元信息就采用共享状态，否则用本地快照播种。
   if (!canCollaborate.value || !hasReceivedInitialSync.value || hasSeededCollaborationState.value) {
     return
   }
@@ -355,6 +360,7 @@ async function seedSharedMetaFromSnapshot() {
 }
 
 function syncCollaborationMode() {
+  // 只有“共享且已持久化为共享”的知识库才真正连接协同房间。
   if (!collaboration) {
     return
   }
@@ -390,6 +396,7 @@ function handleCollaborationSync(isSynced: boolean) {
 }
 
 function syncCollaborators() {
+  // awareness 列表经过去重后再展示，避免同名同色重复出现在头部。
   if (!collaboration || !isCollaborative.value || !canCollaborate.value) {
     collaborators.value = []
     return
@@ -429,6 +436,7 @@ onBeforeRouteLeave(() => {
 })
 
 onMounted(async () => {
+  // 初始化时同时登记最近访问并加载可关联文档列表。
   if (collaboration) {
     collaboration.provider.on('status', handleCollaborationStatus)
     collaboration.provider.on('sync', handleCollaborationSync)
@@ -442,6 +450,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  // 协同知识库离开页面时同样需要完整解除监听并销毁共享文档。
   clearAutoSaveTimer()
   metaMap?.unobserve(applyMetaObserver)
 

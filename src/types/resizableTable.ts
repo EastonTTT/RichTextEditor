@@ -1,4 +1,4 @@
-// 声明可复用表格组件使用的列结构类型。
+// 可拖拽表格列的最小描述结构。
 export interface tableColumns {
   title: string
   key: string

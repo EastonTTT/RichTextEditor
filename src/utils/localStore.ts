@@ -14,6 +14,7 @@ const RECENT_DOCUMENTS_KEY = 'rich-text-editor.recent-documents'
 const USER_KEY = 'rich-text-editor.user'
 const TOKEN_KEY = 'token'
 
+// 本地持久化主要服务于开发/离线演示场景，作为后端不可用时的兜底。
 const now = () => new Date().toISOString()
 
 function createId(prefix: string) {
@@ -31,6 +32,7 @@ function getDefaultUser(): UserProfile {
 }
 
 function getDefaultDocument(author: string): DocumentDetail {
+  // 首次进入系统时自动生成一篇欢迎文档，避免空列表体验过于生硬。
   const createdAt = now()
   const id = createId('doc')
 
@@ -51,6 +53,7 @@ function getDefaultDocument(author: string): DocumentDetail {
 }
 
 function safeParse<T>(value: string | null, fallback: T): T {
+  // 本地存储容错解析，避免历史脏数据直接把应用启动打挂。
   if (!value) {
     return fallback
   }
@@ -63,6 +66,7 @@ function safeParse<T>(value: string | null, fallback: T): T {
 }
 
 function readDocuments(): DocumentDetail[] {
+  // 对旧版本本地数据做一次补字段归一化，兼容后续结构演进。
   const documents = safeParse<DocumentDetail[]>(localStorage.getItem(DOCUMENTS_KEY), []).map((document) => ({
     ...document,
     ownerId: document.ownerId || 'guest',
@@ -110,6 +114,7 @@ export function getStoredToken() {
 }
 
 export function listDocuments(): DocumentSummary[] {
+  // 列表页只依赖摘要字段，这里顺手按更新时间倒序整理好。
   return readDocuments()
     .slice()
     .sort((a, b) => new Date(b.lastModifiedAt).getTime() - new Date(a.lastModifiedAt).getTime())
@@ -163,6 +168,7 @@ export function listRecentDocuments(limit = 5): RecentDocumentItem[] {
 }
 
 export function recordDocumentOpen(id: string) {
+  // 最近访问列表去重后前插，保持“最近打开”的时间语义。
   const target = getDocumentById(id)
   if (!target) {
     return
@@ -180,6 +186,7 @@ export function recordDocumentOpen(id: string) {
 }
 
 export function createDocument(payload: CreateDocumentPayload): DocumentDetail {
+  // 新建文档时直接补齐 owner / roomName / preview 等派生字段。
   const documents = readDocuments()
   const createdAt = now()
   const id = createId('doc')
@@ -217,6 +224,7 @@ export function updateDocument(id: string, payload: UpdateDocumentPayload): Docu
   }
 
   if (typeof payload.content === 'string') {
+    // preview 基于 HTML 的纯文本摘要生成，供首页和搜索列表展示。
     target.content = payload.content
     const plainText = payload.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     target.preview = plainText.slice(0, 120) || 'Empty document'
@@ -252,6 +260,7 @@ export function deleteDocument(id: string) {
 }
 
 export function duplicateDocument(id: string, payload: DuplicateDocumentPayload = {}): DocumentDetail {
+  // 复制操作复用 createDocument，减少两套创建逻辑分叉。
   const source = getDocumentById(id)
 
   if (!source) {

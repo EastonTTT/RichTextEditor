@@ -1,2 +1,2 @@
-// 定义编辑器模块共享的轻量角色类型。
+// 编辑相关的轻量角色类型，供需要时做语义约束。
 export type Role = 'owner' | 'collaborator'

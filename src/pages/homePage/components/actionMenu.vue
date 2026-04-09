@@ -30,6 +30,7 @@ const emit = defineEmits<{
 }>()
 
 function handleCommand(command: ActionCommand) {
+  // 下拉菜单内部只做命令分发，真正业务处理全部回交父组件。
   if (command === 'open') {
     emit('open', props.row.id)
     return

@@ -72,6 +72,7 @@ defineOptions({
   name: 'knowledgeHomePage',
 })
 
+// 知识库首页沿用文档首页结构，但筛选逻辑会额外考虑标签和关联文档。
 const router = useRouter()
 const documents = ref<DocumentSummary[]>([])
 const recentDocuments = ref<RecentDocumentItem[]>([])
@@ -100,6 +101,7 @@ function normalizeSearchText(value: string | undefined | null) {
 }
 
 const availableTags = computed(() =>
+  // 标签来自当前知识库列表的聚合，供顶部筛选器直接使用。
   Array.from(
     new Set(
       knowledgeBases.value
@@ -143,6 +145,7 @@ const filteredKnowledgeBases = computed(() =>
 )
 
 async function loadData() {
+  // 与首页一样，这里的多份资源也可以并行拉取。
   const [currentUser, currentDocuments, currentRecentDocuments, currentKnowledgeBases, currentRecentKnowledgeBases] =
     await Promise.all([
       getCurrentUser(),
@@ -160,6 +163,7 @@ async function loadData() {
 }
 
 async function handleCreateKnowledgeBase() {
+  // 新建后直接跳到知识库编辑页，方便马上关联文档和补充说明。
   const knowledgeBase = await createKnowledgeBase({
     author: getUserDisplayName(user.value),
     title: '未命名知识库',

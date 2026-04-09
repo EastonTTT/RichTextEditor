@@ -1,4 +1,4 @@
-// 声明用户资料类型及显示名称辅助方法。
+// 用户资料会同时用于鉴权、协同光标和页面展示。
 export interface UserProfile {
   id: string
   name: string
@@ -8,5 +8,6 @@ export interface UserProfile {
 }
 
 export function getUserDisplayName(user: Pick<UserProfile, 'name' | 'nickname'>) {
+  // 昵称优先，未设置时回退到登录名。
   return user.nickname?.trim() || user.name
 }

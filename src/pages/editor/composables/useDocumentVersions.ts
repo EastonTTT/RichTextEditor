@@ -32,6 +32,7 @@ interface UseDocumentVersionsOptions {
 }
 
 export function useDocumentVersions(options: UseDocumentVersionsOptions) {
+  // 历史版本的查看、快照和恢复都收敛到这里，页面层只负责展示抽屉和弹窗。
   const isVersionsOpen = ref(false)
   const isVersionPreviewOpen = ref(false)
   const versions = ref<DocumentVersion[]>([])
@@ -64,6 +65,7 @@ export function useDocumentVersions(options: UseDocumentVersionsOptions) {
 
   async function previewVersion(versionId: string) {
     try {
+      // 预览时同时计算块级差异，给 UI 提供更容易阅读的结构化结果。
       selectedVersionPreview.value = await getDocumentVersion(versionId)
       const diffResult = buildBlockDiff(
         options.latestContentSnapshot.value || '<p></p>',
@@ -79,6 +81,7 @@ export function useDocumentVersions(options: UseDocumentVersionsOptions) {
   }
 
   async function handleCreateSnapshot() {
+    // 创建快照前先同步一次最新正文，避免版本内容落后于当前编辑器。
     const currentEditor = options.editorInstance.value
     if (!currentEditor) {
       return
@@ -131,6 +134,7 @@ export function useDocumentVersions(options: UseDocumentVersionsOptions) {
 
     isVersionActionRunning.value = true
     try {
+      // 恢复版本后，如果文档模式发生变化，需要整个编辑器会话一起重建。
       const previousPersistedVisibility = options.persistedVisibility.value
       const document = await restoreDocumentVersion(versionId)
       options.applyDocumentState(document)

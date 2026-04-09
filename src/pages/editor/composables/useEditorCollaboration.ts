@@ -34,6 +34,7 @@ interface UseEditorCollaborationOptions {
 }
 
 export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
+  // 这里同时维护编辑器实例、Yjs 文档和协同 provider，避免页面层过度耦合。
   const editorInstance = shallowRef<Editor | null>(null)
   const sharedDoc = shallowRef<Y.Doc | null>(null)
   const metaMap = shallowRef<Y.Map<unknown> | null>(null)
@@ -63,6 +64,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   function syncStateIntoMeta() {
+    // title / visibility 这类轻量元信息通过 Y.Map 单独同步，不混进正文 XML。
     const map = metaMap.value
     if (!map) {
       return
@@ -94,6 +96,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   async function seedSharedDocumentFromSnapshot() {
+    // 首次连上协同房间时，要么采用共享文档已有内容，要么用本地快照初始化房间。
     if (!options.canCollaborate.value || !hasReceivedInitialSync.value || hasSeededCollaborationState.value) {
       return
     }
@@ -128,6 +131,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   function syncCollaborators() {
+    // awareness 可能包含重复或不完整状态，这里先做一次清洗再给 UI 展示。
     const runtime = collaborationRuntime.value
     if (!runtime || !isCollaborative.value || !options.canCollaborate.value) {
       collaborators.value = []
@@ -178,6 +182,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   function detachCollaborationListeners() {
+    // 切换文档模式或离开页面时，需要把 Yjs / provider 相关监听完整释放掉。
     metaMap.value?.unobserve(applyMetaObserver)
 
     if (collaborationRuntime.value) {
@@ -219,6 +224,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   function createCollaborativeSession() {
+    // 协同模式下由远端文档驱动内容，不直接给初始 content，避免覆盖房间状态。
     if (!options.collabUrl) {
       createLocalEditor(options.latestContentSnapshot.value)
       return
@@ -267,6 +273,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
       forceLocal?: boolean
     } = {},
   ) {
+    // 文档可见性变化时，本地/协同编辑器的扩展集合会变化，因此直接重建实例更稳妥。
     options.latestContentSnapshot.value = document.content || '<p></p>'
     destroyEditorSession()
     await nextTick()
@@ -292,6 +299,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   function toggleCollaboration() {
+    // 这里只控制连接状态，不改变文档的共享属性。
     const runtime = collaborationRuntime.value
     if (!runtime || !options.canCollaborate.value) {
       return

@@ -12,6 +12,7 @@ export interface RetryOptions {
 export async function requestWithRetry<T = unknown>(config: AxiosRequestConfig, options: RetryOptions = {}) {
   const { timeout = 15000, maxRetries = 3, retryDelay = 1000, signal } = options
 
+  // 每次重试都重新创建一组 signal，避免上一次超时状态污染下一次请求。
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const controller = new AbortController()
     const timeoutSignal = AbortSignal.timeout(timeout)

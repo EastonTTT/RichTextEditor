@@ -101,6 +101,7 @@ defineOptions({
   name: 'homePage',
 })
 
+// 首页负责装配文档列表、最近访问、模板入口和个人资料入口。
 const router = useRouter()
 const documents = ref<DocumentSummary[]>([])
 const knowledgeBases = ref<KnowledgeBaseSummary[]>([])
@@ -122,6 +123,7 @@ const filter = ref('all')
 const keyword = ref('')
 
 function normalizeSearchText(value: string | undefined | null) {
+  // 搜索统一按“去 HTML + 压缩空白 + 小写化”处理，保证不同字段可直接比较。
   return `${value || ''}`
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
@@ -194,6 +196,7 @@ const sharedDocuments = computed(() =>
 )
 
 async function loadData() {
+  // 首页所需数据彼此独立，直接并行拉取可以缩短首屏等待。
   const [currentUser, currentDocuments, currentRecentDocuments, currentKnowledgeBases, currentRecentKnowledgeBases] =
     await Promise.all([
       getCurrentUser(),
@@ -210,6 +213,7 @@ async function loadData() {
 }
 
 async function handleCreateDocument() {
+  // 新建后立即记录最近访问并跳到编辑页，形成顺滑主路径。
   const document = await createDocument({
     author: getUserDisplayName(user.value),
     title: '未命名文档',
@@ -226,6 +230,7 @@ function handleImportEntry() {
 }
 
 async function handleTemplateEntry() {
+  // 模板数据只在真正打开弹窗时请求，避免首页平时多一次网络开销。
   templates.value = await getDocumentTemplates()
   isTemplateDialogOpen.value = true
 }
@@ -310,6 +315,7 @@ async function handleDeleteDocument(id: string) {
 }
 
 async function handleImportChange(event: Event) {
+  // 导入完成后走与普通新建相同的“记录最近访问 + 刷新列表 + 跳转”路径。
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''

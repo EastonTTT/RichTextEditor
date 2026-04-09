@@ -16,6 +16,7 @@
 // 展示文档列表与知识库列表共用的筛选标签页。
 import { homeFilters } from '@/constants/homePage'
 
+// tabBar 是一个纯展示组件，选项来源完全由常量驱动。
 defineProps<{
   modelValue: string
 }>()

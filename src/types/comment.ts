@@ -1,4 +1,4 @@
-// 声明编辑器使用的评论与评论线程数据结构。
+// 评论以 thread 为容器，thread 里再按时间顺序保存 comment 列表。
 export interface DocumentCommentItem {
   id: string
   authorId: string

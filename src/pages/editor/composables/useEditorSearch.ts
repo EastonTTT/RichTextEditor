@@ -15,6 +15,7 @@ interface UseEditorSearchOptions {
 }
 
 export function useEditorSearch(options: UseEditorSearchOptions) {
+  // 搜索和统计都依赖编辑器当前内容，放在同一个 composable 里便于统一刷新。
   const wordCount = ref(0)
   const characterCount = ref(0)
   const searchQuery = ref('')
@@ -33,6 +34,7 @@ export function useEditorSearch(options: UseEditorSearchOptions) {
   }
 
   function refreshSearchMatches(currentEditor: CoreEditor | null = options.getEditor(), preserveIndex = false) {
+    // 直接遍历 ProseMirror 文档节点，保证搜索结果和编辑器真实位置一致。
     const normalizedQuery = searchQuery.value.trim().toLowerCase()
     if (!currentEditor || normalizedQuery.length === 0) {
       searchMatches.value = []
@@ -114,6 +116,7 @@ export function useEditorSearch(options: UseEditorSearchOptions) {
   }
 
   function handleEditorUpdate(currentEditor: CoreEditor) {
+    // setContent 等“回填动作”也会触发 update，这里用 hydrating 标记跳过二次保存。
     if (options.isHydrating.value) {
       return
     }
@@ -125,6 +128,7 @@ export function useEditorSearch(options: UseEditorSearchOptions) {
   }
 
   function createBaseEditorOptions() {
+    // 页面层与编辑器层的最小约定都从这里透出，便于本地/协同实例复用。
     return {
       onUpdate: ({ editor }: { editor: CoreEditor }) => {
         handleEditorUpdate(editor)

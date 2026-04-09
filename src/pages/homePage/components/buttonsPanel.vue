@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-// 在列表页展示主要的新建与导入入口。
+// 首页和知识库页都复用这组快捷入口按钮，因此文案允许通过 props 覆写。
 withDefaults(
   defineProps<{
     primaryTitle?: string

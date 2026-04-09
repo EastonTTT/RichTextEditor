@@ -1,4 +1,4 @@
-// 定义编辑器专用的静态配置项，例如字号和语言列表。
+// 工具栏和气泡菜单共用的字号选项。
 export const sizes: string[] = [
   '10px',
   '12px',
@@ -13,6 +13,7 @@ export const sizes: string[] = [
   // '字号',
 ]
 
+// 代码块语言列表同时驱动高亮注册和语言选择器展示。
 export const codeLanguages = [
   { label: 'JavaScript', value: 'javascript' },
   { label: 'TypeScript', value: 'typescript' },

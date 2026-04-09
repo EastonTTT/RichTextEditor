@@ -6,6 +6,7 @@ export function useOfflineDraftPresentation(
   networkState: Ref<'online' | 'offline'>,
   draftSyncState: Ref<OfflineDraftSyncState>,
 ) {
+  // 这一层只做展示文案映射，避免页面模板里堆积大量 if/else。
   const offlineSyncStateLabel = computed(() => {
     if (draftSyncState.value === 'conflict') {
       return '存在冲突'

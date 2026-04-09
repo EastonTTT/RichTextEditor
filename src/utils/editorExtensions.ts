@@ -53,6 +53,7 @@ interface EditorExtensionsOptions {
   }
 }
 
+// 代码高亮语言统一在扩展工厂初始化前注册，避免编辑器重复处理。
 lowlight.registerLanguage('javascript', javascript)
 lowlight.registerLanguage('typescript', typescript)
 lowlight.registerLanguage('html', xml)
@@ -66,6 +67,7 @@ lowlight.registerLanguage('markdown', markdown)
 lowlight.registerLanguage('yaml', yaml)
 
 function renderCollaborationCursor(user: { name?: string; color?: string }) {
+  // 协同光标使用自定义 DOM，便于在样式层统一呈现用户名和颜色。
   const caret = document.createElement('span')
   caret.classList.add('collaboration-caret')
   caret.style.setProperty('--cursor-color', user.color || '#175ce6')
@@ -82,6 +84,7 @@ function renderCollaborationCursor(user: { name?: string; color?: string }) {
 }
 
 export function createEditorExtensions(options: EditorExtensionsOptions = {}) {
+  // 本地编辑与协同编辑共用同一套基础扩展，只在状态同步能力上分叉。
   const baseExtensions = [
     Document,
     Paragraph,

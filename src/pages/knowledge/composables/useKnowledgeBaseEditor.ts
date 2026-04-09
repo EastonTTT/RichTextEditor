@@ -27,6 +27,7 @@ interface UseKnowledgeBaseEditorOptions {
 }
 
 export function useKnowledgeBaseEditor(options: UseKnowledgeBaseEditorOptions) {
+  // 这个 composable 负责知识库的基础表单状态与自动保存，不关心文档选择器。
   const title = ref('未命名知识库')
   const titleDraft = ref('未命名知识库')
   const isTitleFocused = ref(false)
@@ -46,6 +47,7 @@ export function useKnowledgeBaseEditor(options: UseKnowledgeBaseEditorOptions) {
 
   const tagsInput = computed(() => tags.value.join('，'))
   const saveStatusLabel = computed(() => {
+    // 顶部状态文案来自同一组源状态，避免页面里散落多套判断。
     if (saveError.value) {
       return saveError.value
     }
@@ -72,6 +74,7 @@ export function useKnowledgeBaseEditor(options: UseKnowledgeBaseEditorOptions) {
   }
 
   function applyKnowledgeBaseState(knowledgeBase: KnowledgeBaseSnapshot) {
+    // 服务端状态回填后，要同步 titleDraft，避免输入框和真实标题脱节。
     title.value = knowledgeBase.title
     ownerName.value = knowledgeBase.ownerName
     description.value = knowledgeBase.description
@@ -104,12 +107,14 @@ export function useKnowledgeBaseEditor(options: UseKnowledgeBaseEditorOptions) {
 
   function scheduleAutoSave() {
     clearAutoSaveTimer()
+    // 知识库元信息更新频率相对低一些，短防抖即可覆盖大部分输入场景。
     autoSaveTimer = window.setTimeout(() => {
       void saveCurrentKnowledgeBase()
     }, 900)
   }
 
   function markDirty() {
+    // 任何会影响知识库持久化结果的变更，都统一走这里挂脏并触发自动保存。
     isDirty.value = true
     saveError.value = ''
 
@@ -122,6 +127,7 @@ export function useKnowledgeBaseEditor(options: UseKnowledgeBaseEditorOptions) {
   }
 
   async function saveCurrentKnowledgeBase(force = false) {
+    // 保存同时覆盖手动点击和自动保存，不在页面层再拆两套逻辑。
     if (isSaving.value) {
       queuedSave.value = true
       return
@@ -182,6 +188,7 @@ export function useKnowledgeBaseEditor(options: UseKnowledgeBaseEditorOptions) {
   }
 
   function handleTagsInput(value: string) {
+    // 标签输入允许中英文逗号，便于不同输入法下快速录入。
     const nextTags = value
       .split(/[，,]/)
       .map((tag) => tag.trim())

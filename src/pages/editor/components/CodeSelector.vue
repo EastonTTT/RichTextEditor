@@ -17,6 +17,7 @@ import type { Editor } from '@tiptap/vue-3'
 
 const { editor, currentLanguage } = defineProps<{ editor: Editor | null; currentLanguage: string }>()
 
+// 语言选择器本身只维护一个本地 selected，再同步到 codeBlock attributes。
 const selected = ref(currentLanguage)
 const onChange = () => {
   editor
@@ -30,6 +31,7 @@ const onChange = () => {
 
 watch(() => selected.value, onChange)
 watch(() => currentLanguage, (value) => {
+  // 当外部编辑器选区切到其它代码块时，需要反向更新下拉框显示。
   selected.value = value
 })
 </script>

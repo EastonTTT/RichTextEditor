@@ -17,6 +17,7 @@ interface UseDocumentEditorOptions {
 }
 
 export function useDocumentEditor(options: UseDocumentEditorOptions) {
+  // 这里集中管理“文档本身”的状态，不处理编辑器实例和协同连接。
   const title = ref('未命名文档')
   const ownerId = ref(options.storedUser.id)
   const ownerName = ref(getUserDisplayName(options.storedUser))
@@ -58,6 +59,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
 
   function scheduleAutoSave() {
     clearAutoSaveTimer()
+    // 自动保存做短暂防抖，避免每次输入都直连后端。
     autoSaveTimer = window.setTimeout(() => {
       options.onAutoSave()
     }, 1000)
@@ -65,12 +67,14 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
 
   function scheduleDraftPersist(syncState: OfflineDraftSyncState = 'pending') {
     clearDraftPersistTimer()
+    // 本地草稿写入比远端保存更轻量，可以用更短的节流周期兜底。
     draftPersistTimer = window.setTimeout(() => {
       options.onDraftPersist(syncState)
     }, 350)
   }
 
   function markDirty() {
+    // 所有会改动文档内容或元信息的入口，最终都应该回到这个脏状态入口。
     isDirty.value = true
     saveError.value = ''
     options.draftSyncState.value = options.draftSyncState.value === 'conflict' ? 'conflict' : 'pending'
@@ -85,6 +89,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
   }
 
   function applyDocumentState(document: DocumentDetail) {
+    // 服务端返回的数据在这里一次性回填，保证界面和持久化状态一致。
     title.value = document.title
     ownerId.value = document.ownerId
     ownerName.value = document.ownerName
@@ -99,6 +104,7 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
   }
 
   function normalizeShareTargets(value: unknown) {
+    // 共享列表里不允许把所有者自己再选一遍，避免冗余权限数据。
     const ids = readStringArray(value)
     return ids.filter((id) => id !== ownerId.value)
   }

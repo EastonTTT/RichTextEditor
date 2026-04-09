@@ -6,6 +6,7 @@ import { addPendingRequest, removePendingRequest } from './cancelManager'
 export function setInterceptor(instance: AxiosInstance) {
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+      // 登录态由本地 token 驱动，请求发出前统一补上鉴权头。
       const token = localStorage.getItem('token')
 
       if (token) {
@@ -21,6 +22,7 @@ export function setInterceptor(instance: AxiosInstance) {
 
   instance.interceptors.response.use(
     (response: AxiosResponse<requestResponse>) => {
+      // 无论成功或失败，都要把请求从 pending 队列里移除，避免重复取消。
       removePendingRequest(response.config)
       const res = response.data
 

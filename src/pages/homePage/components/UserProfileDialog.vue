@@ -70,6 +70,7 @@ const form = ref({
   avatar: '',
 })
 
+// 每次弹窗打开时都用最新 props 重置表单，避免上次未保存内容残留。
 const displayInitial = computed(() => {
   const value = form.value.nickname.trim() || props.userName.trim()
   return value.slice(0, 1).toUpperCase()
@@ -95,6 +96,7 @@ function closeDialog() {
 }
 
 function beforeAvatarUpload(file: File) {
+  // 上传前先做最基本的类型校验，降低后续 FileReader 出错概率。
   const isImage = file.type.startsWith('image/')
   if (!isImage) {
     ElMessage.warning('只能上传图片文件。')
@@ -103,6 +105,7 @@ function beforeAvatarUpload(file: File) {
 }
 
 function handleAvatarChange(uploadFile: { raw?: File }) {
+  // 头像直接转为 base64，当前项目不额外依赖独立文件存储服务。
   if (!uploadFile.raw) {
     ElMessage.error('读取图片失败。')
     return
@@ -125,6 +128,7 @@ function handleAvatarChange(uploadFile: { raw?: File }) {
 }
 
 function saveProfile() {
+  // 保存前只做轻量前端校验，最终仍以服务端写入结果为准。
   const nickname = form.value.nickname.trim()
   if (!nickname) {
     ElMessage.warning('昵称不能为空。')

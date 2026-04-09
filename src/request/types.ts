@@ -1,4 +1,4 @@
-// 定义 HTTP 层共享的请求与响应类型。
+// 后端接口统一返回 code/msg/data 三段式结构。
 export interface requestResponse<T = unknown> {
   code: number
   msg: string
@@ -7,4 +7,5 @@ export interface requestResponse<T = unknown> {
 
 export type Params = Record<string, unknown> | undefined
 
+// data 同时兼容普通 JSON 和文件上传的 FormData。
 export type Data = object | FormData | undefined
