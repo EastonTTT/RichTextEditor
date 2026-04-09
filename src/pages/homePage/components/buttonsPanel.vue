@@ -16,7 +16,7 @@
       </div>
       <div class="text">
         <div class="title">导入文档</div>
-        <div class="desc">保留入口，后续可接入本地文件导入。</div>
+        <div class="desc">从本地文件导入新文档</div>
       </div>
     </button>
 
@@ -26,13 +26,14 @@
       </div>
       <div class="text">
         <div class="title">从模板新建文档</div>
-        <div class="desc">保留入口，后续可接入模板中心。</div>
+        <div class="desc">从已有的模板文档中创建新文档</div>
       </div>
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+// 在列表页展示主要的新建与导入入口。
 withDefaults(
   defineProps<{
     primaryTitle?: string

@@ -300,11 +300,6 @@
 
       <div v-else class="comment-thread-list">
         <article v-for="thread in commentThreads" :key="thread.id" class="comment-thread-card">
-          <div class="thread-header">
-            <div class="thread-excerpt">{{ thread.excerpt || '未命名讨论' }}</div>
-            <div class="thread-time">{{ formatCommentTime(thread.updatedAt) }}</div>
-          </div>
-
           <div class="thread-comments">
             <div v-for="comment in thread.comments" :key="comment.id" class="comment-item">
               <div class="comment-meta">
@@ -474,6 +469,7 @@
 </template>
 
 <script lang="ts" setup>
+// 组合完整的文档编辑页、抽屉面板和编辑流程。
 import { ElMessage } from 'element-plus'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
@@ -1169,7 +1165,7 @@ onMounted(async () => {
   try {
     await recordDocumentOpen(documentId)
   } catch {
-    // Ignore recent-record errors so the editor can still open.
+    // 忽略最近访问记录写入失败，避免影响编辑页正常打开。
   }
 
   try {
@@ -1396,7 +1392,6 @@ onBeforeUnmount(() => {
 
 .comment-toolbar,
 .comment-toolbar-actions,
-.thread-header,
 .comment-meta,
 .reply-actions {
   display: flex;
@@ -1406,7 +1401,6 @@ onBeforeUnmount(() => {
 }
 
 .comment-summary,
-.thread-time,
 .comment-meta span {
   font-size: 12px;
   color: #667085;
@@ -1425,17 +1419,10 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
 }
 
-.thread-excerpt {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1d2939;
-}
-
 .thread-comments {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 12px;
 }
 
 .comment-item {

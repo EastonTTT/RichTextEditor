@@ -75,6 +75,7 @@
 </template>
 
 <script setup lang="ts">
+// 渲染文档中心列表、筛选条件和共享文档卡片。
 import buttonsPanel from './buttonsPanel.vue'
 import tabBar from './tabBar.vue'
 import resizableTable from '@/components/resizableTable.vue'
@@ -271,4 +272,3 @@ function formatDate(value: string) {
   }
 }
 </style>
-
