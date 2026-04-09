@@ -1,3 +1,4 @@
+// 处理本地账号登录、注册和资料持久化。
 import { get, patch, post } from '@/request'
 import { clearStoredUser, getStoredToken, getStoredUser, setStoredSession } from '@/utils/localStore'
 import type { UserProfile } from '@/types/user'

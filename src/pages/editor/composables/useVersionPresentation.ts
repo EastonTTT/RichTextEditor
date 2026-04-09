@@ -1,3 +1,4 @@
+// 为历史版本预览抽屉构建块级差异数据。
 export type DiffRowType = 'added' | 'removed' | 'changed'
 export type BlockKind = 'heading' | 'paragraph' | 'list-item' | 'code' | 'quote' | 'table' | 'divider' | 'other'
 

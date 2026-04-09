@@ -1,3 +1,4 @@
+// 注入鉴权请求头，并统一处理接口错误。
 import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import type { requestResponse } from './types'
 import { addPendingRequest, removePendingRequest } from './cancelManager'

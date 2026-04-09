@@ -1,3 +1,4 @@
+// 定义 HTTP 层共享的请求与响应类型。
 export interface requestResponse<T = unknown> {
   code: number
   msg: string

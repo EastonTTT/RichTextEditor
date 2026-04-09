@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+// 展示文档列表与知识库列表共用的筛选标签页。
 import { homeFilters } from '@/constants/homePage'
 
 defineProps<{

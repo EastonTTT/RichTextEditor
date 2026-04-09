@@ -1,3 +1,4 @@
+// 提供编辑器内搜索状态和匹配结果跳转能力。
 import { ref, type Ref } from 'vue'
 import type { Editor as CoreEditor } from '@tiptap/core'
 

@@ -10,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
+// 展示未知路由对应的兜底页面。
 defineOptions({
   name: 'notFound',
 })

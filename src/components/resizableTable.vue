@@ -29,6 +29,7 @@
 </template>
 
 <script setup lang="ts">
+// 为列表页面渲染支持用户拖拽调节列宽的表格。
 import type { tableColumns } from '@/types/resizableTable'
 import { computed } from 'vue'
 

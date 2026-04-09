@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+// 统筹知识库首页及其相关数据源。
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

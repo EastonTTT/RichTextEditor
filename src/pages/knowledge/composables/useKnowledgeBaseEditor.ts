@@ -1,3 +1,4 @@
+// 封装知识库的加载、编辑和保存行为。
 import { computed, ref } from 'vue'
 import { getKnowledgeBaseDetail, saveKnowledgeBase } from '@/api/knowledgeBase'
 import { arraysEqual } from '@/utils/collaborationMeta'

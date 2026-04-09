@@ -1,3 +1,4 @@
+// 协调离线草稿的持久化、恢复与同步状态。
 import { nextTick, ref, type Ref } from 'vue'
 import type { Editor as CoreEditor } from '@tiptap/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -60,7 +61,7 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
       offlineDraft.value = record
       options.draftSyncState.value = syncState
     } catch {
-      // Ignore IndexedDB failures and keep the editor usable.
+      // 忽略 IndexedDB 写入失败，保证编辑器仍可继续使用。
     }
   }
 
@@ -81,7 +82,7 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
       offlineDraft.value = record
       options.draftSyncState.value = syncState
     } catch {
-      // Ignore IndexedDB failures and keep the editor usable.
+      // 忽略 IndexedDB 写入失败，保证编辑器仍可继续使用。
     }
   }
 

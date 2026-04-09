@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+// 允许当前用户编辑昵称和头像信息。
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 

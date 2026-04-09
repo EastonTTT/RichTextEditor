@@ -1,3 +1,4 @@
+// 管理 AI 助手状态及文档级 AI 操作。
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { askDocumentAi } from '@/api/document'

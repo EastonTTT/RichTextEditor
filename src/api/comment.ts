@@ -1,3 +1,4 @@
+// 封装编辑器评论线程相关接口。
 import { get, patch } from '@/request'
 import type { DocumentCommentThread } from '@/types/comment'
 

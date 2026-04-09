@@ -1,3 +1,4 @@
+// 封装文档、模板、版本和 AI 相关接口。
 import type {
   CreateTemplatePayload,
   CreateDocumentPayload,

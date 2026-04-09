@@ -1,3 +1,4 @@
+// 声明应用内共享的文档、模板和版本类型。
 import type { UserProfile } from './user'
 
 export type DocumentRole = 'owner' | 'collaborator'

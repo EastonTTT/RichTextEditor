@@ -1,3 +1,4 @@
+// 封装共享文档会话使用的 y-websocket provider。
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 

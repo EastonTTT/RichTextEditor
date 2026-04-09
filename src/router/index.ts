@@ -1,3 +1,4 @@
+// 声明登录、文档和知识库等页面路由。
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({

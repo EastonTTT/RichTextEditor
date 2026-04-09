@@ -1,3 +1,4 @@
+// 管理编辑器评论线程、回复草稿与轮询状态。
 import { computed, ref, type Ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getDocumentCommentThreads, updateDocumentCommentThreads } from '@/api/comment'

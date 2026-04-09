@@ -97,6 +97,7 @@
 </template>
 
 <script lang="ts" setup>
+// 展示文档状态、搜索工具、共享控制和导出操作。
 import { computed } from 'vue'
 import { Editor } from '@tiptap/vue-3'
 import { FileExportIcon, HomeIcon, SaveIcon } from 'tdesign-icons-vue-next'

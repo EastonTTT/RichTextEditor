@@ -1,3 +1,4 @@
+// 封装编辑器初始化、保存流程和文档状态同步逻辑。
 import { computed, ref, type Ref } from 'vue'
 import { getUserList } from '@/api/user'
 import { readStringArray } from '@/utils/collaborationMeta'

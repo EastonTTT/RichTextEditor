@@ -71,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+// 统筹首页文档区与最近访问资源的整体页面逻辑。
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'

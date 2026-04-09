@@ -1,3 +1,4 @@
+// 封装首页和归档页使用的知识库接口。
 import { del, get, patch, post } from '@/request'
 import type {
   CreateKnowledgeBasePayload,

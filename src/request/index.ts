@@ -1,3 +1,4 @@
+// 基于共享 HTTP 客户端暴露带类型的请求辅助方法。
 import httpClient, { request } from './httpClient'
 import { setInterceptor } from './interceptor'
 import { requestWithRetry } from './withRetry'

@@ -14,6 +14,7 @@
 </template>
 
 <script lang="ts" setup>
+// 根据编辑器中的标题节点实时生成目录。
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { Editor } from '@tiptap/vue-3'
 import type { HeadingItem } from '@/types/extensionTypes'

@@ -71,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+// 渲染共享工作区侧边栏和最近访问快捷入口。
 import { menuTabs } from '@/constants/homePage'
 import type { RecentDocumentItem } from '@/types/document'
 import type { RecentKnowledgeBaseItem } from '@/types/knowledgeBase'

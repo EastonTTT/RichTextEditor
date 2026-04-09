@@ -137,6 +137,7 @@
 </template>
 
 <script setup lang="ts">
+// 提供富文本编辑器主要的块级编辑操作。
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { Editor } from '@tiptap/vue-3'

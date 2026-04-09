@@ -155,6 +155,7 @@
 </template>
 
 <script lang="ts" setup>
+// 渲染知识库编辑器和归档管理工作区。
 import * as Y from 'yjs'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'

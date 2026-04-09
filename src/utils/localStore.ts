@@ -8,6 +8,7 @@
 } from '@/types/document'
 import type { UserProfile } from '@/types/user'
 
+// 在浏览器存储中保留本地兜底的会话和文档数据。
 const DOCUMENTS_KEY = 'rich-text-editor.documents'
 const RECENT_DOCUMENTS_KEY = 'rich-text-editor.recent-documents'
 const USER_KEY = 'rich-text-editor.user'

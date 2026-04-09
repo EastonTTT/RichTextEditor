@@ -1,3 +1,4 @@
+// 加载文档版本列表，并提供恢复和预览能力。
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { nextTick, ref, type Ref } from 'vue'
 import type { Editor as CoreEditor } from '@tiptap/core'

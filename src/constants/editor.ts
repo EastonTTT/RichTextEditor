@@ -1,3 +1,4 @@
+// 定义编辑器专用的静态配置项，例如字号和语言列表。
 export const sizes: string[] = [
   '10px',
   '12px',

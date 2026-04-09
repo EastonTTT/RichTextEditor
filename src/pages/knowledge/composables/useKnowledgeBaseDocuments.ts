@@ -1,3 +1,4 @@
+// 加载文档选项，并管理知识库中的归档归属关系。
 import * as Y from 'yjs'
 import { computed, ref, type Ref } from 'vue'
 import { getDocumentList } from '@/api/document'

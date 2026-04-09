@@ -1,3 +1,4 @@
+// 跟踪共享文档的协同在线状态和连接状态。
 import { nextTick, ref, shallowRef, type Ref } from 'vue'
 import type { Editor as CoreEditor } from '@tiptap/core'
 import { Editor } from '@tiptap/vue-3'

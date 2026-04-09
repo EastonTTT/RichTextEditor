@@ -1,3 +1,4 @@
+// 启动 Vue 应用并注册全局共享插件。
 import '@/styles/index.less'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'

@@ -1,4 +1,5 @@
-// fontSize.ts
+// 为编辑器格式化流程补充字号标记支持。
+// 字号扩展实现。
 import { Extension } from '@tiptap/core'
 
 declare module '@tiptap/core' {

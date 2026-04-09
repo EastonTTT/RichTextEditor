@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+// 提供打开、重命名、复制、删除等行级操作。
 type ActionCommand = 'open' | 'rename' | 'duplicate' | 'delete'
 
 const props = defineProps<{

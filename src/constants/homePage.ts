@@ -1,3 +1,4 @@
+// 定义首页区域复用的导航项与筛选项。
 export const menuTabs = [
   {
     name: '文档中心',

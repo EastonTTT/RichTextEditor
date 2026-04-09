@@ -22,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+// 渲染编辑器主区域，以及工具栏和行内辅助组件。
 import { EditorContent } from '@tiptap/vue-3'
 import { computed, ref, watchEffect, nextTick } from 'vue'
 import ToolBar from './ToolBar.vue'

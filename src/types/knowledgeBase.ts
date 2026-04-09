@@ -1,3 +1,4 @@
+// 声明归档页面和接口共享的知识库模型。
 import type { DocumentVisibility } from './document'
 
 export interface KnowledgeBaseSummary {

@@ -1,3 +1,4 @@
+// 将离线编辑草稿持久化到 IndexedDB，用于断线恢复。
 import type { OfflineDraftRecord, OfflineDraftSyncState } from '@/types/offline'
 
 const DB_NAME = 'rich-text-editor-offline'

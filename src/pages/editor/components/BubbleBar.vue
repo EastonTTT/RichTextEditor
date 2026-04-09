@@ -61,6 +61,7 @@
 </template>
 
 <script lang="ts" setup>
+// 为当前文本选区显示行内格式化工具。
 import type { Editor } from '@tiptap/core'
 import { BubbleMenu } from '@tiptap/vue-3'
 import { sizes } from '@/constants/editor'

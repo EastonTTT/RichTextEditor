@@ -1,3 +1,4 @@
+// 规范化协同编辑器共享的 Yjs 元数据值。
 import type * as Y from 'yjs'
 
 export function normalizeVisibility(value: unknown): 'private' | 'shared' {

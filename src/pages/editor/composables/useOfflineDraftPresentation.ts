@@ -1,3 +1,4 @@
+// 将离线草稿同步状态映射为面向用户的标签和提示文案。
 import { computed, type Ref } from 'vue'
 import type { OfflineDraftSyncState } from '@/types/offline'
 

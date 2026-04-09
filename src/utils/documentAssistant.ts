@@ -1,3 +1,4 @@
+// 提供助手功能使用的本地文档文本分析方法。
 export interface AssistantAnswer {
   answer: string
   references: string[]

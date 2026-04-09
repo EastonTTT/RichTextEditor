@@ -1,3 +1,4 @@
+// 对并发 HTTP 请求去重，并支持请求取消。
 import type { AxiosRequestConfig } from 'axios'
 
 type RequestKey = string

@@ -1,3 +1,4 @@
+// 为可重试的请求流程增加简单的重试能力。
 import type { AxiosRequestConfig } from 'axios'
 import { request } from './httpClient'
 

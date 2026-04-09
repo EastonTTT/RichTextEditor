@@ -1,3 +1,4 @@
+// 声明用户资料类型及显示名称辅助方法。
 export interface UserProfile {
   id: string
   name: string

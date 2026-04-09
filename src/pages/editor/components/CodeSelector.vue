@@ -10,6 +10,7 @@
 </template>
 
 <script lang="ts" setup>
+// 允许用户切换当前代码块的语言。
 import { codeLanguages } from '@/constants/editor'
 import { ref, watch } from 'vue'
 import type { Editor } from '@tiptap/vue-3'

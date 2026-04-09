@@ -1,3 +1,4 @@
+// 组装本地编辑器和协同编辑器共用的 Tiptap 扩展集合。
 import type { Doc as YDoc } from 'yjs'
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'

@@ -1,3 +1,4 @@
+// 创建前端数据层复用的 Axios 客户端。
 import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig } from 'axios'
 import type { requestResponse } from './types'

@@ -1,3 +1,4 @@
+// 声明编辑器使用的评论与评论线程数据结构。
 export interface DocumentCommentItem {
   id: string
   authorId: string

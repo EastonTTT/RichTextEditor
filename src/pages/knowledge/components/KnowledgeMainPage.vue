@@ -88,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+// 展示知识库列表，并提供搜索、标签筛选和快捷操作。
 import buttonsPanel from '@/pages/homePage/components/buttonsPanel.vue'
 import tabBar from '@/pages/homePage/components/tabBar.vue'
 import actionMenu from '@/pages/homePage/components/actionMenu.vue'

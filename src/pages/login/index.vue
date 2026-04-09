@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+// 处理落地页中的本地账号登录与注册流程。
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'

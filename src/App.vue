@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// 承载路由切换后的应用页面视图。
 import { RouterView } from 'vue-router'
 </script>
 
