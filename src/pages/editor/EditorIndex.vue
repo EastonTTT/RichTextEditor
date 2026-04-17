@@ -21,7 +21,7 @@
       :collaborators="collaborators"
       :network-state="networkState"
       :draft-sync-state="draftSyncState"
-      :has-offline-draft="Boolean(offlineDraft && offlineDraft.syncState !== 'synced')"
+      :show-sync-entry="showHeaderSyncEntry"
       @update:title="handleTitleChange"
       @update:visibility="handleVisibilityChange"
       @update:search="handleSearchChange"
@@ -70,273 +70,78 @@
       </div>
     </div>
 
-    <el-drawer v-model="isSettingsOpen" title="文档设置" size="420px">
-      <div class="settings-panel">
-        <el-form label-position="top">
-          <el-form-item label="标题">
-            <el-input :model-value="title" @update:model-value="handleTitleChange" />
-          </el-form-item>
+    <editor-settings-drawer
+      v-model="isSettingsOpen"
+      :title="title"
+      :owner-name="ownerName"
+      :visibility="visibility"
+      :is-owner="isOwner"
+      :share-target-ids="shareTargetIds"
+      :available-users="availableUsers"
+      :document-id="documentId"
+      :can-collaborate="canCollaborate"
+      :room-name="roomName"
+      :last-saved-at="lastSavedAt"
+      :selected-share-users="selectedShareUsers"
+      :word-count="wordCount"
+      :character-count="characterCount"
+      :search-match-count="searchMatches.length"
+      :template-title="templateTitle"
+      :template-description="templateDescription"
+      :is-saving-template="isSavingTemplate"
+      @update:title="handleTitleChange"
+      @update:visibility="handleVisibilityChange"
+      @update:share-target-ids="handleShareTargetsChange"
+      @update:template-title="templateTitle = $event"
+      @update:template-description="templateDescription = $event"
+      @save-template="handleSaveAsTemplate"
+    />
 
-          <el-form-item label="所有者">
-            <el-input :model-value="ownerName" readonly />
-          </el-form-item>
+    <editor-offline-center-drawer
+      v-model="isOfflineCenterOpen"
+      :draft-sync-state="draftSyncState"
+      :offline-status-title="offlineStatusTitle"
+      :offline-status-description="offlineStatusDescription"
+      :network-state="networkState"
+      :offline-sync-state-label="offlineSyncStateLabel"
+      :has-offline-draft="Boolean(offlineDraft)"
+      :offline-draft-updated-at="formatOfflineTime(offlineDraft?.updatedAt)"
+      :server-baseline-time="formatOfflineTime(offlineDraft?.lastServerUpdatedAt || lastSavedAt)"
+      :is-syncing-offline-draft="isSyncingOfflineDraft"
+      @sync="syncPendingOfflineDraft"
+      @open-conflict="isOfflineConflictOpen = true"
+      @restore-draft="restoreDraftFromCenter"
+      @clear-draft="handleClearOfflineDraft"
+    />
 
-          <el-form-item label="可见性">
-            <el-select
-              class="settings-field"
-              :model-value="visibility"
-              :disabled="!isOwner"
-              @update:model-value="handleVisibilityChange"
-            >
-              <el-option label="私有" value="private" />
-              <el-option label="共享" value="shared" />
-            </el-select>
-          </el-form-item>
+    <editor-versions-drawer
+      v-model="isVersionsOpen"
+      :is-version-action-running="isVersionActionRunning"
+      :is-versions-loading="isVersionsLoading"
+      :versions="versions"
+      :last-saved-at="lastSavedAt"
+      @create-snapshot="handleCreateSnapshot"
+      @refresh="loadVersions"
+      @preview="previewVersion"
+      @restore="handleRestoreVersion"
+    />
 
-          <el-form-item label="共享权限">
-            <div class="field-tip prominent">
-              入口在这里。先将上方“可见性”切换为“共享”，再选择允许访问这篇文档的协作者。
-            </div>
-          </el-form-item>
-
-          <el-form-item v-if="isOwner && visibility === 'shared'" label="共享给指定用户">
-            <el-select
-              class="settings-field"
-              :model-value="shareTargetIds"
-              multiple
-              filterable
-              collapse-tags
-              collapse-tags-tooltip
-              placeholder="请选择可以访问此文档的用户"
-              @update:model-value="handleShareTargetsChange"
-            >
-              <el-option
-                v-for="user in availableUsers"
-                :key="user.id"
-                :label="getUserDisplayName(user)"
-                :value="user.id"
-              />
-            </el-select>
-            <div class="field-tip">未被选中的账号将无法在列表、最近访问和协同房间中看到该文档。</div>
-          </el-form-item>
-
-          <el-form-item v-else-if="isOwner" label="共享给指定用户">
-            <el-input model-value="当前为私有文档，切换为共享后可选择具体协作者。" readonly />
-          </el-form-item>
-
-          <el-form-item label="文档 ID">
-            <el-input :model-value="documentId" readonly />
-          </el-form-item>
-
-          <el-form-item v-if="canCollaborate" label="协同房间">
-            <el-input :model-value="roomName" readonly />
-          </el-form-item>
-
-          <el-form-item label="最近保存时间">
-            <el-input :model-value="lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '尚未保存'" readonly />
-          </el-form-item>
-        </el-form>
-
-        <div class="settings-card">
-          <div class="settings-card-title">共享对象</div>
-          <div v-if="selectedShareUsers.length > 0" class="share-chip-list">
-            <span
-              v-for="user in selectedShareUsers"
-              :key="user.id"
-              class="share-chip"
-              :style="{ '--chip-color': user.color }"
-            >
-              {{ getUserDisplayName(user) }}
-            </span>
-          </div>
-          <div v-else class="settings-muted">当前没有额外协作者。</div>
-        </div>
-
-        <div class="settings-card">
-          <div class="settings-card-title">统计信息</div>
-          <div class="settings-stat">字数：{{ wordCount }}</div>
-          <div class="settings-stat">字符数：{{ characterCount }}</div>
-          <div class="settings-stat">搜索结果：{{ searchMatches.length }}</div>
-        </div>
-
-        <div v-if="isOwner" class="settings-card">
-          <div class="settings-card-title">保存为模板</div>
-          <el-input v-model="templateTitle" placeholder="模板名称" />
-          <el-input
-            v-model="templateDescription"
-            class="template-description"
-            type="textarea"
-            :rows="3"
-            placeholder="模板说明，可用于下次快速复用"
-          />
-          <el-button class="template-action" type="primary" :loading="isSavingTemplate" @click="handleSaveAsTemplate">
-            保存当前文档为模板
-          </el-button>
-        </div>
-      </div>
-    </el-drawer>
-
-    <el-drawer v-model="isOfflineCenterOpen" title="离线草稿与恢复" size="420px">
-      <div class="offline-center">
-        <div class="offline-status-card" :class="`offline-status-card--${draftSyncState}`">
-          <div class="offline-status-title">{{ offlineStatusTitle }}</div>
-          <div class="offline-status-desc">{{ offlineStatusDescription }}</div>
-        </div>
-
-        <div class="offline-center-grid">
-          <div class="offline-metric">
-            <span class="offline-metric-label">网络状态</span>
-            <strong>{{ networkState === 'offline' ? '已断开' : '正常' }}</strong>
-          </div>
-          <div class="offline-metric">
-            <span class="offline-metric-label">同步状态</span>
-            <strong>{{ offlineSyncStateLabel }}</strong>
-          </div>
-          <div class="offline-metric">
-            <span class="offline-metric-label">本地草稿时间</span>
-            <strong>{{ formatOfflineTime(offlineDraft?.updatedAt) }}</strong>
-          </div>
-          <div class="offline-metric">
-            <span class="offline-metric-label">服务器基线</span>
-            <strong>{{ formatOfflineTime(offlineDraft?.lastServerUpdatedAt || lastSavedAt) }}</strong>
-          </div>
-        </div>
-
-        <div class="offline-center-actions">
-          <el-button
-            v-if="networkState === 'online' && (draftSyncState === 'pending' || draftSyncState === 'conflict')"
-            type="primary"
-            :loading="isSyncingOfflineDraft"
-            @click="syncPendingOfflineDraft"
-          >
-            立即同步
-          </el-button>
-          <el-button v-if="draftSyncState === 'conflict'" @click="isOfflineConflictOpen = true">处理冲突</el-button>
-          <el-button
-            v-if="offlineDraft && draftSyncState !== 'synced'"
-            @click="restoreDraftFromCenter"
-          >
-            恢复到编辑器
-          </el-button>
-          <el-button v-if="offlineDraft" @click="handleClearOfflineDraft">清理本地草稿</el-button>
-        </div>
-
-        <div class="offline-center-note">
-          <div class="offline-section-title">说明</div>
-          <p>离线时系统会把当前标题、正文、可见性和共享对象写入本地草稿。恢复网络后，会先检查服务器版本，再决定自动同步或提示冲突处理。</p>
-        </div>
-      </div>
-    </el-drawer>
-
-    <el-drawer v-model="isVersionsOpen" title="历史版本" size="460px">
-      <div class="version-actions">
-        <el-button type="primary" :loading="isVersionActionRunning" @click="handleCreateSnapshot">创建快照</el-button>
-        <el-button :loading="isVersionsLoading" @click="loadVersions">刷新</el-button>
-      </div>
-
-      <el-empty v-if="!versions.length && !isVersionsLoading" description="还没有历史版本" />
-
-      <div v-else class="version-timeline">
-        <div class="version-overview-card">
-          <div>
-            <div class="version-overview-title">当前文档快照</div>
-            <div class="version-overview-meta">最近保存：{{ formatVersionTime(lastSavedAt || new Date().toISOString()) }}</div>
-          </div>
-          <div class="version-overview-count">{{ versions.length }} 个版本</div>
-        </div>
-
-        <el-timeline>
-          <el-timeline-item
-            v-for="version in versions"
-            :key="version.id"
-            :timestamp="formatVersionTime(version.createdAt)"
-            :type="getVersionReasonMeta(version.reason).type"
-            :hollow="version.id !== versions[0]?.id"
-            placement="top"
-          >
-            <div class="version-item">
-              <div class="version-top">
-                <strong>v{{ version.versionNo }}</strong>
-                <span class="version-reason-badge" :class="`version-reason-badge--${getVersionReasonMeta(version.reason).tone}`">
-                  {{ getVersionReasonMeta(version.reason).label }}
-                </span>
-              </div>
-              <div class="version-meta">
-                <span>操作人：{{ version.createdByName }}</span>
-                <span>标题：{{ version.title || '未命名文档' }}</span>
-              </div>
-              <p class="version-summary">{{ version.summary || '该版本没有额外摘要。' }}</p>
-              <div class="version-ops">
-                <el-button size="small" @click="previewVersion(version.id)">预览差异</el-button>
-                <el-button size="small" :loading="isVersionActionRunning" @click="handleRestoreVersion(version.id)">
-                  恢复此版本
-                </el-button>
-              </div>
-            </div>
-          </el-timeline-item>
-        </el-timeline>
-      </div>
-    </el-drawer>
-
-    <el-drawer v-model="isCommentsOpen" title="文档评论" size="460px">
-      <div class="comment-actions">
-        <el-input
-          v-model="newCommentContent"
-          type="textarea"
-          :rows="4"
-          resize="none"
-          placeholder="写下这篇文档的讨论、问题或建议"
-        />
-        <div class="comment-toolbar">
-          <span class="comment-summary">共 {{ commentCount }} 条评论</span>
-          <div class="comment-toolbar-actions">
-            <el-button :loading="isCommentsLoading" @click="loadCommentThreads()">刷新</el-button>
-            <el-button type="primary" :loading="isCommentSubmitting" @click="handleCreateComment">发布评论</el-button>
-          </div>
-        </div>
-      </div>
-
-      <el-empty v-if="!commentThreads.length && !isCommentsLoading" description="还没有评论，先发第一条吧" />
-
-      <div v-else class="comment-thread-list">
-        <article v-for="thread in commentThreads" :key="thread.id" class="comment-thread-card">
-          <div class="thread-comments">
-            <div v-for="comment in thread.comments" :key="comment.id" class="comment-item">
-              <div class="comment-meta">
-                <strong>{{ comment.authorName }}</strong>
-                <span>{{ formatCommentTime(comment.createdAt) }}</span>
-              </div>
-              <div class="comment-content">{{ comment.content }}</div>
-            </div>
-          </div>
-
-          <div class="reply-box">
-            <el-input
-              :model-value="replyDrafts[thread.id] || ''"
-              type="textarea"
-              :rows="2"
-              resize="none"
-              placeholder="回复这个讨论"
-              @update:model-value="updateReplyDraft(thread.id, `${$event ?? ''}`)"
-            />
-            <div class="reply-actions">
-              <el-button size="small" :disabled="!(replyDrafts[thread.id] || '').trim()" @click="clearReplyDraft(thread.id)">
-                清空
-              </el-button>
-              <el-button
-                size="small"
-                type="primary"
-                :loading="isCommentSubmitting"
-                :disabled="!(replyDrafts[thread.id] || '').trim()"
-                @click="handleReplyComment(thread.id)"
-              >
-                回复
-              </el-button>
-            </div>
-          </div>
-        </article>
-      </div>
-    </el-drawer>
+    <editor-comments-drawer
+      v-model="isCommentsOpen"
+      :new-comment-content="newCommentContent"
+      :comment-count="commentCount"
+      :is-comments-loading="isCommentsLoading"
+      :is-comment-submitting="isCommentSubmitting"
+      :comment-threads="commentThreads"
+      :reply-drafts="replyDrafts"
+      :format-comment-time="formatCommentTime"
+      @update:new-comment-content="newCommentContent = $event"
+      @refresh="loadCommentThreads"
+      @create-comment="handleCreateComment"
+      @update:reply-draft="updateReplyDraft"
+      @clear-reply="clearReplyDraft"
+      @reply-comment="handleReplyComment"
+    />
 
     <el-dialog v-model="isVersionPreviewOpen" title="版本预览" width="min(1000px, 92vw)" destroy-on-close>
       <template v-if="selectedVersionPreview">
@@ -476,6 +281,10 @@ import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import RichTextEditor from '@/pages/editor/components/RichTextEditor.vue'
 import TableOfContents from '@/pages/editor/components/TableOfContents.vue'
 import EditorHeader from './components/EditorHeader.vue'
+import EditorCommentsDrawer from './components/EditorCommentsDrawer.vue'
+import EditorOfflineCenterDrawer from './components/EditorOfflineCenterDrawer.vue'
+import EditorSettingsDrawer from './components/EditorSettingsDrawer.vue'
+import EditorVersionsDrawer from './components/EditorVersionsDrawer.vue'
 import { useDocumentAssistant } from './composables/useDocumentAssistant'
 import { useDocumentComments } from './composables/useDocumentComments'
 import { useDocumentEditor } from './composables/useDocumentEditor'
@@ -560,8 +369,8 @@ const {
   onAutoSave: () => {
     void saveCurrentDocument()
   },
-  onDraftPersist: (syncState) => {
-    void persistOfflineDraftSnapshot(syncState)
+  onDraftPersist: (syncState, persistOptions) => {
+    void persistOfflineDraftSnapshot(syncState, persistOptions)
   },
   onSyncTitleMeta: (value) => syncTitleToMeta(value),
   onSyncVisibilityMeta: (value) => syncVisibilityToMeta(value),
@@ -659,6 +468,7 @@ const { offlineSyncStateLabel, offlineStatusTitle, offlineStatusDescription } = 
   networkState,
   draftSyncState,
 )
+const showHeaderSyncEntry = computed(() => false)
 
 function getErrorMessage(error: unknown, fallback: string) {
   // 优先透传后端可读错误，再退回通用提示。
@@ -1220,166 +1030,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-.settings-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.settings-field {
-  width: 100%;
-}
-
-.settings-card {
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-}
-
-.settings-card-title {
-  margin-bottom: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #667085;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.settings-stat + .settings-stat {
-  margin-top: 8px;
-}
-
-.settings-muted,
-.field-tip {
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.7;
-  color: #667085;
-}
-
-.field-tip.prominent {
-  margin-top: 0;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #eff4ff;
-  color: #284b95;
-}
-
-.share-chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.share-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eff4ff;
-  color: #1d2939;
-  font-size: 12px;
-}
-
-.share-chip::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--chip-color);
-}
-
-.template-description {
-  margin-top: 12px;
-}
-
-.template-action {
-  width: 100%;
-  margin-top: 12px;
-}
-
-.offline-center {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.offline-status-card {
-  padding: 16px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 100%);
-  color: #284b95;
-}
-
-.offline-status-card--pending,
-.offline-status-card--syncing {
-  background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 100%);
-  color: #284b95;
-}
-
-.offline-status-card--conflict {
-  background: linear-gradient(180deg, #fff1f3 0%, #fff7f8 100%);
-  color: #c01048;
-}
-
-.offline-status-card--synced {
-  background: linear-gradient(180deg, #edfdf3 0%, #f7fff9 100%);
-  color: #027a48;
-}
-
-.offline-status-title {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.offline-status-desc {
-  margin-top: 8px;
-  line-height: 1.7;
-}
-
-.offline-center-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.offline-metric {
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.offline-metric-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #667085;
-}
-
-.offline-center-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.offline-center-note {
-  padding: 16px;
-  border-radius: 16px;
-  background: #f8fafc;
-  color: #475467;
-  line-height: 1.8;
-}
-
-.offline-section-title {
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #344054;
-}
-
 .sync-banner {
   margin-bottom: 12px;
   padding: 12px 14px;
@@ -1399,126 +1049,6 @@ onBeforeUnmount(() => {
   color: #c01048;
 }
 
-.comment-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.comment-toolbar,
-.comment-toolbar-actions,
-.comment-meta,
-.reply-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.comment-summary,
-.comment-meta span {
-  font-size: 12px;
-  color: #667085;
-}
-
-.comment-thread-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.comment-thread-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 14px;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-}
-
-.thread-comments {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.comment-item {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid #eaecf0;
-}
-
-.comment-meta {
-  margin-bottom: 6px;
-}
-
-.comment-content {
-  white-space: pre-wrap;
-  line-height: 1.7;
-  color: #344054;
-}
-
-.reply-box {
-  margin-top: 12px;
-}
-
-.reply-actions {
-  margin-top: 8px;
-  justify-content: flex-end;
-}
-
-.version-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.version-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.version-overview-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #0f4cda 0%, #2f7bff 100%);
-  color: #fff;
-}
-
-.version-overview-title {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.version-overview-meta {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.version-overview-count {
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.version-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 14px;
-  background: linear-gradient(180deg, #fcfcfd 0%, #ffffff 100%);
-}
-
-.version-top,
-.version-meta,
-.version-ops,
 .preview-meta,
 .preview-panels {
   display: flex;
@@ -1526,59 +1056,13 @@ onBeforeUnmount(() => {
   gap: 12px;
 }
 
-.version-top,
-.version-meta,
 .preview-meta {
   margin-bottom: 8px;
 }
 
-.version-time,
-.version-meta,
 .preview-meta {
   color: #667085;
   font-size: 12px;
-}
-
-.version-summary {
-  margin: 0 0 10px;
-  color: #344054;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.version-reason-badge {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.version-reason-badge--neutral {
-  background: #f2f4f7;
-  color: #475467;
-}
-
-.version-reason-badge--brand {
-  background: #eff4ff;
-  color: #175ce6;
-}
-
-.version-reason-badge--success {
-  background: #edfdf3;
-  color: #027a48;
-}
-
-.version-reason-badge--warning {
-  background: #fff7ed;
-  color: #b54708;
-}
-
-.version-reason-badge--danger {
-  background: #fff1f3;
-  color: #c01048;
 }
 
 .preview-panels {
@@ -1778,10 +1262,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 960px) {
-  .offline-center-grid {
-    grid-template-columns: 1fr;
-  }
-
   .floating-ai-button {
     right: 18px;
     bottom: 18px;

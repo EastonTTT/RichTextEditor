@@ -10,7 +10,7 @@ interface UseDocumentEditorOptions {
   storedUser: UserProfile
   draftSyncState: Ref<OfflineDraftSyncState>
   onAutoSave: () => void
-  onDraftPersist: (syncState: OfflineDraftSyncState) => void
+  onDraftPersist: (syncState: OfflineDraftSyncState, options?: { syncUiState?: boolean }) => void
   onSyncTitleMeta?: (value: string) => void
   onSyncVisibilityMeta?: (value: DocumentVisibility) => void
   getErrorMessage: (error: unknown, fallback: string) => string
@@ -65,11 +65,14 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
     }, 1000)
   }
 
-  function scheduleDraftPersist(syncState: OfflineDraftSyncState = 'pending') {
+  function scheduleDraftPersist(
+    syncState: OfflineDraftSyncState = 'pending',
+    persistOptions: { syncUiState?: boolean } = {},
+  ) {
     clearDraftPersistTimer()
     // 本地草稿写入比远端保存更轻量，可以用更短的节流周期兜底。
     draftPersistTimer = window.setTimeout(() => {
-      options.onDraftPersist(syncState)
+      options.onDraftPersist(syncState, persistOptions)
     }, 350)
   }
 
@@ -77,8 +80,9 @@ export function useDocumentEditor(options: UseDocumentEditorOptions) {
     // 所有会改动文档内容或元信息的入口，最终都应该回到这个脏状态入口。
     isDirty.value = true
     saveError.value = ''
-    options.draftSyncState.value = options.draftSyncState.value === 'conflict' ? 'conflict' : 'pending'
-    scheduleDraftPersist(options.draftSyncState.value)
+    const pendingDraftState = options.draftSyncState.value === 'conflict' ? 'conflict' : 'pending'
+    // 在线编辑时继续落本地草稿，但不把离线同步 banner 切到 pending，避免输入时闪动。
+    scheduleDraftPersist(pendingDraftState, { syncUiState: false })
 
     if (isSaving.value) {
       queuedSave.value = true

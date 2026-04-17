@@ -28,6 +28,10 @@ interface UseOfflineDraftOptions {
   onRefreshSearchMatches: (editor: CoreEditor | null) => void
 }
 
+interface PersistOfflineDraftSnapshotOptions {
+  syncUiState?: boolean
+}
+
 export function useOfflineDraft(options: UseOfflineDraftOptions) {
   // 离线草稿既服务于断网兜底，也负责在线恢复时的冲突判断。
   const networkState = ref<'online' | 'offline'>(options.initialOnlineState ? 'online' : 'offline')
@@ -56,12 +60,17 @@ export function useOfflineDraft(options: UseOfflineDraftOptions) {
     }
   }
 
-  async function persistOfflineDraftSnapshot(syncState: OfflineDraftSyncState) {
+  async function persistOfflineDraftSnapshot(
+    syncState: OfflineDraftSyncState,
+    persistOptions: PersistOfflineDraftSnapshotOptions = {},
+  ) {
     try {
       const record = buildOfflineDraftRecord(syncState)
       await saveOfflineDraft(record)
       offlineDraft.value = record
-      options.draftSyncState.value = syncState
+      if (persistOptions.syncUiState !== false) {
+        options.draftSyncState.value = syncState
+      }
     } catch {
       // 忽略 IndexedDB 写入失败，保证编辑器仍可继续使用。
     }

@@ -71,14 +71,21 @@
       <button class="mini-button comments-button" type="button" @click="emit('toggle-comments')">
         评论{{ commentCount > 0 ? ` (${commentCount})` : '' }}
       </button>
-      <button
-        v-if="hasOfflineDraft || draftSyncState !== 'synced' || networkState === 'offline'"
-        class="mini-button sync-button"
-        type="button"
-        @click="emit('open-sync-center')"
+      <div
+        v-if="showSyncEntry"
+        class="sync-entry-slot sync-entry-slot--visible"
+        :aria-hidden="!showSyncEntry"
       >
-        草稿同步
-      </button>
+        <button
+          class="mini-button sync-button"
+          type="button"
+          :tabindex="0"
+          :disabled="false"
+          @click="emit('open-sync-center')"
+        >
+          草稿同步
+        </button>
+      </div>
       <button class="mini-button settings-button" type="button" @click="emit('toggle-settings')">共享/设置</button>
       <button class="mini-button history-button" type="button" @click="emit('toggle-versions')">历史版本</button>
 
@@ -132,7 +139,7 @@ const {
   collaborators,
   networkState,
   draftSyncState,
-  hasOfflineDraft,
+  showSyncEntry,
 } = defineProps<{
   editor: Editor | null
   title: string
@@ -154,7 +161,7 @@ const {
   collaborators: CollaboratorPresence[]
   networkState: 'online' | 'offline'
   draftSyncState: OfflineDraftSyncState
-  hasOfflineDraft: boolean
+  showSyncEntry: boolean
 }>()
 
 const emit = defineEmits<{
@@ -432,6 +439,21 @@ function exportAsPDF() {
 .status-tag,
 .action-button {
   height: 40px;
+}
+
+.sync-entry-slot {
+  display: flex;
+  flex: 0 0 84px;
+  width: 84px;
+  visibility: hidden;
+}
+
+.sync-entry-slot--visible {
+  visibility: visible;
+}
+
+.sync-button {
+  width: 100%;
 }
 
 :deep(.visibility-select .el-select__wrapper) {
