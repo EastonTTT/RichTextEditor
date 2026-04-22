@@ -12,7 +12,6 @@
       :visibility="visibility"
       :can-collaborate="canCollaborate"
       :can-manage-sharing="isOwner"
-      :comment-count="commentCount"
       :word-count="wordCount"
       :character-count="characterCount"
       :search-query="searchQuery"
@@ -27,7 +26,6 @@
       @update:search="handleSearchChange"
       @search-prev="focusPreviousSearchMatch"
       @search-next="focusNextSearchMatch"
-      @toggle-comments="openCommentsDrawer"
       @toggle-settings="isSettingsOpen = true"
       @toggle-versions="openVersionDrawer"
       @open-sync-center="openOfflineCenter"
@@ -65,6 +63,8 @@
           :editor="editorInstance"
           :can-collaborate="canCollaborate"
           :is-collaborative="isCollaborative"
+          :comment-count="commentCount"
+          @toggle-comments="openCommentsDrawer"
           @toggle-collaboration="toggleCollaboration"
         />
       </div>
@@ -322,16 +322,19 @@ interface RequestErrorLike {
 const route = useRoute()
 const router = useRouter()
 const documentId = route.params.id as string
+// 协同服务地址来自环境变量；未配置时页面只保留本地编辑能力。
 const collabUrl = import.meta.env.VITE_COLLAB_WS_URL as string | undefined
 const storedUser = getStoredUser()
 const storedToken = getStoredToken() || undefined
 const initialOnlineState = typeof navigator === 'undefined' ? true : navigator.onLine
 
+// 页面级流程状态：回填中、抽屉开关，以及离线草稿当前所处的同步阶段。
 const isHydrating = ref(false)
 const isSettingsOpen = ref(false)
 const isCommentsOpen = ref(false)
 const draftSyncState = ref<OfflineDraftSyncState>('synced')
 
+// 协同房间按文档隔离；available 只表示“有配置地址”，不代表服务一定可连。
 const roomName = computed(() => `document:${documentId}`)
 const isCollaborationAvailable = Boolean(collabUrl)
 // 文档基础信息、脏状态和自动保存节奏都由 useDocumentEditor 统一维护。
@@ -376,8 +379,10 @@ const {
   onSyncVisibilityMeta: (value) => syncVisibilityToMeta(value),
   getErrorMessage,
 })
+// 只有服务器侧已保存为共享文档时，页面才允许真正进入协同编辑。
 const canCollaborate = computed(() => Boolean(collabUrl) && persistedVisibility.value === 'shared')
 const isOwner = computed(() => ownerId.value === storedUser.id)
+// AI 面板逻辑先保留，入口目前默认关闭，方便后面按环境逐步放开。
 const showAiAssistant = false
 // 搜索、字数统计和编辑器 update 生命周期共用一套基础回调。
 const {
@@ -468,6 +473,7 @@ const { offlineSyncStateLabel, offlineStatusTitle, offlineStatusDescription } = 
   networkState,
   draftSyncState,
 )
+// 预留页头同步中心入口，当前版本先固定隐藏。
 const showHeaderSyncEntry = computed(() => false)
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -532,10 +538,12 @@ function isNetworkError(error: unknown) {
 }
 
 async function openCommentsDrawer() {
+  // 打开评论抽屉时顺手刷新一次，避免用户看到过期评论。
   isCommentsOpen.value = true
   await loadCommentThreads()
 }
 
+// 版本管理单独做成 composable，这里只注入当前文档与编辑器上下文。
 const {
   isVersionsOpen,
   isVersionPreviewOpen,
@@ -578,6 +586,7 @@ async function hydrateDocument() {
     const document = await getDocumentDetail(documentId)
 
     if (!document) {
+      // 服务端读不到文档时，如果本地还有草稿，优先兜底恢复用户内容。
       if (localDraft) {
         networkState.value = 'offline'
         isOfflineFallbackMode.value = true
@@ -608,6 +617,7 @@ async function hydrateDocument() {
     await rebuildEditorSession(document)
     isDirty.value = false
 
+    // 没有待同步本地草稿时，把当前服务器版本作为新的离线基线即可。
     if (!localDraft || localDraft.syncState === 'synced') {
       await persistOfflineBaseline(document)
       return
@@ -617,6 +627,7 @@ async function hydrateDocument() {
     pendingOfflineDraft.value = localDraft
     pendingServerDocument.value = document
 
+    // 基线时间不一致，说明离线期间服务器也发生过更新，需要进入冲突分支。
     if (localDraft.lastServerUpdatedAt && localDraft.lastServerUpdatedAt !== document.lastModifiedAt) {
       draftSyncState.value = 'conflict'
       await updateOfflineDraftSyncState(documentId, 'conflict')
@@ -672,6 +683,7 @@ async function saveCurrentDocument(
   }
 
   if (networkState.value === 'offline') {
+    // 离线时不打服务端，直接把最新编辑内容落到本地草稿。
     await persistOfflineDraftSnapshot(draftSyncState.value === 'conflict' ? 'conflict' : 'pending')
     saveError.value = '当前离线，修改已保存到本地草稿。'
     if (force) {
@@ -686,6 +698,7 @@ async function saveCurrentDocument(
   saveError.value = ''
 
   try {
+    // 记录保存前的可见性，用来判断保存后是否需要重建编辑器实例。
     const previousPersistedVisibility = persistedVisibility.value
     const document = await saveDocument(documentId, {
       title: title.value.trim() || '未命名文档',
@@ -706,6 +719,7 @@ async function saveCurrentDocument(
     isOfflineFallbackMode.value = false
     await persistOfflineBaseline(document)
 
+    // 私有/共享切换会改变编辑器扩展集合，因此这里需要整套重建。
     if (previousPersistedVisibility !== document.visibility) {
       await rebuildEditorSession(document)
     } else if (document.visibility === 'shared' && metaMap.value) {
@@ -753,6 +767,7 @@ async function saveCurrentDocument(
 
 // 下面这组函数处理离线恢复分支：保留服务器、恢复本地，或另存冲突副本。
 async function discardPendingOfflineDraft() {
+  // 选择保留服务器版本时，恢复到服务器快照并关闭离线处理弹窗。
   const serverDocument = pendingServerDocument.value
   if (serverDocument) {
     applyDocumentState(serverDocument)
@@ -771,6 +786,7 @@ async function discardPendingOfflineDraft() {
 }
 
 async function restorePendingOfflineDraft(syncToServer = false) {
+  // 可以只把草稿恢复到当前编辑器，也可以进一步覆盖回服务器。
   const draft = pendingOfflineDraft.value
   if (!draft) {
     clearPendingOfflineDialogs()
@@ -794,6 +810,7 @@ async function restorePendingOfflineDraft(syncToServer = false) {
 }
 
 async function createConflictCopyFromDraft() {
+  // 冲突副本用于同时保住本地内容，又不直接覆盖线上文档。
   const draft = pendingOfflineDraft.value
   if (!draft) {
     clearPendingOfflineDialogs()
@@ -846,6 +863,7 @@ async function syncPendingOfflineDraft() {
   draftSyncState.value = draft.syncState === 'conflict' ? 'conflict' : 'syncing'
 
   try {
+    // 重新读取服务器版本，确认离线期间是否出现并发修改。
     const serverDocument = await getDocumentDetail(documentId)
 
     if (!serverDocument) {
@@ -882,6 +900,7 @@ async function syncPendingOfflineDraft() {
     saveError.value = ''
     await persistOfflineBaseline(document)
 
+    // 离线兜底返回在线时，可能要整页重建；否则直接覆盖编辑器内容即可。
     if (shouldRebuildSession) {
       await rebuildEditorSession(document)
     } else if (editorInstance.value && editorInstance.value.getHTML() !== document.content) {
@@ -912,11 +931,13 @@ async function syncPendingOfflineDraft() {
 }
 
 function handleNetworkOnline() {
+  // 浏览器恢复联网后，立即尝试回传本地待同步草稿。
   networkState.value = 'online'
   void syncPendingOfflineDraft()
 }
 
 function handleNetworkOffline() {
+  // 这里只更新网络状态，实际兜底写本地草稿由保存逻辑负责。
   networkState.value = 'offline'
 }
 
@@ -941,6 +962,7 @@ const {
 })
 
 async function handleSaveAsTemplate() {
+  // 模板保存属于受保护动作：仅所有者可执行，而且需要先确保正文已落盘。
   if (!isOwner.value) {
     ElMessage.warning('只有文档所有者可以保存模板。')
     return
@@ -964,6 +986,7 @@ async function handleSaveAsTemplate() {
 }
 
 function handleBeforeUnload(event: BeforeUnloadEvent) {
+  // 浏览器刷新或关闭页签前的最后一道提醒，避免误丢未保存内容。
   if (!isDirty.value) {
     return
   }
@@ -973,6 +996,7 @@ function handleBeforeUnload(event: BeforeUnloadEvent) {
 }
 
 onBeforeRouteLeave(() => {
+  // 站内路由跳转同样要拦一下，和 beforeunload 保持一致的保护行为。
   if (!isDirty.value) {
     return true
   }

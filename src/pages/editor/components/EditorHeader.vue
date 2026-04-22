@@ -68,9 +68,6 @@
         <el-option label="共享" value="shared" />
       </el-select>
 
-      <button class="mini-button comments-button" type="button" @click="emit('toggle-comments')">
-        评论{{ commentCount > 0 ? ` (${commentCount})` : '' }}
-      </button>
       <div
         v-if="showSyncEntry"
         class="sync-entry-slot sync-entry-slot--visible"
@@ -130,7 +127,6 @@ const {
   visibility,
   canCollaborate,
   canManageSharing,
-  commentCount,
   wordCount,
   characterCount,
   searchQuery,
@@ -152,7 +148,6 @@ const {
   visibility: DocumentVisibility
   canCollaborate: boolean
   canManageSharing: boolean
-  commentCount: number
   wordCount: number
   characterCount: number
   searchQuery: string
@@ -172,7 +167,6 @@ const emit = defineEmits<{
   'update:search': [value: string]
   'search-prev': []
   'search-next': []
-  'toggle-comments': []
   'open-sync-center': []
   'toggle-settings': []
   'toggle-versions': []
@@ -431,7 +425,6 @@ function exportAsPDF() {
   border-radius: 12px;
 }
 
-.comments-button,
 .sync-button,
 .settings-button,
 .history-button,

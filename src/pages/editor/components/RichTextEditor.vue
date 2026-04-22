@@ -6,7 +6,9 @@
         :editor="editor"
         :can-collaborate="canCollaborate"
         :is-collaborative="isCollaborative"
+        :comment-count="commentCount"
         class="tool-bar"
+        @toggle-comments="emit('toggle-comments')"
         @toggle-collaboration="emit('toggle-collaboration')"
       />
       <editor-content :editor="editorForContent" class="editor-content" />
@@ -30,13 +32,15 @@ import CodeSelector from '@/pages/editor/components/CodeSelector.vue'
 import BubbleBar from '@/pages/editor/components/BubbleBar.vue'
 import { Editor } from '@tiptap/vue-3'
 
-const { editor, canCollaborate, isCollaborative } = defineProps<{
+const { editor, canCollaborate, isCollaborative, commentCount } = defineProps<{
   editor: Editor | null
   canCollaborate: boolean
   isCollaborative: boolean
+  commentCount: number
 }>()
 
 const emit = defineEmits<{
+  'toggle-comments': []
   'toggle-collaboration': []
 }>()
 

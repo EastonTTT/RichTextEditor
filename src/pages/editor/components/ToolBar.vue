@@ -115,6 +115,12 @@
       </button>
     </el-tooltip>
 
+    <el-tooltip :content="commentCount > 0 ? `查看评论 (${commentCount})` : '查看评论'" placement="bottom">
+      <button type="button" aria-label="查看评论" @click="emit('toggle-comments')">
+        <ChatBubble1Icon class="icon" />
+      </button>
+    </el-tooltip>
+
     <el-tooltip content="共享文档才可启用协同" placement="bottom">
       <button
         type="button"
@@ -203,6 +209,7 @@ import {
   ClearFormatting1Icon,
   CodeIcon,
   ComponentDividerVerticalIcon,
+  ChatBubble1Icon,
   ForwardIcon,
   ImageAddIcon,
   Link1Icon,
@@ -214,13 +221,15 @@ import {
   UsergroupIcon,
 } from 'tdesign-icons-vue-next'
 
-const { editor, canCollaborate, isCollaborative } = defineProps<{
+const { editor, canCollaborate, isCollaborative, commentCount } = defineProps<{
   editor: Editor
   canCollaborate: boolean
   isCollaborative: boolean
+  commentCount: number
 }>()
 
 const emit = defineEmits<{
+  'toggle-comments': []
   'toggle-collaboration': []
 }>()
 
@@ -469,6 +478,7 @@ button:disabled {
   font-weight: 700;
   letter-spacing: 0.01em;
 }
+
 
 .icon {
   font-size: 20px;
