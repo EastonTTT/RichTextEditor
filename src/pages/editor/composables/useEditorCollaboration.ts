@@ -1,8 +1,10 @@
 // 跟踪共享文档的协同在线状态和连接状态。
 import { nextTick, ref, shallowRef, type Ref } from 'vue'
-import type { Editor as CoreEditor } from '@tiptap/core'
+import { createDocument as createPmDocument, getSchema, type Editor as CoreEditor } from '@tiptap/core'
+import type { Schema } from '@tiptap/pm/model'
 import { Editor } from '@tiptap/vue-3'
 import * as Y from 'yjs'
+import { prosemirrorToYXmlFragment } from 'y-prosemirror'
 import { createEditorExtensions } from '@/utils/editorExtensions'
 import { normalizeVisibility, setMetaValueIfChanged } from '@/utils/collaborationMeta'
 import { useCollaborationProvider } from '@/utils/useCollaborationProvider'
@@ -27,10 +29,12 @@ interface UseEditorCollaborationOptions {
   latestContentSnapshot: Ref<string>
   collaborationEnabled: Ref<boolean>
   isHydrating: Ref<boolean>
+  isBootstrappingCollaboration?: Ref<boolean>
   onMarkDirty: () => void
   onSyncEditorStats: (editor: CoreEditor | null) => void
   onRefreshSearchMatches: (editor: CoreEditor | null, preserveIndex?: boolean) => void
   createBaseEditorOptions: () => Record<string, unknown>
+  onPermissionRevoked?: () => void
 }
 
 export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
@@ -74,8 +78,27 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     setMetaValueIfChanged(map, 'visibility', options.visibility.value)
   }
 
-  function sharedDocumentHasContent() {
-    return Boolean(sharedDoc.value && sharedDoc.value.getXmlFragment('content').length > 0)
+  function sharedDocumentHasMeaningfulContent(editor: Editor) {
+    // 协同编辑器刚初始化时，底层 Y.XmlFragment 里可能已经有默认空段落；
+    // 这里改用编辑器语义上的“是否为空文档”判断，避免把空壳房间误判成已有正文。
+    return !editor.isEmpty
+  }
+
+  function setCollaborationBootstrapState(value: boolean) {
+    if (options.isBootstrappingCollaboration) {
+      options.isBootstrappingCollaboration.value = value
+    }
+  }
+
+  function seedSharedDocumentContent(schema: Schema, snapshot = options.latestContentSnapshot.value) {
+    const doc = sharedDoc.value
+    if (!doc) {
+      return
+    }
+
+    const fragment = doc.getXmlFragment('content')
+    const pmDoc = createPmDocument(snapshot || '<p></p>', schema)
+    prosemirrorToYXmlFragment(pmDoc, fragment)
   }
 
   function sharedMetaHasValues() {
@@ -115,11 +138,11 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
       syncStateIntoMeta()
     }
 
-    if (sharedDocumentHasContent()) {
+    if (sharedDocumentHasMeaningfulContent(currentEditor)) {
       options.latestContentSnapshot.value = currentEditor.getHTML()
     } else {
       options.isHydrating.value = true
-      currentEditor.commands.setContent(options.latestContentSnapshot.value || '<p></p>', false)
+      seedSharedDocumentContent(currentEditor.schema)
       await nextTick()
       options.isHydrating.value = false
     }
@@ -128,6 +151,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     options.onRefreshSearchMatches(currentEditor)
     suppressMetaObserver.value = false
     hasSeededCollaborationState.value = true
+    setCollaborationBootstrapState(false)
   }
 
   function syncCollaborators() {
@@ -177,7 +201,25 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   function handleCollaborationSync(isSynced: boolean) {
     hasReceivedInitialSync.value = isSynced
     if (isSynced) {
+      if (hasSeededCollaborationState.value) {
+        setCollaborationBootstrapState(false)
+        return
+      }
+
       void seedSharedDocumentFromSnapshot()
+      return
+    }
+
+    setCollaborationBootstrapState(true)
+  }
+
+  function handleConnectionClose(event: CloseEvent | null) {
+    if (!options.canCollaborate.value) {
+      return
+    }
+
+    if (event?.code === 4001 || event?.reason === 'permission-updated') {
+      options.onPermissionRevoked?.()
     }
   }
 
@@ -188,6 +230,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     if (collaborationRuntime.value) {
       collaborationRuntime.value.provider.off('status', handleCollaborationStatus)
       collaborationRuntime.value.provider.off('sync', handleCollaborationSync)
+      collaborationRuntime.value.provider.off('connection-close', handleConnectionClose)
       collaborationRuntime.value.awareness.off('change', syncCollaborators)
       collaborationRuntime.value.destroy()
     }
@@ -204,6 +247,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     hasReceivedInitialSync.value = false
     hasSeededCollaborationState.value = false
     isCollaborative.value = false
+    setCollaborationBootstrapState(false)
   }
 
   function destroyEditorSession() {
@@ -216,6 +260,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
   }
 
   function createLocalEditor(content: string) {
+    setCollaborationBootstrapState(false)
     editorInstance.value = new Editor({
       extensions: createEditorExtensions(),
       content: content || '<p></p>',
@@ -223,7 +268,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     })
   }
 
-  function createCollaborativeSession() {
+  function createCollaborativeSession(buildOptions: { seedFromSnapshot?: boolean } = {}) {
     // 协同模式下由远端文档驱动内容，不直接给初始 content，避免覆盖房间状态。
     if (!options.collabUrl) {
       createLocalEditor(options.latestContentSnapshot.value)
@@ -248,9 +293,20 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     collaborationRuntime.value = runtime
     metaMap.value = meta
     options.collaborationEnabled.value = true
+    setCollaborationBootstrapState(true)
+
+    if (buildOptions.seedFromSnapshot) {
+      // 私有文档首次切入共享时，后端会清空旧 room state；
+      // 这里要先把刚保存的正文写进新的 Yjs 房间，再让协同编辑器接管。
+      seedSharedDocumentContent(getBaseSchema())
+      syncStateIntoMeta()
+      hasSeededCollaborationState.value = true
+      hasReceivedInitialSync.value = true
+    }
 
     runtime.provider.on('status', handleCollaborationStatus)
     runtime.provider.on('sync', handleCollaborationSync)
+    runtime.provider.on('connection-close', handleConnectionClose)
     runtime.awareness.on('change', syncCollaborators)
     meta.observe(applyMetaObserver)
 
@@ -271,6 +327,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     document: Pick<DocumentDetail, 'content' | 'title' | 'visibility'>,
     buildOptions: {
       forceLocal?: boolean
+      seedCollaborationFromSnapshot?: boolean
     } = {},
   ) {
     // 文档可见性变化时，本地/协同编辑器的扩展集合会变化，因此直接重建实例更稳妥。
@@ -279,7 +336,7 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     await nextTick()
 
     if (!buildOptions.forceLocal && document.visibility === 'shared' && options.collabUrl) {
-      createCollaborativeSession()
+      createCollaborativeSession({ seedFromSnapshot: buildOptions.seedCollaborationFromSnapshot })
       return
     }
 
@@ -296,6 +353,10 @@ export function useEditorCollaboration(options: UseEditorCollaborationOptions) {
     if (metaMap.value && hasReceivedInitialSync.value) {
       setMetaValueIfChanged(metaMap.value, 'visibility', value)
     }
+  }
+
+  function getBaseSchema() {
+    return editorInstance.value?.schema ?? getSchema(createEditorExtensions())
   }
 
   function toggleCollaboration() {

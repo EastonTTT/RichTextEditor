@@ -133,6 +133,7 @@
       :comment-count="commentCount"
       :is-comments-loading="isCommentsLoading"
       :is-comment-submitting="isCommentSubmitting"
+      :can-delete-comments="isOwner"
       :comment-threads="commentThreads"
       :reply-drafts="replyDrafts"
       :format-comment-time="formatCommentTime"
@@ -142,6 +143,7 @@
       @update:reply-draft="updateReplyDraft"
       @clear-reply="clearReplyDraft"
       @reply-comment="handleReplyComment"
+      @delete-comment="handleDeleteComment"
     />
 
     <el-dialog v-model="isVersionPreviewOpen" title="版本预览" width="min(1000px, 92vw)" destroy-on-close>
@@ -276,7 +278,7 @@
 
 <script lang="ts" setup>
 // 组合完整的文档编辑页、抽屉面板和编辑流程。
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import RichTextEditor from '@/pages/editor/components/RichTextEditor.vue'
@@ -334,6 +336,9 @@ const isHydrating = ref(false)
 const isSettingsOpen = ref(false)
 const isCommentsOpen = ref(false)
 const draftSyncState = ref<OfflineDraftSyncState>('synced')
+const isBootstrappingCollaboration = ref(false)
+const isHandlingShareTermination = ref(false)
+const allowForcedLeave = ref(false)
 
 // 协同房间按文档隔离；available 只表示“有配置地址”，不代表服务一定可连。
 const roomName = computed(() => `document:${documentId}`)
@@ -401,6 +406,7 @@ const {
 } = useEditorSearch({
   latestContentSnapshot,
   isHydrating,
+  isBootstrappingCollaboration,
   getEditor: () => editorInstance.value ?? null,
   onMarkDirty: markDirty,
 })
@@ -428,10 +434,12 @@ const {
   latestContentSnapshot,
   collaborationEnabled,
   isHydrating,
+  isBootstrappingCollaboration,
   onMarkDirty: markDirty,
   onSyncEditorStats: (editor) => syncEditorStats(editor),
   onRefreshSearchMatches: (editor, preserveIndex) => refreshSearchMatches(editor, preserveIndex),
   createBaseEditorOptions: () => createBaseEditorOptions(),
+  onPermissionRevoked: handleShareTermination,
 })
 // 离线草稿模块负责 IndexedDB 持久化、恢复提示和冲突处理上下文。
 const {
@@ -507,11 +515,13 @@ const {
   loadCommentThreads,
   handleCreateComment,
   handleReplyComment,
+  handleDeleteComment,
   startCommentsPolling,
   stopCommentsPolling,
 } = useDocumentComments({
   documentId,
   currentUser: storedUser,
+  isOwner,
   getErrorMessage,
 })
 
@@ -723,7 +733,9 @@ async function saveCurrentDocument(
 
     // 私有/共享切换会改变编辑器扩展集合，因此这里需要整套重建。
     if (previousPersistedVisibility !== document.visibility) {
-      await rebuildEditorSession(document)
+      await rebuildEditorSession(document, {
+        seedCollaborationFromSnapshot: previousPersistedVisibility === 'private' && document.visibility === 'shared',
+      })
     } else if (document.visibility === 'shared' && metaMap.value) {
       suppressMetaObserver.value = true
       syncStateIntoMeta()
@@ -764,6 +776,31 @@ async function saveCurrentDocument(
         scheduleAutoSave()
       }
     }
+  }
+}
+
+async function handleShareTermination() {
+  // 协作者被移出共享后，先弹出明确提示，再放行返回主页，避免继续停留在失效文档页。
+  if (isOwner.value || isHandlingShareTermination.value) {
+    return
+  }
+
+  isHandlingShareTermination.value = true
+  clearAutoSaveTimer()
+  clearDraftPersistTimer()
+  destroyEditorSession()
+
+  try {
+    await ElMessageBox.alert('文档所有者已结束共享，你将返回主页。', '共享已结束', {
+      confirmButtonText: '确定',
+      type: 'warning',
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      showClose: false,
+    })
+  } finally {
+    allowForcedLeave.value = true
+    void router.replace('/home')
   }
 }
 
@@ -999,6 +1036,10 @@ function handleBeforeUnload(event: BeforeUnloadEvent) {
 
 onBeforeRouteLeave(() => {
   // 站内路由跳转同样要拦一下，和 beforeunload 保持一致的保护行为。
+  if (allowForcedLeave.value) {
+    return true
+  }
+
   if (!isDirty.value) {
     return true
   }

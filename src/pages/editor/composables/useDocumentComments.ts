@@ -1,13 +1,14 @@
 // 管理编辑器评论线程、回复草稿与轮询状态。
 import { computed, ref, type Ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getDocumentCommentThreads, updateDocumentCommentThreads } from '@/api/comment'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { deleteDocumentComment, getDocumentCommentThreads, updateDocumentCommentThreads } from '@/api/comment'
 import type { DocumentCommentItem, DocumentCommentThread } from '@/types/comment'
 import { getUserDisplayName, type UserProfile } from '@/types/user'
 
 interface UseDocumentCommentsOptions {
   documentId: string
   currentUser: Pick<UserProfile, 'id' | 'name' | 'nickname'>
+  isOwner: Ref<boolean>
   getErrorMessage: (error: unknown, fallback: string) => string
 }
 
@@ -162,6 +163,34 @@ export function useDocumentComments(options: UseDocumentCommentsOptions) {
     clearReplyDraft(threadId)
   }
 
+  async function handleDeleteComment(threadId: string, commentId: string) {
+    if (!options.isOwner.value) {
+      ElMessage.warning('只有文档所有者可以删除评论。')
+      return
+    }
+
+    try {
+      await ElMessageBox.confirm('删除后将无法恢复这条评论，是否继续？', '删除评论', {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+    } catch {
+      return
+    }
+
+    isCommentSubmitting.value = true
+    try {
+      commentThreads.value = await deleteDocumentComment(options.documentId, threadId, commentId)
+      clearReplyDraft(threadId)
+      ElMessage.success('评论已删除。')
+    } catch (error) {
+      ElMessage.error(options.getErrorMessage(error, '删除评论失败'))
+    } finally {
+      isCommentSubmitting.value = false
+    }
+  }
+
   function stopCommentsPolling() {
     if (commentsPollTimer) {
       window.clearInterval(commentsPollTimer)
@@ -194,6 +223,7 @@ export function useDocumentComments(options: UseDocumentCommentsOptions) {
     loadCommentThreads,
     handleCreateComment,
     handleReplyComment,
+    handleDeleteComment,
     startCommentsPolling,
     stopCommentsPolling,
   }

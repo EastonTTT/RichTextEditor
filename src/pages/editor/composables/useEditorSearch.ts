@@ -10,6 +10,7 @@ export interface SearchMatch {
 interface UseEditorSearchOptions {
   latestContentSnapshot: Ref<string>
   isHydrating: Ref<boolean>
+  isBootstrappingCollaboration?: Ref<boolean>
   getEditor: () => CoreEditor | null
   onMarkDirty: () => void
 }
@@ -117,7 +118,7 @@ export function useEditorSearch(options: UseEditorSearchOptions) {
 
   function handleEditorUpdate(currentEditor: CoreEditor) {
     // setContent 等“回填动作”也会触发 update，这里用 hydrating 标记跳过二次保存。
-    if (options.isHydrating.value) {
+    if (options.isHydrating.value || options.isBootstrappingCollaboration?.value) {
       return
     }
 
@@ -134,7 +135,11 @@ export function useEditorSearch(options: UseEditorSearchOptions) {
         handleEditorUpdate(editor)
       },
       onCreate: ({ editor }: { editor: CoreEditor }) => {
-        options.latestContentSnapshot.value = editor.getHTML()
+        // 协同编辑器刚创建时，Yjs 房间内容还没首轮同步完成；
+        // 如果此时编辑器还是空壳，不能反向把已有正文快照覆盖成空内容。
+        if (!editor.isEmpty || !options.latestContentSnapshot.value || options.latestContentSnapshot.value === '<p></p>') {
+          options.latestContentSnapshot.value = editor.getHTML()
+        }
         syncEditorStats(editor)
         refreshSearchMatches(editor)
       },

@@ -25,8 +25,20 @@
         <div class="thread-comments">
           <div v-for="comment in thread.comments" :key="comment.id" class="comment-item">
             <div class="comment-meta">
-              <strong>{{ comment.authorName }}</strong>
-              <span>{{ formatCommentTime(comment.createdAt) }}</span>
+              <div class="comment-meta-main">
+                <strong>{{ comment.authorName }}</strong>
+                <span>{{ formatCommentTime(comment.createdAt) }}</span>
+              </div>
+              <el-button
+                v-if="canDeleteComments"
+                size="small"
+                text
+                type="danger"
+                :loading="isCommentSubmitting"
+                @click="emit('deleteComment', thread.id, comment.id)"
+              >
+                删除
+              </el-button>
             </div>
             <div class="comment-content">{{ comment.content }}</div>
           </div>
@@ -71,6 +83,7 @@ const props = defineProps<{
   commentCount: number
   isCommentsLoading: boolean
   isCommentSubmitting: boolean
+  canDeleteComments: boolean
   commentThreads: DocumentCommentThread[]
   replyDrafts: Record<string, string>
   formatCommentTime: (value: string) => string
@@ -84,6 +97,7 @@ const emit = defineEmits<{
   'update:replyDraft': [threadId: string, value: string]
   clearReply: [threadId: string]
   replyComment: [threadId: string]
+  deleteComment: [threadId: string, commentId: string]
 }>()
 
 const drawerVisible = computed({
@@ -102,12 +116,25 @@ const drawerVisible = computed({
 
 .comment-toolbar,
 .comment-toolbar-actions,
-.comment-meta,
 .reply-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comment-meta-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .comment-summary,
