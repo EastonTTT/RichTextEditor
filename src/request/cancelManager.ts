@@ -20,18 +20,21 @@ export function addPendingRequest(config: AxiosRequestConfig) {
   }
 
   const controller = new AbortController()
+  // 获取上游可能存在的signal
   const upstreamSignal = config.signal as AbortSignal | undefined
 
   if (upstreamSignal) {
+    //如果上游已经取消了请求，则取消本次请求
     if (upstreamSignal.aborted) {
       controller.abort(upstreamSignal.reason)
     } else {
+      //如果上游还没有取消，则监听上游的取消，同步取消。
       upstreamSignal.addEventListener(
         'abort',
         () => {
           controller.abort(upstreamSignal.reason)
         },
-        { once: true },
+        { once: true }
       )
     }
   }

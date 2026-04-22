@@ -43,12 +43,21 @@
 
     <el-dialog v-model="isTemplateDialogOpen" title="选择模板" width="760px">
       <div class="template-dialog">
-        <div v-if="templates.length > 0" class="template-grid">
+        <div v-if="templates.length > 0" class="template-list">
           <article v-for="template in templates" :key="template.id" class="template-card">
-            <div class="template-title">{{ template.title }}</div>
-            <div class="template-desc">{{ template.description }}</div>
-            <div class="template-preview">{{ template.preview }}</div>
-            <div class="template-meta">来源文档：{{ template.sourceDocumentId || '未记录' }}</div>
+            <div class="template-summary">
+              <div class="template-card-header">
+                <div>
+                  <div class="template-title">{{ template.title }}</div>
+                  <div class="template-meta">来源文档：{{ template.sourceDocumentId || '未记录' }}</div>
+                </div>
+              </div>
+              <div class="template-desc">{{ template.description || '该模板暂时没有补充说明。' }}</div>
+            </div>
+            <div class="template-preview-block">
+              <div class="template-preview-label">模板预览</div>
+              <div class="template-preview">{{ template.preview || '当前模板还没有预览内容。' }}</div>
+            </div>
             <div class="template-actions">
               <el-button type="primary" @click="handleCreateFromTemplate(template.id)">使用模板</el-button>
               <el-button @click="handleDeleteTemplate(template.id)">删除模板</el-button>
@@ -415,41 +424,107 @@ onMounted(loadData)
   min-height: 220px;
 }
 
-.template-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .template-card {
-  padding: 16px;
-  border-radius: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  grid-template-areas:
+    'summary summary'
+    'preview actions';
+  column-gap: 18px;
+  row-gap: 14px;
+  padding: 18px 20px;
+  border-radius: 20px;
   border: 1px solid #dbe4f3;
   background: linear-gradient(180deg, #fff 0%, #f9fbff 100%);
 }
 
+.template-summary {
+  grid-area: summary;
+  min-width: 0;
+}
+
+.template-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .template-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #101828;
 }
 
-.template-desc,
-.template-meta,
-.template-preview {
-  margin-top: 8px;
+.template-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #475467;
+}
+
+.template-desc {
+  margin-top: 0;
+  margin-bottom: 12px;
   color: #667085;
   line-height: 1.7;
 }
 
-.template-preview {
-  min-height: 68px;
+.template-preview-block {
+  grid-area: preview;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(239, 244, 255, 0.72);
+  border: 1px solid #d8e4ff;
+}
+
+.template-preview-label {
   font-size: 12px;
+  font-weight: 700;
+  color: #35518a;
+  letter-spacing: 0.04em;
+}
+
+.template-preview {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #475467;
+  line-height: 1.8;
 }
 
 .template-actions {
-  margin-top: 14px;
+  grid-area: actions;
   display: flex;
+  flex-direction: column;
   gap: 10px;
+  align-items: stretch;
+  align-self: start;
+  min-width: 132px;
+}
+
+:deep(.template-actions .el-button) {
+  width: 100%;
+  height: 40px;
+  margin-left: 0;
+}
+
+@media (max-width: 720px) {
+  .template-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'summary'
+      'preview'
+      'actions';
+  }
+
+  .template-actions {
+    width: 100%;
+    min-width: 0;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 ﻿<template>
   <div class="wrapper">
-    <button class="button primary" @click="emit('create')">
+    <button class="button secondary" @click="emit('create')">
       <div class="icon">
         <DocumentAdd />
       </div>
@@ -78,10 +78,10 @@ const emit = defineEmits<{
   box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08);
 }
 
-.button.primary {
-  border-color: #bfd3ff;
-  background: linear-gradient(135deg, #f3f8ff 0%, #eef6ff 100%);
-}
+// .button.primary {
+//   border-color: #bfd3ff;
+//   background: linear-gradient(135deg, #f3f8ff 0%, #eef6ff 100%);
+// }
 
 .button.secondary {
   background: #fff;
