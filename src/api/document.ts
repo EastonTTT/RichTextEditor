@@ -120,6 +120,18 @@ export async function getDocumentVersion(versionId: string): Promise<DocumentVer
   return get<DocumentVersion>(`/document-versions/${versionId}`)
 }
 
-export async function restoreDocumentVersion(versionId: string): Promise<DocumentDetail> {
-  return post<DocumentDetail>(`/document-versions/${versionId}/restore`)
+export async function restoreDocumentVersion(
+  versionId: string,
+  payload: {
+    createBackup?: boolean
+    currentTitle?: string
+    currentContent?: string
+    backupSummary?: string
+  } = {},
+): Promise<DocumentDetail> {
+  return post<DocumentDetail>(`/document-versions/${versionId}/restore`, payload)
+}
+
+export async function deleteDocumentVersion(versionId: string): Promise<void> {
+  await del(`/document-versions/${versionId}`)
 }

@@ -1,4 +1,6 @@
 // 为历史版本预览抽屉构建块级差异数据。
+import type { DocumentVersion } from '@/types/document'
+
 export type DiffRowType = 'added' | 'removed' | 'changed'
 export type BlockKind = 'heading' | 'paragraph' | 'list-item' | 'code' | 'quote' | 'table' | 'divider' | 'other'
 
@@ -45,42 +47,56 @@ const versionReasonMetaMap: Record<
     label: string
     tone: 'neutral' | 'brand' | 'success' | 'warning' | 'danger'
     type: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+    display: 'version' | 'record'
   }
 > = {
   manual_save: {
     label: '手动保存',
     tone: 'brand',
     type: 'primary',
+    display: 'version',
   },
   autosave: {
     label: '自动保存',
     tone: 'success',
     type: 'success',
+    display: 'version',
   },
   manual_snapshot: {
     label: '手动快照',
     tone: 'brand',
     type: 'primary',
+    display: 'version',
   },
   manual_snapshot_prepare: {
     label: '快照准备',
     tone: 'neutral',
     type: 'info',
+    display: 'version',
+  },
+  restore_backup: {
+    label: '恢复前备份',
+    tone: 'warning',
+    type: 'warning',
+    display: 'version',
   },
   restore: {
     label: '版本恢复',
     tone: 'warning',
     type: 'warning',
+    display: 'record',
   },
   offline_reconnect: {
     label: '断线重连同步',
     tone: 'success',
     type: 'success',
+    display: 'version',
   },
   offline_restore: {
     label: '本地覆盖恢复',
     tone: 'danger',
     type: 'danger',
+    display: 'version',
   },
 }
 
@@ -280,8 +296,17 @@ export function getVersionReasonMeta(reason: string) {
       label: reason || '系统版本',
       tone: 'neutral' as const,
       type: 'info' as const,
+      display: 'version' as const,
     }
   )
+}
+
+export function isRestoreRecord(reason: string) {
+  return getVersionReasonMeta(reason).display === 'record'
+}
+
+export function getVersionDisplayTime(version: Pick<DocumentVersion, 'createdAt' | 'lastRestoredAt'>) {
+  return version.lastRestoredAt || version.createdAt
 }
 
 export function formatVersionTime(value: string) {

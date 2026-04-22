@@ -24,7 +24,7 @@
 
         <el-form-item label="共享权限">
           <div class="field-tip prominent">
-            入口在这里。先将上方“可见性”切换为“共享”，再选择允许访问这篇文档的协作者。
+            先将上方“可见性”切换为“共享”，再选择允许访问这篇文档的协作者。
           </div>
         </el-form-item>
 

@@ -13,16 +13,52 @@
           <div class="version-overview-title">当前文档快照</div>
           <div class="version-overview-meta">最近保存：{{ formatVersionTime(lastSavedAt || new Date().toISOString()) }}</div>
         </div>
-        <div class="version-overview-count">{{ versions.length }} 个版本</div>
+        <div class="version-overview-count">
+          {{ contentVersions.length }} 个内容版本
+          <span v-if="restoreRecords.length" class="version-overview-count__extra">
+            含 {{ restoreRecords.length }} 条旧恢复记录
+          </span>
+        </div>
       </div>
 
-      <el-timeline>
+      <div v-if="restoreRecords.length" class="restore-records-card">
+        <div class="restore-records-card__header">
+          <div class="restore-records-card__title">旧恢复记录</div>
+          <p class="restore-records-card__tip">
+            这部分仅用于兼容旧数据。新恢复逻辑不会再额外创建恢复记录，而是直接将被恢复版本提升到最新顺序。
+          </p>
+        </div>
+
+        <div class="restore-records-list">
+          <div v-for="version in restoreRecords" :key="version.id" class="restore-record-item">
+            <div class="version-top">
+              <strong>v{{ version.versionNo }}</strong>
+              <span class="version-reason-badge" :class="`version-reason-badge--${getVersionReasonMeta(version.reason).tone}`">
+                {{ getVersionReasonMeta(version.reason).label }}
+              </span>
+            </div>
+            <div class="version-meta">
+              <span>操作人：{{ version.createdByName }}</span>
+              <span>{{ formatVersionTime(getVersionDisplayTime(version)) }}</span>
+            </div>
+            <p class="version-summary">{{ version.summary || '这是一条恢复操作记录。' }}</p>
+            <div class="version-ops version-ops--single">
+              <el-button size="small" @click="emit('preview', version.id)">查看详情</el-button>
+              <el-button size="small" type="danger" plain :loading="isVersionActionRunning" @click="emit('delete', version.id)">
+                删除
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <el-timeline v-if="contentVersions.length">
         <el-timeline-item
-          v-for="version in versions"
+          v-for="version in contentVersions"
           :key="version.id"
-          :timestamp="formatVersionTime(version.createdAt)"
+          :timestamp="formatVersionTime(getVersionDisplayTime(version))"
           :type="getVersionReasonMeta(version.reason).type"
-          :hollow="version.id !== versions[0]?.id"
+          :hollow="version.id !== contentVersions[0]?.id"
           placement="top"
         >
           <div class="version-item">
@@ -42,10 +78,14 @@
               <el-button size="small" :loading="isVersionActionRunning" @click="emit('restore', version.id)">
                 恢复此版本
               </el-button>
+              <el-button size="small" type="danger" plain :loading="isVersionActionRunning" @click="emit('delete', version.id)">
+                删除
+              </el-button>
             </div>
           </div>
         </el-timeline-item>
       </el-timeline>
+      <el-empty v-else description="当前只有恢复记录，暂时没有可展示的内容版本" />
     </div>
   </el-drawer>
 </template>
@@ -53,7 +93,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DocumentVersion } from '@/types/document'
-import { formatVersionTime, getVersionReasonMeta } from '../composables/useVersionPresentation'
+import {
+  formatVersionTime,
+  getVersionDisplayTime,
+  getVersionReasonMeta,
+  isRestoreRecord,
+} from '../composables/useVersionPresentation'
 
 const props = defineProps<{
   modelValue: boolean
@@ -69,12 +114,16 @@ const emit = defineEmits<{
   refresh: []
   preview: [versionId: string]
   restore: [versionId: string]
+  delete: [versionId: string]
 }>()
 
 const drawerVisible = computed({
   get: () => props.modelValue,
   set: (value: boolean) => emit('update:modelValue', value),
 })
+
+const contentVersions = computed(() => props.versions.filter((version) => !isRestoreRecord(version.reason)))
+const restoreRecords = computed(() => props.versions.filter((version) => isRestoreRecord(version.reason)))
 </script>
 
 <style lang="scss" scoped>
@@ -120,6 +169,50 @@ const drawerVisible = computed({
   font-weight: 700;
 }
 
+.version-overview-count__extra {
+  display: block;
+  margin-top: 4px;
+  font-weight: 500;
+  opacity: 0.82;
+}
+
+.restore-records-card {
+  padding: 14px;
+  border: 1px solid #f2e4c7;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffaf0 0%, #fffdf8 100%);
+}
+
+.restore-records-card__header {
+  margin-bottom: 12px;
+}
+
+.restore-records-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7a3e0b;
+}
+
+.restore-records-card__tip {
+  margin: 6px 0 0;
+  color: #9a670d;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.restore-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.restore-record-item {
+  border: 1px dashed #e7c992;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
 .version-item {
   border: 1px solid #e5e7eb;
   border-radius: 16px;
@@ -133,6 +226,10 @@ const drawerVisible = computed({
   display: flex;
   justify-content: space-between;
   gap: 12px;
+}
+
+.version-ops--single {
+  justify-content: flex-end;
 }
 
 .version-top,

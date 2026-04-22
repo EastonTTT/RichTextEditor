@@ -124,6 +124,7 @@
       @refresh="loadVersions"
       @preview="previewVersion"
       @restore="handleRestoreVersion"
+      @delete="handleDeleteVersion"
     />
 
     <editor-comments-drawer
@@ -559,6 +560,7 @@ const {
   previewVersion,
   handleCreateSnapshot,
   handleRestoreVersion,
+  handleDeleteVersion,
 } = useDocumentVersions({
   documentId,
   title,

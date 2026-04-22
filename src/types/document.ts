@@ -90,4 +90,5 @@ export interface DocumentVersion {
   createdById: string
   createdByName: string
   createdAt: string
+  lastRestoredAt: string
 }
